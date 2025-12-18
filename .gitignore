@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Build output
+/dist/
+/build/
+
+# VSCode settings
+.vscode/
+
+# Mac system files
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+
+# Coverage
+coverage/
+
+# Local dev server output
+/.svelte-kit/
+
+# Misc
+*.local
+*.log
+
+# Ignore audio output cache (if any)
+public/audio/**/*.cache
