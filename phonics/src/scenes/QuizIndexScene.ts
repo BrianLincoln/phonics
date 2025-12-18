@@ -18,10 +18,10 @@ export class QuizIndexScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
-    const buttonWidth = 340;
-    const buttonHeight = 70;
-    const spacing = 24;
-    const startY = 160;
+    const buttonWidth = 220;
+    const buttonHeight = 44;
+    const spacing = 14;
+    const startY = 120;
     quizzes.forEach((quiz: Quiz, i: number) => {
       const y = startY + i * (buttonHeight + spacing);
       this.createQuizButton(quiz.id, quiz.name, y, buttonWidth, buttonHeight);
@@ -35,13 +35,45 @@ export class QuizIndexScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
-    const introButtonWidth = 220;
-    const introButtonHeight = 56;
-    const introSpacing = 18;
+    const introButtonWidth = 140;
+    const introButtonHeight = 36;
+    const introSpacing = 10;
     soundIntroductions.forEach((intro: SoundIntroduction, i: number) => {
-      const y = introSectionY + 60 + i * (introButtonHeight + introSpacing);
+      const y = introSectionY + 40 + i * (introButtonHeight + introSpacing);
       this.createSoundIntroButton(intro, y, introButtonWidth, introButtonHeight);
     });
+
+    // Crow Demo Button (small square, top right)
+    this.load.once('complete', () => {
+      const crowBtnSize = 48;
+      const crowBtnX = this.scale.width - crowBtnSize - 16;
+      const crowBtnY = 16 + crowBtnSize / 2;
+      const crowBtn = this.add.sprite(crowBtnX, crowBtnY, 'crow', 0)
+        .setOrigin(0.5)
+        .setDisplaySize(crowBtnSize, crowBtnSize)
+        .setInteractive();
+      crowBtn.on('pointerdown', () => {
+        this.scene.start('CrowDemoScene');
+      });
+      crowBtn.setDepth(10);
+    });
+    if (!this.textures.exists('crow')) {
+      this.load.spritesheet('crow', 'public/crow_sprite.png', { frameWidth: 200, frameHeight: 200 });
+      this.load.start();
+    } else {
+      // If already loaded, add immediately
+      const crowBtnSize = 48;
+      const crowBtnX = this.scale.width - crowBtnSize - 16;
+      const crowBtnY = 16 + crowBtnSize / 2;
+      const crowBtn = this.add.sprite(crowBtnX, crowBtnY, 'crow', 0)
+        .setOrigin(0.5)
+        .setDisplaySize(crowBtnSize, crowBtnSize)
+        .setInteractive();
+      crowBtn.on('pointerdown', () => {
+        this.scene.start('CrowDemoScene');
+      });
+      crowBtn.setDepth(10);
+    }
   }
 
   private createQuizButton(quizId: string, quizName: string, y: number, width: number, height: number) {
