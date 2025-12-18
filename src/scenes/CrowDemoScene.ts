@@ -11,6 +11,8 @@ export default class CrowDemoScene extends Phaser.Scene {
   private walkFrame: number = 1;
   private lastDirection: 'left' | 'right' = 'left';
   private talkTimeout?: number;
+  private speechBubble?: Phaser.GameObjects.Container;
+  private isSpeechActive: boolean = false;
 
   constructor() {
     super({ key: 'CrowDemoScene' });
@@ -61,8 +63,20 @@ export default class CrowDemoScene extends Phaser.Scene {
       }, 700);
     });
 
+    // Speech bubble demo button
+    const speechBtn = this.add.text(centerX, 130, 'Speech Bubble Demo', {
+      fontSize: '24px',
+      color: '#fff',
+      backgroundColor: '#f5a623',
+      padding: { left: 12, right: 12, top: 8, bottom: 8 },
+    }).setOrigin(0.5).setInteractive();
+    speechBtn.on('pointerdown', () => {
+      this.showSpeechBubble('Hello!');
+    });
+
     // Click to move crow
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.isSpeechActive) return; // disable control during speech
       // Ignore clicks on buttons
       if (pointer.y < 120) return;
       this.targetX = pointer.x;
@@ -71,7 +85,97 @@ export default class CrowDemoScene extends Phaser.Scene {
       this.walkAnimTimer = 0;
       this.walkFrame = 1;
     });
+
+    // Clean up speech bubble if present
+    this.events.on('shutdown', () => {
+      if (this.speechBubble) this.speechBubble.destroy();
+    });
+
   }
+
+  // Reusable speech bubble routine
+  showSpeechBubble(text: string) {
+    this.isSpeechActive = true;
+    // Move crow to bottom center
+    const targetX = this.cameras.main.centerX;
+    const targetY = this.cameras.main.height - 20;
+    this.targetX = targetX;
+    this.targetY = targetY;
+    this.isWalking = true;
+    this.walkAnimTimer = 0;
+    this.walkFrame = 1;
+
+    // Wait until crow arrives, then show bubble
+    const checkArrival = () => {
+      if (this.isWalking) {
+        this.time.delayedCall(50, checkArrival);
+      } else {
+        this.crow.setFrame(0);
+        this.crow.setFlipX(false);
+        this.createSpeechBubble(text);
+      }
+    };
+    checkArrival();
+  }
+
+  createSpeechBubble(text: string) {
+    if (this.speechBubble) this.speechBubble.destroy();
+    // Bubble base
+    const bubbleWidth = 260;
+    const bubbleHeight = 80;
+    // Place bubble well above crow's head, tail points to mouth (left side of head)
+    const crowMouthOffsetX = 0; // nudge farther left
+    const bubbleX = this.crow.x - bubbleWidth / 2 + crowMouthOffsetX;
+    const bubbleY = this.crow.y - 300; // nudge higher
+    const bubble = this.add.container(bubbleX, bubbleY);
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffffff, 1);
+    graphics.lineStyle(2, 0x222222, 1);
+    // Draw bubble and tail as one path for seamless border
+    graphics.beginPath();
+    // Start at top left corner after radius
+    graphics.moveTo(18, 0);
+    // Top edge
+    graphics.lineTo(bubbleWidth - 18, 0);
+    // Top-right corner
+    graphics.arc(bubbleWidth - 18, 18, 18, Phaser.Math.DegToRad(270), Phaser.Math.DegToRad(360), false);
+    // Right edge
+    graphics.lineTo(bubbleWidth, bubbleHeight - 18);
+    // Bottom-right corner
+    graphics.arc(bubbleWidth - 18, bubbleHeight - 18, 18, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(90), false);
+    // Bottom edge to tail
+    const tailBaseX = 36;
+    graphics.lineTo(tailBaseX + 24, bubbleHeight);
+    graphics.lineTo(tailBaseX + 12, bubbleHeight + 24); // tip of tail
+    graphics.lineTo(tailBaseX, bubbleHeight);
+    // Continue bottom edge
+    graphics.lineTo(18, bubbleHeight);
+    // Bottom-left corner
+    graphics.arc(18, bubbleHeight - 18, 18, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(180), false);
+    // Left edge
+    graphics.lineTo(0, 18);
+    // Top-left corner
+    graphics.arc(18, 18, 18, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(270), false);
+    graphics.closePath();
+    graphics.fillPath();
+    graphics.strokePath();
+    bubble.add(graphics);
+    // Text
+    const txt = this.add.text(bubbleWidth / 2, bubbleHeight / 2, text, {
+      fontSize: '24px',
+      color: '#222',
+      wordWrap: { width: bubbleWidth - 24 },
+      align: 'center',
+    }).setOrigin(0.5);
+    bubble.add(txt);
+    this.speechBubble = bubble;
+    // Dismiss after 2 seconds
+    this.time.delayedCall(2000, () => {
+      if (this.speechBubble) this.speechBubble.destroy();
+      this.isSpeechActive = false;
+    });
+  }
+
 
   update(time: number, delta: number) {
     if (this.isWalking && this.targetX !== null && this.targetY !== null) {
