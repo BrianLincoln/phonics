@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
 import type { Quiz } from '../data/quizzes';
 import { getQuizCompletion } from '../helpers/quizProgress';
+import { soundIntroductions } from '../../../src/config/soundIntroductions';
+import type { SoundIntroduction } from '../../../src/config/soundIntroductions';
 
 export class QuizIndexScene extends Phaser.Scene {
   constructor() {
@@ -23,6 +25,22 @@ export class QuizIndexScene extends Phaser.Scene {
     quizzes.forEach((quiz: Quiz, i: number) => {
       const y = startY + i * (buttonHeight + spacing);
       this.createQuizButton(quiz.id, quiz.name, y, buttonWidth, buttonHeight);
+    });
+
+    // Sound Introductions Section
+    const introSectionY = startY + quizzes.length * (buttonHeight + spacing) + 40;
+    this.add.text(this.scale.width / 2, introSectionY, 'Select a letter or letter team', {
+      fontSize: '32px',
+      color: '#333',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+
+    const introButtonWidth = 220;
+    const introButtonHeight = 56;
+    const introSpacing = 18;
+    soundIntroductions.forEach((intro: SoundIntroduction, i: number) => {
+      const y = introSectionY + 60 + i * (introButtonHeight + introSpacing);
+      this.createSoundIntroButton(intro, y, introButtonWidth, introButtonHeight);
     });
   }
 
@@ -75,6 +93,46 @@ export class QuizIndexScene extends Phaser.Scene {
     });
     hit.on('pointerdown', () => {
       this.scene.start('Quiz', { quizId });
+    });
+  }
+  private createSoundIntroButton(intro: SoundIntroduction, y: number, width: number, height: number) {
+    const x = this.scale.width / 2;
+    const container = this.add.container(x, y);
+    const bg = this.add.graphics();
+    bg.fillStyle(0xf5a623, 1);
+    bg.lineStyle(2, 0xb9770e, 1);
+    bg.fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+    bg.strokeRoundedRect(-width / 2, -height / 2, width, height, 10);
+    const text = this.add.text(0, 0, intro.displayName, {
+      fontSize: '24px',
+      color: '#fff',
+      align: 'center',
+    }).setOrigin(0.5, 0.5);
+    container.add([bg, text]);
+    container.setSize(width, height);
+
+    const hit = this.add.rectangle(-width / 2, -height / 2, width, height, 0x000000, 0);
+    hit.setOrigin(0, 0);
+    hit.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
+    container.add(hit);
+    hit.on('pointerover', () => {
+      bg.clear();
+      bg.fillStyle(0xf7b94e, 1);
+      bg.lineStyle(2, 0xb9770e, 1);
+      bg.fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+      bg.strokeRoundedRect(-width / 2, -height / 2, width, height, 10);
+      this.input.setDefaultCursor('pointer');
+    });
+    hit.on('pointerout', () => {
+      bg.clear();
+      bg.fillStyle(0xf5a623, 1);
+      bg.lineStyle(2, 0xb9770e, 1);
+      bg.fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+      bg.strokeRoundedRect(-width / 2, -height / 2, width, height, 10);
+      this.input.setDefaultCursor('default');
+    });
+    hit.on('pointerdown', () => {
+      this.scene.start('SoundIntroductionScene', { intro });
     });
   }
 }

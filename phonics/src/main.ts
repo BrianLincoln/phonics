@@ -3,6 +3,7 @@ import { gameConfig } from './config/gameConfig';
 // import { getAudioContext } from './helpers/audio';
 import { QuizIndexScene } from './scenes/QuizIndexScene';
 import { QuizScene } from './scenes/QuizScene';
+import SoundIntroductionScene from '../../src/scenes/SoundIntroductionScene';
 
 // Entry point: use QuizIndexScene and QuizScene
 new Phaser.Game({
@@ -14,5 +15,5 @@ new Phaser.Game({
     height: gameConfig.canvas.height
   },
   backgroundColor: gameConfig.canvas.backgroundColor,
-  scene: [QuizIndexScene, QuizScene],
+  scene: [QuizIndexScene, QuizScene, SoundIntroductionScene],
 });
