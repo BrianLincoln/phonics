@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
-import { getQuizCompletion, setQuizCompletion } from '../helpers/quizProgress';
+import type { Quiz } from '../data/quizzes';
+import { getQuizCompletion } from '../helpers/quizProgress';
 
 export class QuizIndexScene extends Phaser.Scene {
   constructor() {
@@ -19,7 +20,7 @@ export class QuizIndexScene extends Phaser.Scene {
     const buttonHeight = 70;
     const spacing = 24;
     const startY = 160;
-    quizzes.forEach((quiz, i) => {
+    quizzes.forEach((quiz: Quiz, i: number) => {
       const y = startY + i * (buttonHeight + spacing);
       this.createQuizButton(quiz.id, quiz.name, y, buttonWidth, buttonHeight);
     });

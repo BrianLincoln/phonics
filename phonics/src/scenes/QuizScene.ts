@@ -52,8 +52,7 @@ export class QuizScene extends Phaser.Scene {
       color: '#4a90e2',
       backgroundColor: '#fff',
       padding: { left: 12, right: 12, top: 6, bottom: 6 },
-      border: '1px solid #4a90e2',
-      borderRadius: 6,
+      // border and borderRadius removed (not supported by Phaser TextStyle)
     }).setOrigin(0, 0).setInteractive();
     btn.on('pointerover', () => {
       btn.setColor('#357abd');
@@ -86,14 +85,14 @@ export class QuizScene extends Phaser.Scene {
       color: '#fff',
       backgroundColor: '#4a90e2',
       padding: { left: 18, right: 18, top: 8, bottom: 8 },
-      borderRadius: 5,
+      // borderRadius removed (not supported by Phaser TextStyle)
     }).setOrigin(0.5, 0.5).setInteractive().setDepth(1001);
     const noBtn = this.add.text(width / 2 + 60, height / 2 + 40, 'No', {
       fontSize: '20px',
       color: '#4a90e2',
       backgroundColor: '#eaf1fb',
       padding: { left: 18, right: 18, top: 8, bottom: 8 },
-      borderRadius: 5,
+      // borderRadius removed (not supported by Phaser TextStyle)
     }).setOrigin(0.5, 0.5).setInteractive().setDepth(1001);
     yesBtn.on('pointerdown', () => {
       overlay.destroy();
