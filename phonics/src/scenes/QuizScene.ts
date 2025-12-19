@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { quizzes } from '../data/quizzes';
+import { quizzes, type Quiz } from '../data/quizzes';
 
 import { setQuizCompletion } from '../helpers/quizProgress';
 import { createButton } from '../helpers/createButton';
@@ -9,22 +9,14 @@ interface SceneData {
 }
 
 export class QuizScene extends Phaser.Scene {
-  private quiz?: {
-    id: string;
-    name: string;
-    questions: Array<{
-      id: string;
-      text: string;
-      words: string[];
-      correctAnswer: string;
-      phonemeFile: string;
-      promptFile?: string;
-    }>;
-  };
+  private quiz?: Quiz;
   private currentQuestionIndex: number = 0;
   private wordButtons: ReturnType<typeof createButton>[] = [];
   private dynamicObjects: Phaser.GameObjects.GameObject[] = [];
   private answerSelected: boolean = false;
+  private questionTextObj?: Phaser.GameObjects.Text; // Track question text directly
+  private fadeDuration: number = 250;
+  private fadeDelay: number = 50;
 
   constructor() {
     super('Quiz');
@@ -67,7 +59,7 @@ export class QuizScene extends Phaser.Scene {
 
 
 
-  private showQuestion(delayMs: number = 500) {
+  private showQuestion(delayMs: number = 500, fadeIn: boolean = false) {
     if (!this.quiz) return;
     // Remove only dynamic objects (buttons/text) from previous question
     this.dynamicObjects.forEach(obj => obj.destroy());
@@ -78,18 +70,22 @@ export class QuizScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#fff');
     this.createBackButton();
 
-    const quizTitle = this.add.text(this.scale.width / 2, 60, this.quiz.name, {
-      fontSize: '200px',
-      color: '#222',
-    }).setOrigin(0.5, 0);
-    this.dynamicObjects.push(quizTitle);
+    // Only show quiz title if hideLetter is not true for this question
+    if (!question.hideLetter) {
+      const quizTitle = this.add.text(this.scale.width / 2, 200, this.quiz.name, {
+        fontSize: '200px',
+        color: '#222',
+      }).setOrigin(0.5, 0);
+      this.dynamicObjects.push(quizTitle);
+    }
 
-    const questionText = this.add.text(this.scale.width / 2, this.scale.height - 400, question.text, {
+    this.questionTextObj = this.add.text(this.scale.width / 2, this.scale.height - 400, question.text, {
       fontSize: '30px',
       color: '#333',
       wordWrap: { width: this.scale.width * 0.8 },
     }).setOrigin(0.5, 0);
-    this.dynamicObjects.push(questionText);
+    if (fadeIn) this.questionTextObj.alpha = 0;
+    this.dynamicObjects.push(this.questionTextObj);
 
     // Play spoken prompt (if available and different from phoneme), then phoneme
     const spokenPromptFile = question.promptFile || null;
@@ -151,6 +147,31 @@ export class QuizScene extends Phaser.Scene {
     });
   }
 
+  private onAnswerComplete(isCorrect: boolean) {
+    // Feedback animation duration (sync with bounce/shake)
+    const feedbackDuration = 300;
+    const postFeedbackDelay = 700;
+    // Fade out question text and buttons after feedback + delay
+    this.time.delayedCall(feedbackDuration + postFeedbackDelay, () => {
+      if (this.questionTextObj) {
+        this.tweens.add({
+          targets: this.questionTextObj,
+          alpha: 0,
+          duration: this.fadeDuration,
+        });
+      }
+      this.wordButtons.forEach(btn => {
+        this.tweens.add({
+          targets: btn.container,
+          alpha: 0,
+          duration: this.fadeDuration,
+        });
+      });
+      // After fade out, pause, then next question
+      this.time.delayedCall(this.fadeDuration + 1500, () => this.nextQuestion(true));
+    });
+  }
+
   private handleAnswer(selected: string, correct: string) {
     if (this.answerSelected) return;
     this.answerSelected = true;
@@ -177,7 +198,7 @@ export class QuizScene extends Phaser.Scene {
     // Play feedback audio
     if (isCorrect) {
       this.sound.play('success');
-      this.time.delayedCall(500, () => this.nextQuestion());
+      this.onAnswerComplete(true);
     } else {
       this.sound.play('failure');
       // Add a short delay before replaying the prompt after incorrect answer
@@ -185,11 +206,23 @@ export class QuizScene extends Phaser.Scene {
     }
   }
 
-  private nextQuestion() {
+  private nextQuestion(fadeIn: boolean = false) {
     if (!this.quiz) return;
     this.currentQuestionIndex++;
     if (this.currentQuestionIndex < this.quiz.questions.length) {
-      this.showQuestion();
+      this.showQuestion(500, fadeIn);
+      // Fade in question text if requested
+      if (fadeIn) {
+        this.time.delayedCall(this.fadeDelay, () => {
+          if (this.questionTextObj) {
+            this.tweens.add({
+              targets: this.questionTextObj,
+              alpha: 1,
+              duration: this.fadeDuration
+            });
+          }
+        });
+      }
     } else {
       setQuizCompletion(this.quiz.id, true);
       if (this.sound) this.sound.stopAll();
