@@ -3,8 +3,8 @@ import { gameConfig } from './config/gameConfig';
 // import { getAudioContext } from './helpers/audio';
 import { QuizIndexScene } from './scenes/QuizIndexScene';
 import { QuizScene } from './scenes/QuizScene';
-import SoundIntroductionScene from '../../src/scenes/SoundIntroductionScene';
-import CrowDemoScene from '../../src/scenes/CrowDemoScene';
+import SoundIntroductionScene from './scenes/SoundIntroductionScene';
+import CrowDemoScene from './scenes/CrowDemoScene';
 
 // Entry point: use QuizIndexScene and QuizScene
 new Phaser.Game({

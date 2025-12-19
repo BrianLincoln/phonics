@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
 import { getQuizCompletion } from '../helpers/quizProgress';
-import { soundIntroductions } from '../../../src/config/soundIntroductions';
-import type { SoundIntroduction } from '../../../src/config/soundIntroductions';
+import { soundIntroductions } from '../config/soundIntroductions';
+import type { SoundIntroduction } from '../config/soundIntroductions';
 
 export class QuizIndexScene extends Phaser.Scene {
   constructor() {
