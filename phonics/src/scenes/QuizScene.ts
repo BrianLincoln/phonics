@@ -84,8 +84,8 @@ export class QuizScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
     this.dynamicObjects.push(quizTitle);
 
-    const questionText = this.add.text(this.scale.width / 2, 300, question.text, {
-      fontSize: '60px',
+    const questionText = this.add.text(this.scale.width / 2, this.scale.height - 400, question.text, {
+      fontSize: '30px',
       color: '#333',
       wordWrap: { width: this.scale.width * 0.8 },
     }).setOrigin(0.5, 0);
