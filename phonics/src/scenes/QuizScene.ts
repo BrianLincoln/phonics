@@ -168,7 +168,12 @@ export class QuizScene extends Phaser.Scene {
     const buttonWidth = 220;
     const buttonHeight = 60;
     const spacing = 30;
+    // Shuffle words array for random order
     const words = [...question.words];
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
     const totalWidth = words.length * buttonWidth + (words.length - 1) * spacing;
     const startX = (this.scale.width - totalWidth) / 2;
     const yPos = 260;

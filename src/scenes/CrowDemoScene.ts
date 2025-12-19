@@ -1,7 +1,13 @@
 import Phaser from 'phaser';
 
 export default class CrowDemoScene extends Phaser.Scene {
+  private crowWalkSpeed: number = 200;
   private crow!: Phaser.GameObjects.Sprite;
+  private shiny!: Phaser.GameObjects.Sprite;
+  private shinyAnimTimer: number = 0;
+  private shinyFrame: number = 0;
+  private sparkleCount: number = 0;
+  private sparkleCounterText!: Phaser.GameObjects.Text;
   private crowFlipOffset: number = 50; // px to offset when flipped (adjust as needed)
   private mmmSound?: Phaser.Sound.BaseSound;
   private targetX: number | null = null;
@@ -12,7 +18,6 @@ export default class CrowDemoScene extends Phaser.Scene {
   private lastDirection: 'left' | 'right' = 'left';
   private talkTimeout?: number;
   private speechBubble?: Phaser.GameObjects.Container;
-  private isSpeechActive: boolean = false;
 
   constructor() {
     super({ key: 'CrowDemoScene' });
@@ -23,6 +28,10 @@ export default class CrowDemoScene extends Phaser.Scene {
       frameWidth: 200,
       frameHeight: 200,
     });
+    this.load.spritesheet('shiny', 'public/shiny_sprite.png', {
+      frameWidth: 50,
+      frameHeight: 50,
+    });
     this.load.audio('mmm', 'public/audio/sounds/mmm.wav');
   }
 
@@ -30,8 +39,55 @@ export default class CrowDemoScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#e8f4fa');
     const centerX = this.cameras.main.centerX;
     const centerY = this.cameras.main.centerY;
-    this.crow = this.add.sprite(centerX, centerY, 'crow', 0);
+    // Crow starts at bottom left
+    this.crow = this.add.sprite(60, this.cameras.main.height - 20, 'crow', 0);
     this.crow.setOrigin(0.5, 1);
+
+    // Sparkle counter (top right)
+    this.sparkleCounterText = this.add.text(this.cameras.main.width - 40, 32, '0 ✨', {
+      fontSize: '32px',
+      color: '#f5a623',
+      fontFamily: 'Arial, sans-serif',
+      fontStyle: 'bold',
+      stroke: '#fff',
+      strokeThickness: 2,
+      shadow: {
+        offsetX: 0,
+        offsetY: 2,
+        color: '#bbb',
+        blur: 4,
+        fill: true
+      }
+    }).setOrigin(1, 0);
+
+    // Add shiny sprite, stationary for now
+    this.shiny = this.add.sprite(centerX + 200, centerY, 'shiny', 0);
+    this.shiny.setOrigin(0.5, 1);
+    this.shiny.setInteractive({ useHandCursor: true });
+    this.shiny.on('pointerover', () => {
+      this.input.setDefaultCursor('pointer');
+    });
+    this.shiny.on('pointerout', () => {
+      this.input.setDefaultCursor('default');
+    });
+    this.shiny.on('pointerdown', () => {
+      // Animate sparkle to counter
+      const endX = this.cameras.main.width - 60;
+      const endY = 56;
+      this.tweens.add({
+        targets: this.shiny,
+        x: endX,
+        y: endY,
+        scale: 0.3,
+        duration: 400,
+        ease: 'Cubic.easeIn',
+        onComplete: () => {
+          this.shiny.setVisible(false);
+          this.sparkleCount++;
+          this.sparkleCounterText.setText(this.sparkleCount + ' ✨');
+        }
+      });
+    });
     this.mmmSound = this.sound.add('mmm');
 
     // Back button
@@ -43,6 +99,12 @@ export default class CrowDemoScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive();
     backBtn.on('pointerdown', () => {
       this.scene.start('QuizIndex');
+    });
+    backBtn.on('pointerover', () => {
+      this.input.setDefaultCursor('pointer');
+    });
+    backBtn.on('pointerout', () => {
+      this.input.setDefaultCursor('default');
     });
 
     // Phoneme button
@@ -62,28 +124,41 @@ export default class CrowDemoScene extends Phaser.Scene {
         this.crow.setFrame(0); // idle
       }, 700);
     });
-
-    // Speech bubble demo button
-    const speechBtn = this.add.text(centerX, 130, 'Speech Bubble Demo', {
-      fontSize: '24px',
-      color: '#fff',
-      backgroundColor: '#f5a623',
-      padding: { left: 12, right: 12, top: 8, bottom: 8 },
-    }).setOrigin(0.5).setInteractive();
-    speechBtn.on('pointerdown', () => {
-      this.showSpeechBubble('Hello!');
+    phonemeBtn.on('pointerover', () => {
+      this.input.setDefaultCursor('pointer');
+    });
+    phonemeBtn.on('pointerout', () => {
+      this.input.setDefaultCursor('default');
     });
 
+    // Crow walks to bottom center, then triggers speech bubble sequence
+    this.targetX = centerX;
+    this.targetY = this.cameras.main.height * 0.5;
+    this.isWalking = true;
+    this.walkAnimTimer = 0;
+    this.walkFrame = 1;
+    this.crowWalkSpeed = 400; // px/sec, faster walk
+    const afterWalk = () => {
+      this.showSpeechBubble('Hello!', () => {
+        this.showSpeechBubble('Will you help me collect shinies?');
+      });
+    };
+    // Wait until crow arrives, then show bubble
+    const checkArrival = () => {
+      if (this.isWalking) {
+        this.time.delayedCall(50, checkArrival);
+      } else {
+        this.crow.setFrame(0);
+        this.crow.setFlipX(false);
+        afterWalk();
+      }
+    };
+    checkArrival();
+
     // Click to move crow
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (this.isSpeechActive) return; // disable control during speech
-      // Ignore clicks on buttons
-      if (pointer.y < 120) return;
-      this.targetX = pointer.x;
-      this.targetY = pointer.y;
-      this.isWalking = true;
-      this.walkAnimTimer = 0;
-      this.walkFrame = 1;
+    // Crow is locked for the entire scene
+    this.input.on('pointerdown', () => {
+      return;
     });
 
     // Clean up speech bubble if present
@@ -93,32 +168,12 @@ export default class CrowDemoScene extends Phaser.Scene {
 
   }
 
-  // Reusable speech bubble routine
-  showSpeechBubble(text: string) {
-    this.isSpeechActive = true;
-    // Move crow to bottom center
-    const targetX = this.cameras.main.centerX;
-    const targetY = this.cameras.main.height - 20;
-    this.targetX = targetX;
-    this.targetY = targetY;
-    this.isWalking = true;
-    this.walkAnimTimer = 0;
-    this.walkFrame = 1;
-
-    // Wait until crow arrives, then show bubble
-    const checkArrival = () => {
-      if (this.isWalking) {
-        this.time.delayedCall(50, checkArrival);
-      } else {
-        this.crow.setFrame(0);
-        this.crow.setFlipX(false);
-        this.createSpeechBubble(text);
-      }
-    };
-    checkArrival();
+  // Speech bubble routine with callback
+  showSpeechBubble(text: string, onComplete?: () => void) {
+    this.createSpeechBubble(text, onComplete);
   }
 
-  createSpeechBubble(text: string) {
+  createSpeechBubble(text: string, onComplete?: () => void) {
     if (this.speechBubble) this.speechBubble.destroy();
     // Bubble base
     const bubbleWidth = 260;
@@ -172,14 +227,23 @@ export default class CrowDemoScene extends Phaser.Scene {
     // Dismiss after 2 seconds
     this.time.delayedCall(2000, () => {
       if (this.speechBubble) this.speechBubble.destroy();
-      this.isSpeechActive = false;
+      if (onComplete) onComplete();
     });
   }
 
 
-  update(time: number, delta: number) {
+  update(_time: number, delta: number) {
+    // Animate shiny sprite: cycle through 4 frames quickly
+    if (this.shiny) {
+      this.shinyAnimTimer += delta;
+      if (this.shinyAnimTimer > 80) { // ~12.5 fps
+        this.shinyFrame = (this.shinyFrame + 1) % 4;
+        this.shiny.setFrame(this.shinyFrame);
+        this.shinyAnimTimer = 0;
+      }
+    }
     if (this.isWalking && this.targetX !== null && this.targetY !== null) {
-      const speed = 200 * (delta / 1000); // px/sec
+      const speed = (this.crowWalkSpeed || 200) * (delta / 1000); // px/sec
       const dx = this.targetX - this.crow.x;
       const dy = this.targetY - this.crow.y;
       // Flip sprite based on direction and compensate for left-aligned frames

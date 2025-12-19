@@ -1,7 +1,7 @@
 export const gameConfig = {
   canvas: {
-    width: 800,
-    height: 600,
+    width: 1280, // Increased for higher detail
+    height: 960,
     backgroundColor: '#ffffff',
   },
   button: {

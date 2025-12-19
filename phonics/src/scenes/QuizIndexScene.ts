@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
-import type { Quiz } from '../data/quizzes';
 import { getQuizCompletion } from '../helpers/quizProgress';
 import { soundIntroductions } from '../../../src/config/soundIntroductions';
 import type { SoundIntroduction } from '../../../src/config/soundIntroductions';
@@ -13,16 +12,27 @@ export class QuizIndexScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#f0f4fa');
     this.add.text(this.scale.width / 2, 60, 'Select a Quiz', {
-      fontSize: '40px',
-      color: '#222',
+      fontFamily: '"Segoe UI", "Arial", "Helvetica Neue", sans-serif',
+      fontSize: '44px',
+      color: '#1a1a1a',
       fontStyle: 'bold',
+      stroke: '#fff',
+      strokeThickness: 2,
+      shadow: {
+        offsetX: 0,
+        offsetY: 2,
+        color: '#bbb',
+        blur: 4,
+        fill: true
+      }
     }).setOrigin(0.5, 0);
 
     const buttonWidth = 220;
     const buttonHeight = 44;
     const spacing = 14;
     const startY = 120;
-    quizzes.forEach((quiz: Quiz, i: number) => {
+    // Stack all quizzes vertically
+    quizzes.forEach((quiz, i) => {
       const y = startY + i * (buttonHeight + spacing);
       this.createQuizButton(quiz.id, quiz.name, y, buttonWidth, buttonHeight);
     });
@@ -30,9 +40,19 @@ export class QuizIndexScene extends Phaser.Scene {
     // Sound Introductions Section
     const introSectionY = startY + quizzes.length * (buttonHeight + spacing) + 40;
     this.add.text(this.scale.width / 2, introSectionY, 'Select a letter or letter team', {
+      fontFamily: '"Segoe UI", "Arial", "Helvetica Neue", sans-serif',
       fontSize: '32px',
-      color: '#333',
+      color: '#222',
       fontStyle: 'bold',
+      stroke: '#fff',
+      strokeThickness: 1.5,
+      shadow: {
+        offsetX: 0,
+        offsetY: 2,
+        color: '#bbb',
+        blur: 3,
+        fill: true
+      }
     }).setOrigin(0.5, 0);
 
     const introButtonWidth = 140;
@@ -76,8 +96,8 @@ export class QuizIndexScene extends Phaser.Scene {
     }
   }
 
-  private createQuizButton(quizId: string, quizName: string, y: number, width: number, height: number) {
-    const x = this.scale.width / 2;
+  private createQuizButton(quizId: string, quizName: string, y: number, width: number, height: number, xOverride?: number) {
+    const x = xOverride !== undefined ? xOverride : this.scale.width / 2;
     const container = this.add.container(x, y);
     const bg = this.add.graphics();
     bg.fillStyle(0x4a90e2, 1);

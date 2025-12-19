@@ -2,10 +2,10 @@
 // Scene to introduce a letter or letter team with text (audio to be added later)
 
 import Phaser from 'phaser';
-import { SoundIntroduction } from '../config/soundIntroductions';
+import type { SoundIntroduction } from '../config/soundIntroductions';
 
 export default class SoundIntroductionScene extends Phaser.Scene {
-  private introData: SoundIntroduction;
+  private introData!: SoundIntroduction;
 
   constructor() {
     super({ key: 'SoundIntroductionScene' });
