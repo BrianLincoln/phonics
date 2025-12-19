@@ -76,17 +76,20 @@ export class QuizScene extends Phaser.Scene {
     this.answerSelected = false;
     this.cameras.main.setBackgroundColor('#fff');
     this.createBackButton();
+
     const quizTitle = this.add.text(this.scale.width / 2, 60, this.quiz.name, {
-      fontSize: '32px',
+      fontSize: '200px',
       color: '#222',
     }).setOrigin(0.5, 0);
     this.dynamicObjects.push(quizTitle);
-    const questionText = this.add.text(this.scale.width / 2, 140, question.text, {
-      fontSize: '24px',
+
+    const questionText = this.add.text(this.scale.width / 2, 300, question.text, {
+      fontSize: '60px',
       color: '#333',
       wordWrap: { width: this.scale.width * 0.8 },
     }).setOrigin(0.5, 0);
     this.dynamicObjects.push(questionText);
+
     // Play spoken prompt (if available and different from phoneme), then phoneme
     const spokenPromptFile = question.promptFile || null;
     // Remove old audio from cache
@@ -130,7 +133,7 @@ export class QuizScene extends Phaser.Scene {
     }
     const totalWidth = words.length * buttonWidth + (words.length - 1) * spacing;
     const startX = (this.scale.width - totalWidth) / 2;
-    const yPos = 260;
+    const yPos = this.scale.height - buttonHeight / 2 - 100;
     words.forEach((word, i) => {
       const xPos = startX + i * (buttonWidth + spacing) + buttonWidth / 2;
       const btn = createButton({
@@ -158,13 +161,13 @@ export class QuizScene extends Phaser.Scene {
     if (selectedBtn) {
       if (isCorrect) {
         selectedBtn.bg.clear();
-        selectedBtn.bg.fillStyle(0x27ae60, 1); // vivid success green
+        selectedBtn.bg.fillStyle(0x50bc37, 1);
         selectedBtn.bg.fillRoundedRect(-110, -30, 220, 60, 8);
         selectedBtn.bg.setAlpha(1);
         if (selectedBtn.animate) selectedBtn.animate('bounce');
       } else {
         selectedBtn.bg.clear();
-        selectedBtn.bg.fillStyle(0xe74c3c, 1); // vivid fail red
+        selectedBtn.bg.fillStyle(0xbc3737, 1);
         selectedBtn.bg.fillRoundedRect(-110, -30, 220, 60, 8);
         selectedBtn.bg.setAlpha(1);
         if (selectedBtn.animate) selectedBtn.animate('shake');
