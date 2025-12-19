@@ -58,7 +58,8 @@ export class QuizScene extends Phaser.Scene {
       height: 80,
       label: '⬅ Back',
       onClick: () => {
-        this.scene.start('QuizIndex');
+        if (this.sound) this.sound.stopAll();
+        this.scene.start('Menu');
       },
     });
     this.dynamicObjects.push(btn.bg, btn.text, btn.hit);
@@ -191,7 +192,12 @@ export class QuizScene extends Phaser.Scene {
       this.showQuestion();
     } else {
       setQuizCompletion(this.quiz.id, true);
-      this.scene.start('QuizIndex');
+      if (this.sound) this.sound.stopAll();
+      this.scene.start('Menu');
     }
+  }
+
+  shutdown() {
+    if (this.sound) this.sound.stopAll();
   }
 }

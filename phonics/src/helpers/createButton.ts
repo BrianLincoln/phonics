@@ -6,6 +6,10 @@ type ButtonOpts = {
   height: number
   label: string
   onClick: () => void
+  fontSize?: number
+  bgColor?: number
+  borderColor?: number
+  textColor?: string
 }
 
 export function createButton({
@@ -15,17 +19,24 @@ export function createButton({
   width,
   height,
   label,
-  onClick
+  onClick,
+  fontSize,
+  bgColor = 0x4a90e2,
+  borderColor = 0x2c5aa0,
+  textColor = '#fff'
 }: ButtonOpts) {
-  // VISUAL: match QuizIndexScene button color and outline
+  // VISUAL: use provided or default colors
   const bg = scene.add.graphics();
-  bg.fillStyle(0x4a90e2, 1); // blue fill
-  bg.lineStyle(2, 0x2c5aa0, 1); // blue outline
+  bg.fillStyle(bgColor, 1);
+  bg.lineStyle(2, borderColor, 1);
   bg.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
   bg.strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
 
   // TEXT: center relative to button
-  const text = scene.add.text(0, 0, label, { color: '#fff', fontSize: '32px' }).setOrigin(0.5);
+  const text = scene.add.text(0, 0, label, {
+    color: textColor,
+    fontSize: fontSize ? `${fontSize}px` : '32px',
+  }).setOrigin(0.5);
 
   // CONTAINER: holds bg and text, centered at (x, y)
   const container = scene.add.container(x, y, [bg, text]);
@@ -36,12 +47,15 @@ export function createButton({
   hit.setInteractive();
   container.add(hit);
 
-  // DEBUG: optional, shows hit area
-  // scene.input.enableDebug(hit, 0xff0000)
-
   // HOVER / CLICK FEEDBACK
-  hit.on('pointerover', () => bg.setAlpha(0.85));
-  hit.on('pointerout', () => bg.setAlpha(1));
+  hit.on('pointerover', () => {
+    bg.setAlpha(0.85);
+    scene.input.setDefaultCursor('pointer');
+  });
+  hit.on('pointerout', () => {
+    bg.setAlpha(1);
+    scene.input.setDefaultCursor('default');
+  });
   hit.on('pointerdown', () => container.setScale(0.95));
   hit.on('pointerup', () => {
     container.setScale(1);

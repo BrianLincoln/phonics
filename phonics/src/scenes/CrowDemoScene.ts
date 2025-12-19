@@ -1,4 +1,3 @@
-
 import Phaser from 'phaser';
 import { createButton } from '../helpers/createButton';
 import { SpeechBubble } from '../helpers/SpeechBubble';
@@ -109,7 +108,8 @@ export default class CrowDemoScene extends Phaser.Scene {
       height: 48,
       label: 'Back',
       onClick: () => {
-        this.scene.start('QuizIndex');
+        if (this.sound) this.sound.stopAll();
+        this.scene.start('Menu');
       }
     });
 
@@ -242,5 +242,9 @@ export default class CrowDemoScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  shutdown() {
+    if (this.sound) this.sound.stopAll();
   }
 }

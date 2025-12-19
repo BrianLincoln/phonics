@@ -39,7 +39,12 @@ export default class SoundIntroductionScene extends Phaser.Scene {
       padding: { left: 16, right: 16, top: 8, bottom: 8 },
     }).setOrigin(0.5).setInteractive();
     backBtn.on('pointerdown', () => {
-      this.scene.start('QuizIndex');
+      if (this.sound) this.sound.stopAll();
+      this.scene.start('Menu');
     });
+  }
+
+  shutdown() {
+    if (this.sound) this.sound.stopAll();
   }
 }
