@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { createButton } from '../helpers/createButton';
 import { quizzes } from '../data/quizzes';
-import { getQuizCompletion } from '../helpers/quizProgress';
+
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -25,7 +25,7 @@ export class MenuScene extends Phaser.Scene {
       crowBtn.setDepth(10);
     });
     if (!this.textures.exists('crow')) {
-      this.load.spritesheet('crow', 'public/crow_sprite.png', { frameWidth: 200, frameHeight: 200 });
+      this.load.spritesheet('crow', '/crow_sprite.png', { frameWidth: 200, frameHeight: 200 });
       this.load.start();
     } else {
       // If already loaded, add immediately
@@ -72,12 +72,8 @@ export class MenuScene extends Phaser.Scene {
     playHit.on('pointerout', () => playBtn.setAlpha(1));
     playHit.on('pointerdown', () => {
       if (this.sound) this.sound.stopAll();
-      // Find first incomplete quiz, or pick one at random if all are complete
-      const incomplete = quizzes.find(q => !getQuizCompletion(q.id));
-      let targetQuiz = incomplete;
-      if (!targetQuiz) {
-        targetQuiz = quizzes[Math.floor(Math.random() * quizzes.length)];
-      }
+      // Pick a quiz at random
+      const targetQuiz = quizzes[Math.floor(Math.random() * quizzes.length)];
       if (targetQuiz) {
         this.scene.start('Quiz', { quizId: targetQuiz.id });
       }
@@ -99,6 +95,23 @@ export class MenuScene extends Phaser.Scene {
       onClick: () => this.scene.start('QuizIndex'),
     });
     this.add.existing(quizIndexBtn.container);
+
+    // Phonics Progress button using createButton
+    const progressBtnY = quizIndexBtnY - 80;
+    const progressBtn = createButton({
+      scene: this,
+      x: this.scale.width / 2,
+      y: progressBtnY,
+      width: 260,
+      height: 64,
+      label: 'Phonics Progress',
+      fontSize: 22,
+      bgColor: 0xf4f4f4,
+      borderColor: 0xd0d0d0,
+      textColor: '#666',
+      onClick: () => this.scene.start('PhonicsProgress'),
+    });
+    this.add.existing(progressBtn.container);
   }
 
   shutdown() {

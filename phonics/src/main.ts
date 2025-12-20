@@ -6,6 +6,7 @@ import { QuizIndexScene } from './scenes/QuizIndexScene';
 import { QuizScene } from './scenes/QuizScene';
 import SoundIntroductionScene from './scenes/SoundIntroductionScene';
 import CrowDemoScene from './scenes/CrowDemoScene';
+import { PhonicsProgressScene } from './scenes/PhonicsProgressScene';
 
 // Entry point: use QuizIndexScene and QuizScene
 new Phaser.Game({
@@ -17,5 +18,5 @@ new Phaser.Game({
     height: gameConfig.canvas.height
   },
   backgroundColor: gameConfig.canvas.backgroundColor,
-  scene: [MenuScene, QuizIndexScene, QuizScene, SoundIntroductionScene, CrowDemoScene],
+  scene: [MenuScene, QuizIndexScene, QuizScene, SoundIntroductionScene, CrowDemoScene, PhonicsProgressScene],
 });

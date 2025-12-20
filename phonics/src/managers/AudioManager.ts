@@ -15,11 +15,11 @@ export class AudioManager {
     });
   }
 
-  playSuccess(): void {
-    this.scene.sound.play('success');
+  playCorrect(): void {
+    this.scene.sound.play('correct');
   }
 
-  playFailure(): void {
-    this.scene.sound.play('failure');
+  playIncorrect(): void {
+    this.scene.sound.play('incorrect');
   }
 }

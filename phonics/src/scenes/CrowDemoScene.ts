@@ -27,15 +27,15 @@ export default class CrowDemoScene extends Phaser.Scene {
 
 
   preload() {
-    this.load.spritesheet('crow', 'public/crow_sprite.png', {
+    this.load.spritesheet('crow', '/crow_sprite.png', {
       frameWidth: 200,
       frameHeight: 200,
     });
-    this.load.spritesheet('shiny', 'public/shiny_sprite.png', {
+    this.load.spritesheet('shiny', '/shiny_sprite.png', {
       frameWidth: 50,
       frameHeight: 50,
     });
-    this.load.audio('mmm', 'public/audio/sounds/mmm.wav');
+    this.load.audio('mmm', '/audio/sounds/mmm.wav');
   }
 
   create() {

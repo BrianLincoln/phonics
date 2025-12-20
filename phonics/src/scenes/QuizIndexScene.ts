@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
-import { getQuizCompletion } from '../helpers/quizProgress';
+
 import { soundIntroductions } from '../config/soundIntroductions';
 import type { SoundIntroduction } from '../config/soundIntroductions';
 import { createButton } from '../helpers/createButton';
@@ -67,14 +67,7 @@ export class QuizIndexScene extends Phaser.Scene {
       });
       this.add.existing(btn.container);
       // Completion checkmark (small, top right, overflow)
-      if (getQuizCompletion(quiz.id)) {
-        const check = this.add.text(x + buttonSize / 2, y - buttonSize / 2 + 12, '✔', {
-          fontSize: '60px',
-          color: '#27ae60',
-          fontStyle: '',
-        }).setOrigin(0.5, 0.5);
-        check.setDepth(2);
-      }
+
     });
 
     // Sound Introductions Section - match quiz grid style

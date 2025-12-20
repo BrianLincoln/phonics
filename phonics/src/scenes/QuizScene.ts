@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { quizzes, type Quiz } from '../data/quizzes';
 
-import { setQuizCompletion } from '../helpers/quizProgress';
 import { createButton } from '../helpers/createButton';
+import { updatePhonicsUnitProgress } from '../helpers/quizProgress';
 
 interface SceneData {
   quizId: string;
@@ -28,8 +28,9 @@ export class QuizScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio('success', '/audio/system/Success.wav');
-    this.load.audio('failure', '/audio/system/Failure.wav');
+    this.load.audio('correct', '/audio/system/correct.wav');
+    this.load.audio('incorrect', '/audio/system/incorrect.wav');
+    this.load.audio('success', '/audio/system/success.wav');
   }
 
   create() {
@@ -147,7 +148,7 @@ export class QuizScene extends Phaser.Scene {
     });
   }
 
-  private onAnswerComplete(isCorrect: boolean) {
+  private onAnswerComplete() {
     // Feedback animation duration (sync with bounce/shake)
     const feedbackDuration = 300;
     const postFeedbackDelay = 700;
@@ -167,8 +168,8 @@ export class QuizScene extends Phaser.Scene {
           duration: this.fadeDuration,
         });
       });
-      // After fade out, pause, then next question
-      this.time.delayedCall(this.fadeDuration + 1500, () => this.nextQuestion(true));
+      // After fade out, go to next question immediately (no extra delay)
+      this.nextQuestion(true);
     });
   }
 
@@ -176,6 +177,10 @@ export class QuizScene extends Phaser.Scene {
     if (this.answerSelected) return;
     this.answerSelected = true;
     const isCorrect = selected === correct;
+    // Update phonics progress for this quiz's unit
+    if (this.quiz && this.quiz.unit) {
+      updatePhonicsUnitProgress(this.quiz.unit, isCorrect);
+    }
     // Disable all button input
     this.wordButtons.forEach(btn => btn.hit.disableInteractive());
     // Animate feedback on the selected button
@@ -197,10 +202,52 @@ export class QuizScene extends Phaser.Scene {
     }
     // Play feedback audio
     if (isCorrect) {
-      this.sound.play('success');
-      this.onAnswerComplete(true);
+      this.sound.play('correct');
+      // If this is the last question, play 'success' after 'correct'
+      if (this.currentQuestionIndex === this.quiz.questions.length - 1) {
+        // Wait for 'correct' sound to finish, then play 'success' and show animation
+        const correctSound = this.sound.get('correct');
+        const delay = correctSound && correctSound.duration ? correctSound.duration * 1000 : 700;
+        this.time.delayedCall(delay, () => {
+          this.sound.play('success');
+          // Remove all dynamic objects (buttons, text, etc.)
+          this.dynamicObjects.forEach(obj => obj.destroy());
+          this.dynamicObjects = [];
+          // Show success animation (🎉)
+          const emoji = this.add.text(this.scale.width / 2, this.scale.height / 2, '🎉', {
+            fontSize: '180px',
+            fontFamily: 'Arial',
+            color: '#222',
+          }).setOrigin(0.5);
+          emoji.alpha = 0;
+          // Fade in quickly
+          this.tweens.add({
+            targets: emoji,
+            alpha: 1,
+            duration: 250,
+            onComplete: () => {
+              // Fade out quickly after a short pause (match success sound duration or 700ms min)
+              const successSound = this.sound.get('success');
+              const outDelay = successSound && successSound.duration ? Math.max(successSound.duration * 1000, 700) : 700;
+              this.time.delayedCall(outDelay, () => {
+                this.tweens.add({
+                  targets: emoji,
+                  alpha: 0,
+                  duration: 400,
+                  onComplete: () => {
+                    emoji.destroy();
+                    this.onAnswerComplete();
+                  }
+                });
+              });
+            }
+          });
+        });
+      } else {
+        this.onAnswerComplete();
+      }
     } else {
-      this.sound.play('failure');
+      this.sound.play('incorrect');
       // Add a short delay before replaying the prompt after incorrect answer
       this.time.delayedCall(700, () => this.showQuestion(500));
     }
@@ -224,7 +271,6 @@ export class QuizScene extends Phaser.Scene {
         });
       }
     } else {
-      setQuizCompletion(this.quiz.id, true);
       if (this.sound) this.sound.stopAll();
       this.scene.start('Menu');
     }
