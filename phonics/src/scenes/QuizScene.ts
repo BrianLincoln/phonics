@@ -204,7 +204,7 @@ export class QuizScene extends Phaser.Scene {
     if (isCorrect) {
       this.sound.play('correct');
       // If this is the last question, play 'success' after 'correct'
-      if (this.currentQuestionIndex === this.quiz.questions.length - 1) {
+      if (this.quiz && this.currentQuestionIndex === this.quiz.questions.length - 1) {
         // Wait for 'correct' sound to finish, then play 'success' and show animation
         const correctSound = this.sound.get('correct');
         const delay = correctSound && correctSound.duration ? correctSound.duration * 1000 : 700;

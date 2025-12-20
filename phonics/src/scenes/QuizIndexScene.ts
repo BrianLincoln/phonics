@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
 
 import { soundIntroductions } from '../config/soundIntroductions';
-import type { SoundIntroduction } from '../config/soundIntroductions';
 import { createButton } from '../helpers/createButton';
 
 export class QuizIndexScene extends Phaser.Scene {

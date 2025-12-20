@@ -7,7 +7,7 @@ export class AudioManager {
     this.scene = scene;
   }
 
-  playPromptSequence(phonemeFile: string): void {
+  playPromptSequence(): void {
     const promptSound = this.scene.sound.add('prompt');
     promptSound.play();
     promptSound.once('complete', () => {
