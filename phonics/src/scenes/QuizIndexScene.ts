@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { quizzes } from '../data/quizzes';
 
-import { soundIntroductions } from '../config/soundIntroductions';
 import { createButton } from '../helpers/createButton';
 
 export class QuizIndexScene extends Phaser.Scene {
@@ -79,37 +78,6 @@ export class QuizIndexScene extends Phaser.Scene {
       stroke: '#fff',
       strokeThickness: 2,
     }).setOrigin(0.5, 0);
-
-    // Grid for sound introduction buttons
-    const introGridCols = 10;
-    const introButtonSize = 80;
-    const introGridSpacing = 24;
-    const introGridStartY = introSectionY + 120;
-    const introGridStartX = (this.scale.width - (introGridCols * introButtonSize + (introGridCols - 1) * introGridSpacing)) / 2 + introButtonSize / 2;
-    soundIntroductions.forEach((intro, i) => {
-      const col = i % introGridCols;
-      const row = Math.floor(i / introGridCols);
-      const x = introGridStartX + col * (introButtonSize + introGridSpacing);
-      const y = introGridStartY + row * (introButtonSize + introGridSpacing);
-      const btn = createButton({
-        scene: this,
-        x,
-        y,
-        width: introButtonSize,
-        height: introButtonSize,
-        label: intro.displayName,
-        fontSize: 18,
-        bgColor: 0xeeeeee,
-        borderColor: 0xcccccc,
-        textColor: '#444',
-        onClick: () => {
-          if (this.sound) this.sound.stopAll();
-          this.scene.start('SoundIntroductionScene', { intro });
-        },
-      });
-      this.add.existing(btn.container);
-    });
-
   }
 
   shutdown() {

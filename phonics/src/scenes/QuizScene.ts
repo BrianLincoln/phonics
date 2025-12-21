@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { quizzes, type Quiz } from '../data/quizzes';
-
 import { createButton } from '../helpers/createButton';
 import { updatePhonicsUnitProgress } from '../helpers/quizProgress';
+import { phonicsUnits } from '../data/phonicsUnits';
 
 interface SceneData {
   quizId: string;
@@ -17,6 +17,7 @@ export class QuizScene extends Phaser.Scene {
   private questionTextObj?: Phaser.GameObjects.Text; // Track question text directly
   private fadeDuration: number = 250;
   private fadeDelay: number = 50;
+  private introPlayed: boolean = false;
 
   constructor() {
     super('Quiz');
@@ -25,6 +26,7 @@ export class QuizScene extends Phaser.Scene {
   init(data: SceneData) {
     this.quiz = quizzes.find(q => q.id === data.quizId);
     this.currentQuestionIndex = 0;
+    this.introShown = false;
   }
 
   preload() {
@@ -36,6 +38,70 @@ export class QuizScene extends Phaser.Scene {
   create() {
     if (!this.quiz) {
       this.scene.start('QuizIndex');
+      return;
+    }
+    // Play letter introduction audio sequence if flag is set and not already played
+    if (this.quiz.showLetterIntro && !this.introPlayed) {
+      this.introPlayed = true;
+      // Show quiz name and back button while intro audio plays
+      this.cameras.main.setBackgroundColor('#fff');
+      const quizTitle = this.add.text(this.scale.width / 2, 200, this.quiz.name, {
+        fontSize: '200px',
+        color: '#222',
+      }).setOrigin(0.5, 0);
+      const backBtn = createButton({
+        scene: this,
+        x: 100,
+        y: 80,
+        width: 180,
+        height: 80,
+        label: '⬅ Back',
+        onClick: () => {
+          if (this.sound) this.sound.stopAll();
+          this.scene.start('Menu');
+        },
+      });
+      this.add.existing(backBtn.container);
+      // Play intro audio if available for this unit
+      const { unit } = this.quiz;
+      if (unit) {
+        const unitObj = phonicsUnits.find(u => u.id === unit);
+        if (unitObj && unitObj.nameAudio && unitObj.soundAudio) {
+          this.load.audio('intro1', '/audio/prompts/this-is-the-letter.wav');
+          this.load.audio('intro2', unitObj.nameAudio);
+          this.load.audio('intro3', '/audio/prompts/it-makes-the-sound.wav');
+          this.load.audio('intro4', unitObj.soundAudio);
+          this.load.once('complete', () => {
+            const playNext = (key: string, next?: () => void) => {
+              const sound = this.sound.add(key);
+              sound.play();
+              sound.once('complete', () => {
+                sound.destroy();
+                if (next) next();
+              });
+            };
+            playNext('intro1', () => {
+              playNext('intro2', () => {
+                playNext('intro3', () => {
+                  playNext('intro4', () => {
+                    this.time.delayedCall(1000, () => {
+                      quizTitle.destroy();
+                      backBtn.container.destroy();
+                      this.showQuestion();
+                    });
+                  });
+                });
+              });
+            });
+          });
+          this.load.start();
+          return;
+        }
+      }
+      // If no intro audio, just show question
+      quizTitle.destroy();
+      backBtn.container.destroy();
+      this.showQuestion();
       return;
     }
     this.showQuestion();

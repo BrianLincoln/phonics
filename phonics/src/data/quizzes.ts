@@ -33,25 +33,30 @@ export interface Quiz {
   name: string;
   unit?: string;
   questions: QuizQuestion[];
+  showLetterIntro?: boolean;
 }
 
 export const quizzes: Quiz[] = [
-  // {
-  //   id: 'quiz-m',
-  //   name: 'M m',
-  //   unit: 'm',
-  //   questions: [
-  //     // ...existing questions for 'm'
-  //     { id: 'm1', text: 'Which word starts with the "m" sound?', words: ['cat', 'map', 'sun'], correctAnswer: 'map', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-  //     { id: 'm8', text: 'Which letter makes the "m" sound?', words: ['s', 'm', 'd'], correctAnswer: 'm', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-  //   ],
-  // },
+  {
+    id: 'quiz-c',
+    name: 'Cc',
+    unit: 'c',
+    showLetterIntro: true,
+    questions: [
+      { id: 'c1', text: 'Which word starts with the "c" sound?', words: ['cat', 'mat', 'sat'], correctAnswer: 'cat', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'c2', text: 'Which word starts with the "c" sound?', words: ['cup', 'mop', 'sun'], correctAnswer: 'cup', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'c3', text: 'Which word starts with the "c" sound?', words: ['cap', 'map', 'tap'], correctAnswer: 'cap', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'c4', text: 'Which letter makes the "c" sound?', words: ['c', 'm', 'a'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'c5', text: 'Which letter makes the "c" sound?', words: ['a', 'c', 's'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'c6', text: 'Which letter makes the "c" sound?', words: ['m', 'c', 'd'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
+    ],
+  },
   {
     id: 'quiz-t',
     name: 'T t',
     unit: 't',
+    showLetterIntro: true,
     questions: [
-      // ...existing questions for 't'
       { id: 't1', text: 'Which word starts with the "t" sound?', words: ['top', 'hop', 'mop'], correctAnswer: 'top', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 't2', text: 'Which word starts with the "t" sound?', words: ['tap', 'map', 'nap'], correctAnswer: 'tap', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 't3', text: 'Which word starts with the "t" sound?', words: ['ten', 'men', 'hen'], correctAnswer: 'ten', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -67,33 +72,14 @@ export const quizzes: Quiz[] = [
     name: 'M m',
     unit: 'm',
     questions: [
-      // 5 word questions
       { id: 'm1', text: 'Which word starts with the "m" sound?', words: ['cat', 'map', 'sun'], correctAnswer: 'map', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'm2', text: 'Which word starts with the "m" sound?', words: ['mud', 'dog', 'sun'], correctAnswer: 'mud', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'm3', text: 'Which word starts with the "m" sound?', words: ['milk', 'hat', 'pig'], correctAnswer: 'milk', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'm4', text: 'Which word starts with the "m" sound?', words: ['man', 'dog', 'sun'], correctAnswer: 'man', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'm5', text: 'Which word starts with the "m" sound?', words: ['mat', 'cat', 'bat'], correctAnswer: 'mat', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      // 3 letter questions
       { id: 'm6', text: 'Which letter makes the "m" sound?', words: ['c', 's', 'm'], correctAnswer: 'm', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'm7', text: 'Which letter makes the "m" sound?', words: ['m', 't', 'a'], correctAnswer: 'm', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'm8', text: 'Which letter makes the "m" sound?', words: ['s', 'm', 'd'], correctAnswer: 'm', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-    ],
-  },
-  {
-    id: 'quiz-t',
-    name: 'T t',
-    unit: 't',
-    questions: [
-      // 5 word questions
-      { id: 't1', text: 'Which word starts with the "t" sound?', words: ['top', 'hop', 'mop'], correctAnswer: 'top', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't2', text: 'Which word starts with the "t" sound?', words: ['tap', 'map', 'nap'], correctAnswer: 'tap', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't3', text: 'Which word starts with the "t" sound?', words: ['ten', 'men', 'hen'], correctAnswer: 'ten', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't4', text: 'Which word starts with the "t" sound?', words: ['tin', 'win', 'pin'], correctAnswer: 'tin', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't5', text: 'Which word starts with the "t" sound?', words: ['tag', 'bag', 'rag'], correctAnswer: 'tag', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      // 3 letter questions
-      { id: 't6', text: 'Which letter makes the "t" sound?', words: ['t', 'm', 'a'], correctAnswer: 't', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 't7', text: 'Which letter makes the "t" sound?', words: ['a', 't', 's'], correctAnswer: 't', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 't8', text: 'Which letter makes the "t" sound?', words: ['m', 't', 'd'], correctAnswer: 't', phonemeFile: '/audio/sounds/ttt.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
   },
   {

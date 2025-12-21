@@ -4,7 +4,6 @@ import { gameConfig } from './config/gameConfig';
 import { MenuScene } from './scenes/MenuScene';
 import { QuizIndexScene } from './scenes/QuizIndexScene';
 import { QuizScene } from './scenes/QuizScene';
-import SoundIntroductionScene from './scenes/SoundIntroductionScene';
 import CrowDemoScene from './scenes/CrowDemoScene';
 import { PhonicsProgressScene } from './scenes/PhonicsProgressScene';
 
@@ -18,5 +17,5 @@ new Phaser.Game({
     height: gameConfig.canvas.height
   },
   backgroundColor: gameConfig.canvas.backgroundColor,
-  scene: [MenuScene, QuizIndexScene, QuizScene, SoundIntroductionScene, CrowDemoScene, PhonicsProgressScene],
+  scene: [MenuScene, QuizIndexScene, QuizScene, CrowDemoScene, PhonicsProgressScene],
 });
