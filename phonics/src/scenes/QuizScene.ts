@@ -62,10 +62,21 @@ export class QuizScene extends Phaser.Scene {
       return;
     }
 
-    // Add the crow to the scene (bottom right)
-    this.crow = new Crow({ scene: this, x: this.scale.width - 180, y: this.scale.height - 40 });
+    // Add the crow to the scene (top right, half size)
+    const crowSize = 100;
+    // Lower the crow: top margin 64px for more space
+    this.crow = new Crow({ scene: this, x: this.scale.width - crowSize / 2 - 24, y: crowSize / 2 + 64 });
+    this.crow.setDisplaySize(crowSize, crowSize);
     this.crow.setIdle();
     // Play letter introduction audio sequence if flag is set and not already played
+    // Reposition crow on resize
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      if (this.crow) {
+        const crowSize = 100;
+        this.crow.x = gameSize.width - crowSize / 2 - 24;
+        this.crow.y = crowSize / 2 + 64;
+      }
+    });
     if (this.quiz.showLetterIntro && !this.introPlayed) {
       this.introPlayed = true;
       // Show quiz unit name and back button while intro audio plays
@@ -79,8 +90,6 @@ export class QuizScene extends Phaser.Scene {
         scene: this,
         x: 100,
         y: 80,
-        width: 180,
-        height: 80,
         label: '⬅ Back',
         onClick: () => {
           if (this.sound) this.sound.stopAll();
@@ -142,8 +151,6 @@ export class QuizScene extends Phaser.Scene {
       scene: this,
       x: 100,
       y: 80,
-      width: 180,
-      height: 80,
       label: '⬅ Back',
       onClick: () => {
         if (this.sound) this.sound.stopAll();
@@ -168,7 +175,14 @@ export class QuizScene extends Phaser.Scene {
 
     // Only show quiz title if hideLetter is not true for this question
     if (!question.hideLetter) {
-      let unitName = this.quiz.unit ? (phonicsUnits.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit) : this.quiz.id;
+      let unitName: string | undefined;
+      if (this.quiz.unit) {
+        unitName = phonicsUnits.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit;
+      } else {
+        // Try to infer from first question's correct answer if possible
+        const firstWord = question.words.find(w => w.length === 1 && /[a-zA-Z]/.test(w));
+        unitName = firstWord || this.quiz.id;
+      }
       const quizTitle = this.add.text(this.scale.width / 2, 200, unitName, {
         fontSize: '200px',
         color: '#222',
@@ -225,30 +239,51 @@ export class QuizScene extends Phaser.Scene {
   private createWordButtons(question: { id: string; words: string[]; correctAnswer: string; phonemeFile: string; }) {
     const buttonWidth = 220;
     const buttonHeight = 60;
-    const spacing = 30;
-    // Shuffle words array for random order
+    const gap = 4;
     const words = [...question.words];
+    // Shuffle words
     for (let i = words.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [words[i], words[j]] = [words[j], words[i]];
     }
-    const totalWidth = words.length * buttonWidth + (words.length - 1) * spacing;
-    const startX = (this.scale.width - totalWidth) / 2;
-    const yPos = this.scale.height - buttonHeight / 2 - 100;
-    words.forEach((word, i) => {
-      const xPos = startX + i * (buttonWidth + spacing) + buttonWidth / 2;
-      const btn = createButton({
-        scene: this,
-        x: xPos,
-        y: yPos,
-        width: buttonWidth,
-        height: buttonHeight,
-        label: word,
-        onClick: () => this.handleAnswer(word, question.correctAnswer),
+    const isPortrait = this.scale.height > this.scale.width;
+    if (isPortrait) {
+      // Stack vertically, centered (mobile/portrait)
+      const totalHeight = words.length * buttonHeight + (words.length - 1) * gap;
+      const baseY = Math.min(this.scale.height * 0.7 - totalHeight / 2, this.scale.height - totalHeight - 60);
+      words.forEach((word, i) => {
+        const x = this.scale.width / 2;
+        const y = baseY + i * (buttonHeight + gap) + buttonHeight / 2;
+        const btn = createButton({
+          scene: this,
+          x,
+          y,
+          label: word,
+          onClick: () => this.handleAnswer(word, question.correctAnswer),
+        });
+        btn.container.setScale(1); // Always reset scale
+        this.wordButtons.push(btn);
+        this.dynamicObjects.push(btn.bg, btn.text, btn.hit);
       });
-      this.wordButtons.push(btn);
-      this.dynamicObjects.push(btn.bg, btn.text, btn.hit);
-    });
+    } else {
+      // Side by side, centered (desktop/landscape)
+      const totalWidth = words.length * buttonWidth + (words.length - 1) * gap;
+      const baseX = (this.scale.width - totalWidth) / 2;
+      const y = Math.min(this.scale.height * 0.7, this.scale.height - buttonHeight - 60);
+      words.forEach((word, i) => {
+        const x = baseX + i * (buttonWidth + gap) + buttonWidth / 2;
+        const btn = createButton({
+          scene: this,
+          x,
+          y,
+          label: word,
+          onClick: () => this.handleAnswer(word, question.correctAnswer),
+        });
+        btn.container.setScale(1); // Always reset scale
+        this.wordButtons.push(btn);
+        this.dynamicObjects.push(btn.bg, btn.text, btn.hit);
+      });
+    }
   }
 
   private onAnswerComplete() {
@@ -283,6 +318,7 @@ export class QuizScene extends Phaser.Scene {
     // Animate feedback on the selected button
     const selectedBtn = this.wordButtons.find(btn => btn.text.text === selected);
     if (selectedBtn) {
+      selectedBtn.container.setScale(1); // Prevent giant scaling
       if (isCorrect) {
         selectedBtn.bg.clear();
         selectedBtn.bg.fillStyle(0x50bc37, 1);

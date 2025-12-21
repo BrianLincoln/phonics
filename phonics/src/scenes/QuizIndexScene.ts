@@ -1,3 +1,4 @@
+
 import Phaser from 'phaser';
 
 import { quizzes } from '../data/quizzes';
@@ -6,6 +7,13 @@ import { phonicsUnits } from '../data/phonicsUnits';
 import { createButton } from '../helpers/createButton';
 
 export class QuizIndexScene extends Phaser.Scene {
+  handleResize() {
+    // Example: reposition title text if it exists
+    const title = this.children.getByName && this.children.getByName('quizTitle');
+    if (title && 'x' in title) {
+      (title as Phaser.GameObjects.Text).x = this.scale.width / 2;
+    }
+  }
   constructor() {
     super('QuizIndex');
   }
@@ -36,7 +44,7 @@ export class QuizIndexScene extends Phaser.Scene {
       fontStyle: 'bold',
       stroke: '#fff',
       strokeThickness: 2,
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setName('quizTitle');
 
     // Grid layout for quiz buttons
     const gridCols = 10;

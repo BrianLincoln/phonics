@@ -1,3 +1,4 @@
+import './style.css';
 import Phaser from 'phaser';
 import { gameConfig } from './config/gameConfig';
 // import { getAudioContext } from './helpers/audio';
@@ -11,10 +12,10 @@ import { PhonicsProgressScene } from './scenes/PhonicsProgressScene';
 new Phaser.Game({
   type: Phaser.AUTO,
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: gameConfig.canvas.width,
-    height: gameConfig.canvas.height
+    width: window.innerWidth,
+    height: window.innerHeight
   },
   backgroundColor: gameConfig.canvas.backgroundColor,
   scene: [MenuScene, QuizIndexScene, QuizScene, CrowDemoScene, PhonicsProgressScene],
