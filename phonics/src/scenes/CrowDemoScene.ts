@@ -27,6 +27,10 @@ export default class CrowDemoScene extends Phaser.Scene {
 
 
   preload() {
+    this.load.spritesheet('tree', '/tree_sprite.png', {
+      frameWidth: 500,
+      frameHeight: 1000,
+    });
     this.load.spritesheet('crow', '/crow_sprite.png', {
       frameWidth: 200,
       frameHeight: 200,
@@ -39,6 +43,19 @@ export default class CrowDemoScene extends Phaser.Scene {
   }
 
   create() {
+    // Add and animate tree sprite (tree grows) anchored at bottom center
+    const tree = this.add.sprite(this.cameras.main.centerX, this.cameras.main.height, 'tree', 0).setOrigin(0.5, 1);
+    tree.setScale(0.5); // Adjust scale as needed for your scene
+    tree.anims.create({
+      key: 'grow',
+      frames: this.anims.generateFrameNumbers('tree', { start: 0, end: 3 }),
+      frameRate: 2,
+      repeat: 0
+    });
+    tree.play('grow');
+    tree.on('animationcomplete', () => {
+      tree.setFrame(3); // Freeze on last frame
+    });
     this.cameras.main.setBackgroundColor('#e8f4fa');
     const centerX = this.cameras.main.centerX;
     const centerY = this.cameras.main.centerY;

@@ -36,16 +36,16 @@ export interface Quiz {
 }
 
 export const quizzes: Quiz[] = [
-  {
-    id: 'quiz-m',
-    name: 'M m',
-    unit: 'm',
-    questions: [
-      // ...existing questions for 'm'
-      { id: 'm1', text: 'Which word starts with the "m" sound?', words: ['cat', 'map', 'sun'], correctAnswer: 'map', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'm8', text: 'Which letter makes the "m" sound?', words: ['s', 'm', 'd'], correctAnswer: 'm', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-    ],
-  },
+  // {
+  //   id: 'quiz-m',
+  //   name: 'M m',
+  //   unit: 'm',
+  //   questions: [
+  //     // ...existing questions for 'm'
+  //     { id: 'm1', text: 'Which word starts with the "m" sound?', words: ['cat', 'map', 'sun'], correctAnswer: 'map', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
+  //     { id: 'm8', text: 'Which letter makes the "m" sound?', words: ['s', 'm', 'd'], correctAnswer: 'm', phonemeFile: '/audio/sounds/mmm.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
+  //   ],
+  // },
   {
     id: 'quiz-t',
     name: 'T t',

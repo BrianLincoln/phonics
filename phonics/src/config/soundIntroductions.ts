@@ -33,4 +33,9 @@ export const soundIntroductions: SoundIntroduction[] = [
     displayName: 'th',
     description: 'This is the letter team th. It makes the sound thhh.',
   },
+  {
+    id: 'c',
+    displayName: 'c',
+    description: 'This is the letter c. It makes the sound kuh.',
+  }
 ];
