@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { Crow } from '../entities/Crow';
 import { quizzes, type Quiz } from '../data/quizzes';
 import { createButton } from '../helpers/createButton';
 import { updatePhonicsUnitProgress } from '../helpers/quizProgress';
@@ -9,24 +10,44 @@ interface SceneData {
 }
 
 export class QuizScene extends Phaser.Scene {
+  private crow!: Crow;
+  private crowTalkTimer?: Phaser.Time.TimerEvent;
   private quiz?: Quiz;
   private currentQuestionIndex: number = 0;
   private wordButtons: ReturnType<typeof createButton>[] = [];
   private dynamicObjects: Phaser.GameObjects.GameObject[] = [];
   private answerSelected: boolean = false;
-  private questionTextObj?: Phaser.GameObjects.Text; // Track question text directly
+  // Removed questionTextObj: no question text shown
   private fadeDuration: number = 250;
-  private fadeDelay: number = 50;
   private introPlayed: boolean = false;
 
   constructor() {
     super('Quiz');
   }
 
+  private startCrowTalking() {
+    if (this.crowTalkTimer) this.crowTalkTimer.remove(false);
+    let frame = 4;
+    this.crowTalkTimer = this.time.addEvent({
+      delay: 150, // slower talking
+      loop: true,
+      callback: () => {
+        // Only use frames 4 (closed) and 4 (open) if only 5 frames (0-4)
+        frame = frame === 4 ? 0 : 4;
+        this.crow.setFrame(frame);
+      }
+    });
+  }
+
+  private stopCrowTalking() {
+    if (this.crowTalkTimer) this.crowTalkTimer.remove(false);
+    this.crow.setIdle();
+  }
+
   init(data: SceneData) {
     this.quiz = quizzes.find(q => q.id === data.quizId);
     this.currentQuestionIndex = 0;
-    this.introShown = false;
+    // Removed introShown: no intro shown
   }
 
   preload() {
@@ -40,12 +61,17 @@ export class QuizScene extends Phaser.Scene {
       this.scene.start('QuizIndex');
       return;
     }
+
+    // Add the crow to the scene (bottom right)
+    this.crow = new Crow({ scene: this, x: this.scale.width - 180, y: this.scale.height - 40 });
+    this.crow.setIdle();
     // Play letter introduction audio sequence if flag is set and not already played
     if (this.quiz.showLetterIntro && !this.introPlayed) {
       this.introPlayed = true;
-      // Show quiz name and back button while intro audio plays
+      // Show quiz unit name and back button while intro audio plays
       this.cameras.main.setBackgroundColor('#fff');
-      const quizTitle = this.add.text(this.scale.width / 2, 200, this.quiz.name, {
+      let unitName = this.quiz.unit ? (phonicsUnits.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit) : this.quiz.id;
+      const quizTitle = this.add.text(this.scale.width / 2, 200, unitName, {
         fontSize: '200px',
         color: '#222',
       }).setOrigin(0.5, 0);
@@ -73,11 +99,13 @@ export class QuizScene extends Phaser.Scene {
           this.load.audio('intro4', unitObj.soundAudio);
           this.load.once('complete', () => {
             const playNext = (key: string, next?: () => void) => {
+              this.startCrowTalking();
               const sound = this.sound.add(key);
               sound.play();
               sound.once('complete', () => {
                 sound.destroy();
                 if (next) next();
+                else this.stopCrowTalking();
               });
             };
             playNext('intro1', () => {
@@ -87,6 +115,7 @@ export class QuizScene extends Phaser.Scene {
                     this.time.delayedCall(1000, () => {
                       quizTitle.destroy();
                       backBtn.container.destroy();
+                      this.stopCrowTalking();
                       this.showQuestion();
                     });
                   });
@@ -126,7 +155,7 @@ export class QuizScene extends Phaser.Scene {
 
 
 
-  private showQuestion(delayMs: number = 500, fadeIn: boolean = false) {
+  private showQuestion(delayMs: number = 500) {
     if (!this.quiz) return;
     // Remove only dynamic objects (buttons/text) from previous question
     this.dynamicObjects.forEach(obj => obj.destroy());
@@ -139,20 +168,23 @@ export class QuizScene extends Phaser.Scene {
 
     // Only show quiz title if hideLetter is not true for this question
     if (!question.hideLetter) {
-      const quizTitle = this.add.text(this.scale.width / 2, 200, this.quiz.name, {
+      let unitName = this.quiz.unit ? (phonicsUnits.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit) : this.quiz.id;
+      const quizTitle = this.add.text(this.scale.width / 2, 200, unitName, {
         fontSize: '200px',
         color: '#222',
       }).setOrigin(0.5, 0);
       this.dynamicObjects.push(quizTitle);
     }
 
-    this.questionTextObj = this.add.text(this.scale.width / 2, this.scale.height - 400, question.text, {
-      fontSize: '30px',
-      color: '#333',
-      wordWrap: { width: this.scale.width * 0.8 },
-    }).setOrigin(0.5, 0);
-    if (fadeIn) this.questionTextObj.alpha = 0;
-    this.dynamicObjects.push(this.questionTextObj);
+    // No question text to display
+    this.dynamicObjects.push(
+      this.add.text(this.scale.width / 2, this.scale.height - 400, '', {
+        fontSize: '30px',
+        color: '#333',
+        wordWrap: { width: this.scale.width * 0.8 },
+      }).setOrigin(0.5, 0)
+    );
+    // No question text to display
 
     // Play spoken prompt (if available and different from phoneme), then phoneme
     const spokenPromptFile = question.promptFile || null;
@@ -167,16 +199,21 @@ export class QuizScene extends Phaser.Scene {
     this.load.once('complete', () => {
       this.time.delayedCall(delayMs, () => {
         const playPhoneme = () => {
+          this.startCrowTalking();
           const phonemeSound = this.sound.add('phoneme');
           phonemeSound.play();
           phonemeSound.once('complete', () => {
+            this.stopCrowTalking();
             this.createWordButtons(question);
           });
         };
         if (shouldPlaySpokenPrompt) {
+          this.startCrowTalking();
           const promptSound = this.sound.add('spokenPrompt');
           promptSound.play();
-          promptSound.once('complete', playPhoneme);
+          promptSound.once('complete', () => {
+            playPhoneme();
+          });
         } else {
           playPhoneme();
         }
@@ -185,7 +222,7 @@ export class QuizScene extends Phaser.Scene {
     this.load.start();
   }
 
-  private createWordButtons(question: { id: string; text: string; words: string[]; correctAnswer: string; phonemeFile: string; }) {
+  private createWordButtons(question: { id: string; words: string[]; correctAnswer: string; phonemeFile: string; }) {
     const buttonWidth = 220;
     const buttonHeight = 60;
     const spacing = 30;
@@ -220,13 +257,7 @@ export class QuizScene extends Phaser.Scene {
     const postFeedbackDelay = 700;
     // Fade out question text and buttons after feedback + delay
     this.time.delayedCall(feedbackDuration + postFeedbackDelay, () => {
-      if (this.questionTextObj) {
-        this.tweens.add({
-          targets: this.questionTextObj,
-          alpha: 0,
-          duration: this.fadeDuration,
-        });
-      }
+      // Fade out buttons after feedback + delay
       this.wordButtons.forEach(btn => {
         this.tweens.add({
           targets: btn.container,
@@ -235,7 +266,7 @@ export class QuizScene extends Phaser.Scene {
         });
       });
       // After fade out, go to next question immediately (no extra delay)
-      this.nextQuestion(true);
+      this.nextQuestion();
     });
   }
 
@@ -319,23 +350,11 @@ export class QuizScene extends Phaser.Scene {
     }
   }
 
-  private nextQuestion(fadeIn: boolean = false) {
+  private nextQuestion() {
     if (!this.quiz) return;
     this.currentQuestionIndex++;
     if (this.currentQuestionIndex < this.quiz.questions.length) {
-      this.showQuestion(500, fadeIn);
-      // Fade in question text if requested
-      if (fadeIn) {
-        this.time.delayedCall(this.fadeDelay, () => {
-          if (this.questionTextObj) {
-            this.tweens.add({
-              targets: this.questionTextObj,
-              alpha: 1,
-              duration: this.fadeDuration
-            });
-          }
-        });
-      }
+      this.showQuestion(500);
     } else {
       if (this.sound) this.sound.stopAll();
       this.scene.start('Menu');
