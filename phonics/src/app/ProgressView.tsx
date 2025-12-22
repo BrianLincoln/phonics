@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPhonicsProgress } from '../helpers/quizProgress';
+import { getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
 import { stopAllAudio } from './audioUtils';
 import type { PhonicsUnitProgress } from '../helpers/quizProgress';
 import { phonicsUnits } from '../data/phonicsUnits';
@@ -32,6 +32,7 @@ const ProgressView: React.FC = () => {
               <th>Recent</th>
               <th>Total</th>
               <th>Last Seen</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -44,6 +45,7 @@ const ProgressView: React.FC = () => {
                   <td>{data?.incorrect ?? 0}</td>
                   <td>{data?.recent ? data.recent.map(r => r ? '✔️' : '❌').join(' ') : ''}</td>
                   <td>{data?.sampleSize ?? 0}</td>
+                  <td style={{ fontWeight: 700, color: '#7aa7e9' }}>{data ? `${getRecentConfidence(data)}%` : ''}</td>
                   <td>{data?.lastSeen ? new Date(data.lastSeen).toLocaleString() : '-'}</td>
                 </tr>
               );

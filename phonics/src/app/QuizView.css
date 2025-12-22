@@ -25,16 +25,13 @@
   margin-bottom: 1.5rem;
   font-family: 'Segoe UI', Arial, sans-serif;
 }
-.quiz-question {
-  font-size: 1.4rem;
-  color: #333;
-  margin-bottom: 2.5rem;
-}
+  
 .quiz-answers {
   display: flex;
   flex-wrap: wrap;
   gap: 1.2rem;
   justify-content: center;
+  margin-top: 2.5rem;
 }
 .quiz-answer {
   min-width: 120px;
@@ -48,6 +45,12 @@
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.quiz-answer:hover:not(:disabled) {
+  background: #e0eaff;
+  border-color: #7aa7e9;
+  color: #1a1a1a;
 }
 .quiz-answer.correct {
   background: #50bc37;

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { quizzes } from '../data/quizzes';
 import { phonicsUnits } from '../data/phonicsUnits';
 import { usePlayAudio, stopAllAudio } from './audioUtils';
-import { updatePhonicsUnitProgress } from '../helpers/quizProgress';
+import { updatePhonicsUnitProgress, getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
 import './QuizView.css';
 
 type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done';
@@ -25,6 +25,8 @@ const QuizViewOrchestrated: React.FC = () => {
   const [phase, setPhase] = useState<Phase>('intro');
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  const [progressRecorded, setProgressRecorded] = useState(false);
   const question = quiz.questions[questionIdx];
 
   // Shuffle utility
@@ -45,12 +47,19 @@ const QuizViewOrchestrated: React.FC = () => {
 
   const shuffledWords = useMemo(() => shuffle(question.words), [questionIdx, shuffleKey]);
   let unitName: string;
+  let unitId: string;
   if (quiz.unit) {
+    unitId = quiz.unit;
     unitName = phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit;
   } else {
-    // If no unit, try to match quiz.id to a phonics unit
-    unitName = phonicsUnits.find(u => u.id === quiz.id.replace(/^quiz-/, ''))?.name || quiz.id;
+    unitId = quiz.id.replace(/^quiz-/, '');
+    unitName = phonicsUnits.find(u => u.id === unitId)?.name || quiz.id;
   }
+
+  // Confidence score for current unit
+  const progress = getPhonicsProgress();
+  const unitProgress = progress.phonicsUnits[unitId];
+  const recentConfidence = unitProgress ? getRecentConfidence(unitProgress) : 0;
 
   const playAudio = usePlayAudio();
   // Orchestrate the quiz sequence
@@ -75,6 +84,8 @@ const QuizViewOrchestrated: React.FC = () => {
           await playAudio(unit.soundAudio, true).catch(() => { });
           if (cancelled) return;
         }
+        // Add 1 second delay after letter intro
+        await new Promise(res => setTimeout(res, 800));
       }
       setPhase('prompt');
       await playAudio(question.promptFile, true).catch(() => { });
@@ -92,11 +103,15 @@ const QuizViewOrchestrated: React.FC = () => {
   const handleAnswer = async (word: string) => {
     setSelected(word);
     setPhase('feedback');
+    setAttempts(a => a + 1);
     const isCorrect = word === question.correctAnswer;
     setFeedback(isCorrect ? 'correct' : 'wrong');
-    // Track progress for this quiz's unit or id
-    const unitId = quiz.unit || quiz.id.replace(/^quiz-/, '');
-    updatePhonicsUnitProgress(unitId, isCorrect);
+    // Record recent result only on first attempt
+    if (!progressRecorded && attempts === 0) {
+      const unitId = quiz.unit || quiz.id.replace(/^quiz-/, '');
+      updatePhonicsUnitProgress(unitId, isCorrect, isCorrect); // only first attempt, true if correct, false if not
+      setProgressRecorded(true);
+    }
     // Play feedback audio
     const feedbackAudio = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
     try {
@@ -106,6 +121,8 @@ const QuizViewOrchestrated: React.FC = () => {
       setSelected(null);
       setFeedback(null);
       if (isCorrect) {
+        setAttempts(0); // reset for next question
+        setProgressRecorded(false);
         if (questionIdx < quiz.questions.length - 1) {
           setQuestionIdx(q => q + 1);
         } else {
@@ -123,11 +140,10 @@ const QuizViewOrchestrated: React.FC = () => {
     <div className="quiz-root">
       <button className="quiz-back" onClick={() => navigate('/')}>⬅ Back</button>
       <h2 className="quiz-title">{unitName}</h2>
-      {phase === 'intro' && <div className="quiz-question">Listen to the letter introduction…</div>}
-      {phase === 'prompt' && <div className="quiz-question">Listen to the question…</div>}
+      {/* Recent confidence score at top right, no label */}
+      <div style={{ position: 'absolute', top: 24, right: 32, fontSize: '2rem', color: '#7aa7e9', fontWeight: 700, zIndex: 10 }}>{recentConfidence}%</div>
       {(phase === 'answers' || phase === 'feedback') && (
         <>
-          <div className="quiz-question">{question.promptFile.includes('which-word') ? 'Which word starts with the sound?' : 'Which letter makes the sound?'}</div>
           <div className="quiz-answers">
             {shuffledWords.map(word => {
               const isSelected = selected === word;
@@ -148,14 +164,8 @@ const QuizViewOrchestrated: React.FC = () => {
               );
             })}
           </div>
-          {phase === 'feedback' && (
-            <div className="quiz-question">
-              {feedback === 'correct' ? 'Correct!' : 'Try again!'}
-            </div>
-          )}
         </>
       )}
-      {phase === 'done' && <div className="quiz-question">Quiz complete!</div>}
     </div>
   );
 };
