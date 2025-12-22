@@ -27,16 +27,15 @@ export interface QuizQuestion {
   skills: Skill[];
 }
 
+
 export interface Quiz {
-  id: string;
-  unit?: string;
+  unit: string;
   questions: QuizQuestion[];
   showLetterIntro?: boolean;
 }
 
 export const quizzes: Quiz[] = [
   {
-    id: 'quiz-c',
     unit: 'c',
     showLetterIntro: true,
     questions: [
@@ -49,7 +48,6 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
-    id: 'quiz-t',
     unit: 't',
     showLetterIntro: true,
     questions: [
@@ -64,7 +62,6 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
-    id: 'quiz-m',
     unit: 'm',
     questions: [
       { id: 'm1', words: ['cat', 'map', 'sun'], correctAnswer: 'map', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -78,7 +75,7 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
-    id: 'quiz-s',
+    unit: 's',
     questions: [
       // 5 word questions
       { id: 's1', words: ['sun', 'cat', 'dog'], correctAnswer: 'sun', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -93,7 +90,7 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
-    id: 'quiz-h',
+    unit: 'h',
     questions: [
       // 5 word questions
       { id: 'h1', words: ['hat', 'cat', 'bat'], correctAnswer: 'hat', phonemeFile: '/audio/phonics-units/h-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -108,7 +105,6 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
-    id: 'quiz-a',
     unit: 'a',
     questions: [
       // 5 word questions

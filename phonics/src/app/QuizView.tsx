@@ -13,7 +13,7 @@ const QuizView: React.FC = () => {
   const [questionIdx, setQuestionIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const question = quiz.questions[questionIdx];
-  const unitName = quiz.unit ? (phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit) : quiz.id;
+  const unitName = phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit;
 
   const handleAnswer = (word: string) => {
     setSelected(word);

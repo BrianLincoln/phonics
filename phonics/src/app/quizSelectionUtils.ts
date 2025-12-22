@@ -6,10 +6,10 @@ export function getNextQuizId(): string {
   // Find the first quiz whose unit is not completed (sampleSize < 1 or not present)
   for (const quiz of quizzes) {
     // Use the same logic as QuizViewOrchestrated for unit id
-    const unitId = quiz.unit || quiz.id.replace(/^quiz-/, '');
+    const unitId = quiz.unit;
     const unitProgress = progress.phonicsUnits[unitId];
     if (!unitProgress || unitProgress.sampleSize < 1) {
-      return quiz.id;
+      return quiz.unit;
     }
   }
   // If all are completed, pick a random quiz

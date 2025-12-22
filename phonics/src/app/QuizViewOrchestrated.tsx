@@ -13,7 +13,7 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const getQuizById = (id: string | null) => quizzes.find(q => q.id === id) || quizzes[0];
+const getQuizById = (unit: string | null) => quizzes.find(q => q.unit === unit) || quizzes[0];
 
 
 const QuizViewOrchestrated: React.FC = () => {
@@ -46,15 +46,8 @@ const QuizViewOrchestrated: React.FC = () => {
   }, [questionIdx]);
 
   const shuffledWords = useMemo(() => shuffle(question.words), [questionIdx, shuffleKey]);
-  let unitName: string;
-  let unitId: string;
-  if (quiz.unit) {
-    unitId = quiz.unit;
-    unitName = phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit;
-  } else {
-    unitId = quiz.id.replace(/^quiz-/, '');
-    unitName = phonicsUnits.find(u => u.id === unitId)?.name || quiz.id;
-  }
+  const unitId = quiz.unit;
+  const unitName = phonicsUnits.find(u => u.id === unitId)?.name || unitId;
 
   // Confidence score for current unit
   const progress = getPhonicsProgress();
@@ -72,7 +65,7 @@ const QuizViewOrchestrated: React.FC = () => {
         setPhase('intro');
         await playAudio('/audio/prompts/this-is-the-letter.wav', true).catch(() => { });
         if (cancelled) return;
-        const unitId = quiz.unit || quiz.id.replace(/^quiz-/, '');
+        const unitId = quiz.unit;
         const unit = phonicsUnits.find(u => u.id === unitId);
         if (unit?.nameAudio) {
           await playAudio(unit.nameAudio, true).catch(() => { });
@@ -108,7 +101,7 @@ const QuizViewOrchestrated: React.FC = () => {
     setFeedback(isCorrect ? 'correct' : 'wrong');
     // Record recent result only on first attempt
     if (!progressRecorded && attempts === 0) {
-      const unitId = quiz.unit || quiz.id.replace(/^quiz-/, '');
+      const unitId = quiz.unit;
       updatePhonicsUnitProgress(unitId, isCorrect, isCorrect); // only first attempt, true if correct, false if not
       setProgressRecorded(true);
     }

@@ -9,7 +9,7 @@ const QuizIndexView: React.FC = () => {
 
   // Helper to get unit name
   const getUnitName = (quiz: typeof quizzes[number]) => {
-    return quiz.unit ? (phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit) : quiz.id;
+    return phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit;
   };
 
   return (
@@ -17,11 +17,11 @@ const QuizIndexView: React.FC = () => {
       <button className="quiz-index-back" onClick={() => navigate('/')}>⬅ Back</button>
       <h2 className="quiz-index-title">Select a Quiz</h2>
       <div className="quiz-index-grid">
-        {quizzes.map((quiz, i) => (
+        {quizzes.map((quiz) => (
           <button
-            key={quiz.id}
+            key={quiz.unit}
             className="quiz-index-btn"
-            onClick={() => navigate(`/quiz?quizId=${quiz.id}`)}
+            onClick={() => navigate(`/quiz?quizId=${quiz.unit}`)}
           >
             {getUnitName(quiz)}
           </button>
