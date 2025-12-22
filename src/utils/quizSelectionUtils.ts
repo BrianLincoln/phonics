@@ -5,7 +5,7 @@ export function getNextQuizId(): string {
   const progress = getPhonicsProgress();
   // Find the first quiz whose unit is not completed (sampleSize < 1 or not present)
   for (const quiz of quizzes) {
-    // Use the same logic as QuizViewOrchestrated for unit id
+    // Use the same logic as QuizView for unit id
     const unitId = quiz.unit;
     const unitProgress = progress.phonicsUnits[unitId];
     if (!unitProgress || unitProgress.sampleSize < 1) {

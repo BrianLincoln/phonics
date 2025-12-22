@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useRef } from "react";
+import * as React from "react";
+const { createContext, useContext, useRef } = React;
 
 class AudioManager {
   private unlocked = false;

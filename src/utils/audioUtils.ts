@@ -4,7 +4,7 @@
 
 // Use AudioManager from context for all audio playback
 
-import { useAudioManager } from './AudioManagerContext';
+import { useAudioManager } from '../context/AudioManagerContext';
 
 export function usePlayAudio() {
   const audioManager = useAudioManager();

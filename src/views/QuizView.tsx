@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { quizzes } from '../data/quizzes';
 import { phonicsUnits } from '../data/phonicsUnits';
-import { usePlayAudio, stopAllAudio } from './audioUtils';
+import { usePlayAudio, stopAllAudio } from '../utils/audioUtils';
 import { updatePhonicsUnitProgress, getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
 import './QuizView.css';
 
@@ -24,7 +24,7 @@ const getQuizById = (quizId: string | null) => {
 };
 
 
-const QuizViewOrchestrated: React.FC = () => {
+const QuizView: React.FC = () => {
   const navigate = useNavigate();
   const query = useQuery();
   const quizId = query.get('quizId');
@@ -171,4 +171,4 @@ const QuizViewOrchestrated: React.FC = () => {
   );
 };
 
-export default QuizViewOrchestrated;
+export default QuizView;

@@ -1,5 +1,5 @@
-import React from 'react';
-import { usePlayAudio } from './audioUtils';
+import * as React from 'react';
+import { usePlayAudio } from '../utils/audioUtils';
 
 const AudioTest: React.FC = () => {
   const playAudio = usePlayAudio();

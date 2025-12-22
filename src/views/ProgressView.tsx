@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
-import { stopAllAudio } from './audioUtils';
+import { stopAllAudio } from '../utils/audioUtils';
 import type { PhonicsUnitProgress } from '../helpers/quizProgress';
 import { phonicsUnits } from '../data/phonicsUnits';
 import './ProgressView.css';

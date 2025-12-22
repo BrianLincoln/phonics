@@ -1,8 +1,8 @@
-import React from 'react';
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNextQuizId } from './quizSelectionUtils';
-import { usePlayAudio } from './audioUtils';
-import { CLICK_SOUND } from './clickSound';
+import { getNextQuizId } from '../utils/quizSelectionUtils';
+import { usePlayAudio } from '../utils/audioUtils';
+import { CLICK_SOUND } from '../utils/clickSound';
 import './MenuView.css';
 
 const MenuView: React.FC = () => {

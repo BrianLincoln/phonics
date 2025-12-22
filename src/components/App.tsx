@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import MenuView from './MenuView';
-import QuizViewOrchestrated from './QuizViewOrchestrated';
+import MenuView from '../views/MenuView';
+import QuizView from '../views/QuizView';
 import AudioTest from './AudioTest';
-import QuizIndexView from './QuizIndexView';
-import ProgressView from './ProgressView';
-import { stopAllAudio } from './audioUtils';
+import QuizIndexView from '../views/QuizIndexView';
+import ProgressView from '../views/ProgressView';
+import { stopAllAudio } from '../utils/audioUtils';
 // ...existing code...
 // import ProgressView from './ProgressView';
 // import CrowDemoView from './CrowDemoView';
@@ -22,7 +22,7 @@ const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<MenuView />} />
-      <Route path="/quiz" element={<QuizViewOrchestrated />} />
+      <Route path="/quiz" element={<QuizView />} />
       <Route path="/audiotest" element={<AudioTest />} />
       <Route path="/quizzes" element={<QuizIndexView />} />
       <Route path="/progress" element={<ProgressView />} />
