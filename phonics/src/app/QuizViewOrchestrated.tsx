@@ -13,7 +13,15 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const getQuizById = (unit: string | null) => quizzes.find(q => q.unit === unit) || quizzes[0];
+const getQuizById = (quizId: string | null) => {
+  // Try to find by id first (for URLs like ?quizId=quiz-t)
+  let quiz = quizzes.find(q => q.id === quizId);
+  if (!quiz) {
+    // Fallback: try to find by unit (for URLs like ?quizId=t)
+    quiz = quizzes.find(q => q.unit === quizId);
+  }
+  return quiz || quizzes[0];
+};
 
 
 const QuizViewOrchestrated: React.FC = () => {
