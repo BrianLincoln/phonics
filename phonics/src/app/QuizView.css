@@ -1,0 +1,97 @@
+.quiz-root {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 48px;
+}
+.quiz-back {
+  position: absolute;
+  left: 32px;
+  top: 32px;
+  font-size: 1.2rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  border: 2px solid #d0d0d0;
+  background: #f4f4f4;
+  color: #333;
+  cursor: pointer;
+}
+.quiz-title {
+  font-size: 6rem;
+  color: #1a1a1a;
+  margin-bottom: 1.5rem;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.quiz-question {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 2.5rem;
+}
+.quiz-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  justify-content: center;
+}
+.quiz-answer {
+  min-width: 120px;
+  font-size: 1.3rem;
+  padding: 1.1rem 2.2rem;
+  border-radius: 8px;
+  border: 2px solid #d0d0d0;
+  background: #f4f4f4;
+  color: #333;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.quiz-answer.correct {
+  background: #50bc37;
+  color: #fff;
+  border-color: #2c5aa0;
+}
+.quiz-answer.wrong {
+  background: #bc3737;
+  color: #fff;
+  border-color: #a00;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(-8px); }
+  20% { transform: translateX(8px); }
+  30% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  50% { transform: translateX(-3px); }
+  60% { transform: translateX(3px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  90% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes scaleup {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.1); }
+  40% { transform: scale(1.15); }
+  60% { transform: scale(1.2); }
+  80% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.quiz-answer.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  z-index: 1;
+}
+.quiz-answer.animate-scale {
+  animation: scaleup 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  z-index: 1;
+}
+.quiz-answer:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

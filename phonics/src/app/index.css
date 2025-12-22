@@ -1,0 +1,8 @@
+body {
+  margin: 0;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background: #0a2342;
+}
+#root {
+  min-height: 100vh;
+}
