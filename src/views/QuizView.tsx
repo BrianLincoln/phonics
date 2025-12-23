@@ -27,6 +27,8 @@ const getQuizById = (quizId: string | null) => {
 
 const QuizView: React.FC = () => {
   const navigate = useNavigate();
+  // Fade out overlay state (must be before any use)
+  const [fadeOut, setFadeOut] = useState(false);
   const query = useQuery();
   const quizId = query.get('quizId');
   const quiz = getQuizById(quizId);
@@ -146,11 +148,13 @@ const QuizView: React.FC = () => {
                 const audioPromise = playAudio('/audio/system/success.wav', true);
                 await Promise.all([crowReturnPromise, audioPromise]);
                 await new Promise(res => setTimeout(res, 2000));
+                // Fade out before navigating away
+                setFadeOut(true);
                 // Stop crow hopping before navigating away
                 if (mainSceneRef.current && typeof mainSceneRef.current.crowController?.stopHoppingInPlace === 'function') {
                   mainSceneRef.current.crowController.stopHoppingInPlace();
                 }
-                navigate('/');
+                setTimeout(() => navigate('/'), 600);
               }
             } else {
               // For crow-take-letter question, hide answers until callback
@@ -175,11 +179,13 @@ const QuizView: React.FC = () => {
                   const audioPromise = playAudio('/audio/system/success.wav', true);
                   await Promise.all([crowReturnPromise, audioPromise]);
                   await new Promise(res => setTimeout(res, 2000));
+                  // Fade out before navigating away
+                  setFadeOut(true);
                   // Stop crow hopping before navigating away
                   if (mainSceneRef.current && typeof mainSceneRef.current.crowController?.stopHoppingInPlace === 'function') {
                     mainSceneRef.current.crowController.stopHoppingInPlace();
                   }
-                  navigate('/');
+                  setTimeout(() => navigate('/'), 600);
                 }
               };
             }
@@ -194,6 +200,7 @@ const QuizView: React.FC = () => {
 
   return (
     <div className="quiz-root">
+      <div className={"quiz-fade-overlay" + (fadeOut ? " visible" : "")}></div>
       <div className="quiz-header">
         <button className="quiz-back" onClick={() => navigate('/')}>⬅ Back</button>
         <div className="quiz-progress-score">{recentConfidence}%</div>

@@ -173,23 +173,19 @@ export class CrowController {
     this.crow.setVisible(true);
     this.crow.setDepth(9);
     this.crow.setFacing('right');
-
     this.crow.setPosition(-100, cam.height - 20);
-
     this.startWalking();
-
     this.scene.tweens.add({
       targets: this.crow,
       x: cam.width - 100,
       y: cam.height - 20,
       duration: 3000,
       ease: 'Sine.easeOut',
-
       onUpdate: () => {
         this.advanceWalkAnimation(16);
       },
-
       onComplete: () => {
+        this.crow.setFacing('left');
         this.crow.setIdle();
         // No putzing after walk-in
       },
@@ -321,7 +317,15 @@ export class CrowController {
    * Hop the crow to a specific (x, y) position, then idle.
    */
   hopTo(x: number, y: number, onDone?: () => void) {
-    this.crow.setFacing(x >= this.crow.x ? 'right' : 'left');
+    // Always face left if hopping to idle spot (bottom right)
+    const cam = this.scene.cameras.main;
+    const idleX = cam.width - 100;
+    const idleY = cam.height - 20;
+    if (x === idleX && y === idleY) {
+      this.crow.setFacing('left');
+    } else {
+      this.crow.setFacing(x >= this.crow.x ? 'right' : 'left');
+    }
     this.scene.tweens.add({
       targets: this.crow,
       x,
@@ -330,6 +334,8 @@ export class CrowController {
       ease: 'Sine.easeInOut',
       onComplete: () => {
         this.hop(() => {
+          // Always face left if at idle
+          if (x === idleX && y === idleY) this.crow.setFacing('left');
           this.crow.setIdle();
           if (onDone) onDone();
         });
@@ -343,9 +349,16 @@ export class CrowController {
   startHoppingInPlace() {
     if (this.hoppingInPlace) return;
     this.hoppingInPlace = true;
+    // Always face left if in idle spot
+    const cam = this.scene.cameras.main;
+    const idleX = cam.width - 100;
+    const idleY = cam.height - 20;
+    this.crow.setFacing('left');
     const hopLoop = () => {
       if (!this.hoppingInPlace) return;
       this.hop(() => {
+        // Always face left if at idle
+        if (this.crow.x === idleX && this.crow.y === idleY) this.crow.setFacing('left');
         if (this.hoppingInPlace) {
           this.scene.time.delayedCall(300, hopLoop);
         }
