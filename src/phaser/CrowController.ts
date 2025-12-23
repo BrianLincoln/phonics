@@ -2,6 +2,36 @@ import Phaser from 'phaser';
 import { Crow } from './Crow';
 
 export class CrowController {
+  /**
+   * Makes the crow do two quick hops animation.
+   */
+  hop(onDone?: () => void) {
+    if (!this.crow.visible) {
+      if (onDone) onDone();
+      return;
+    }
+    // First hop
+    this.scene.tweens.add({
+      targets: this.crow,
+      y: '-=30',
+      duration: 120,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        // Second hop
+        this.scene.tweens.add({
+          targets: this.crow,
+          y: '-=30',
+          duration: 120,
+          yoyo: true,
+          ease: 'Quad.easeOut',
+          onComplete: () => {
+            if (onDone) onDone();
+          },
+        });
+      },
+    });
+  }
   private putzBounds?: Phaser.Geom.Rectangle;
 
   private scene: Phaser.Scene;

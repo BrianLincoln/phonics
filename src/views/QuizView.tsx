@@ -125,15 +125,20 @@ const QuizView: React.FC = () => {
       if (isCorrect) {
         // Notify Phaser MainScene only after correct answer
         if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
-          mainSceneRef.current.onQuestionAnswered();
-        }
-        setAttempts(0); // reset for next question
-        setProgressRecorded(false);
-        if (questionIdx < quiz.questions.length - 1) {
-          setQuestionIdx(q => q + 1);
-        } else {
-          setPhase('done');
-          setTimeout(() => navigate('/'), 1200);
+          // Wait for crow hop animation to finish before advancing
+          mainSceneRef.current.onQuestionAnswered({
+            correct: true,
+            onDone: () => {
+              setAttempts(0); // reset for next question
+              setProgressRecorded(false);
+              if (questionIdx < quiz.questions.length - 1) {
+                setQuestionIdx(q => q + 1);
+              } else {
+                setPhase('done');
+                setTimeout(() => navigate('/'), 1200);
+              }
+            }
+          });
         }
       } else {
         setPhase('answers');

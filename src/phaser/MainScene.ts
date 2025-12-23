@@ -70,9 +70,22 @@ export class MainScene extends Phaser.Scene {
 
   onQuestionAnswered() {
     this.questionCount++;
-    if (this.questionCount === 1 && this.crowActive) {
+    if (arguments.length && typeof arguments[0] === 'object' && arguments[0]?.correct) {
+      // Hop for correct answer
+      if (this.crowController) {
+        this.crowController.hop(arguments[0].onDone);
+      } else if (arguments[0].onDone) {
+        arguments[0].onDone();
+      }
+    }
+    if (this.questionCount === 3 && this.crowActive) {
       this.crowActive = false;
-      this.crowTakeLetter();
+      // Accept a callback to run after crow animation
+      if (arguments.length && typeof arguments[0] === 'function') {
+        this.crowTakeLetter(arguments[0]);
+      } else {
+        this.crowTakeLetter();
+      }
     }
   }
 
@@ -85,12 +98,23 @@ export class MainScene extends Phaser.Scene {
     this.crowController.stopPutzing();
     this.letterText.setDepth(1);
     // Sequence: walk to left of word, then walk off right
+    let afterCrowDone = undefined;
+    if (arguments.length && typeof arguments[0] === 'function') {
+      afterCrowDone = arguments[0];
+    }
     this.crowController.walkToLeftOfWordAndLook(
       this.letterText.x,
       this.letterText.y,
       () => {
         this.crowController.walkWordOffRight(this.letterText!, () => {
           this.crowTakingLetter = false;
+          // Make crow come back and putz after taking the letter
+          setTimeout(() => {
+            if (this.crowController) {
+              this.crowController.startPutzing();
+            }
+            if (afterCrowDone) afterCrowDone();
+          }, 600); // delay for effect
         });
       }
     );
