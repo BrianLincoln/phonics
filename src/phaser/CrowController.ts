@@ -1,7 +1,54 @@
+
+
 import Phaser from 'phaser';
 import { Crow } from './Crow';
 
 export class CrowController {
+  /**
+   * Walks the crow (facing left) and the word from off-screen right onto the sign, then idles.
+   * Calls onDone when finished.
+   */
+  walkWordOnFromRight(
+    word: Phaser.GameObjects.Text,
+    targetX: number,
+    textY: number,
+    crowY: number,
+    onDone: () => void
+  ) {
+    const cam = this.scene.cameras.main;
+    const crowOffset = 90; // px between crow and text (crow to right of text)
+    this.crow.setVisible(true);
+    this.crow.setDepth(9);
+    this.crow.setFacing('left');
+    this.crow.setPosition(cam.width + 100, crowY);
+    word.setVisible(true);
+    word.setPosition(cam.width + 100 - crowOffset, textY);
+    this.startWalking();
+    // Animate both to their final positions, keeping the offset and correct y
+    this.scene.tweens.add({
+      targets: this.crow,
+      x: targetX + crowOffset,
+      y: crowY,
+      duration: 1200,
+      ease: 'Quad.easeOut',
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
+        // Move the word to stay in front of the crow, but keep y fixed
+        word.x = this.crow.x - crowOffset;
+        word.y = textY;
+      },
+      onComplete: () => {
+        // Snap to final positions
+        this.crow.setX(targetX + crowOffset);
+        this.crow.setY(crowY);
+        word.setX(targetX);
+        word.setY(textY);
+        this.crow.setIdle();
+        if (onDone) onDone();
+      },
+    });
+  }
+
   /**
    * Re-enters from the right and calls onDone when finished.
    */
@@ -266,5 +313,73 @@ export class CrowController {
   stopPutzing() {
     this.scene.tweens.killTweensOf(this.crow);
     this.crow.setIdle();
+  }
+
+  private hoppingInPlace = false;
+
+  /**
+   * Hop the crow to a specific (x, y) position, then idle.
+   */
+  hopTo(x: number, y: number, onDone?: () => void) {
+    this.crow.setFacing(x >= this.crow.x ? 'right' : 'left');
+    this.scene.tweens.add({
+      targets: this.crow,
+      x,
+      y,
+      duration: 500,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.hop(() => {
+          this.crow.setIdle();
+          if (onDone) onDone();
+        });
+      },
+    });
+  }
+
+  /**
+   * Start hopping in place repeatedly until stopHoppingInPlace is called.
+   */
+  startHoppingInPlace() {
+    if (this.hoppingInPlace) return;
+    this.hoppingInPlace = true;
+    const hopLoop = () => {
+      if (!this.hoppingInPlace) return;
+      this.hop(() => {
+        if (this.hoppingInPlace) {
+          this.scene.time.delayedCall(300, hopLoop);
+        }
+      });
+    };
+    hopLoop();
+  }
+
+  /**
+   * Stop the repeated hopping in place.
+   */
+  stopHoppingInPlace() {
+    this.hoppingInPlace = false;
+  }
+
+  /**
+ * Crow walks off screen right quickly, then calls onDone.
+ */
+  walkOffRightFast(targetX: number, y: number, onDone?: () => void) {
+    this.crow.setFacing('right');
+    this.startWalking();
+    this.scene.tweens.add({
+      targets: this.crow,
+      x: targetX,
+      y: y,
+      duration: 350,
+      ease: 'Quad.easeIn',
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
+      },
+      onComplete: () => {
+        this.crow.setVisible(false);
+        if (onDone) onDone();
+      },
+    });
   }
 }

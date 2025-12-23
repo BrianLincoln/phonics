@@ -45,8 +45,8 @@ export const quizzes: Quiz[] = [
       { id: 'c2', words: ['cup', 'mop', 'sun'], correctAnswer: 'cup', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'c3', words: ['cap', 'map', 'tap'], correctAnswer: 'cap', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', questionType: QUESTION_TYPE_WORD, skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'c4', words: ['c', 'm', 'a'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 'c5', words: ['a', 'c', 's'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 'c6', words: ['m', 'c', 'd'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      // { id: 'c5', words: ['a', 'c', 's'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      // { id: 'c6', words: ['m', 'c', 'd'], correctAnswer: 'c', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, questionType: QUESTION_TYPE_PHONEME, skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
   },
   {

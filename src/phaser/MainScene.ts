@@ -1,3 +1,4 @@
+
 import Phaser from 'phaser';
 import { Crow } from './Crow';
 import { CrowController } from './CrowController';
@@ -10,7 +11,7 @@ export class MainScene extends Phaser.Scene {
    * Used by React to advance the question after crow re-enters (set as a function ref)
    */
   _afterCrowReEnter?: () => void;
-  static readonly CROW_TAKE_LETTER_QUESTION = 3;
+  static readonly CROW_TAKE_LETTER_QUESTION = 2;
   private unitName: string = '';
 
   constructor() {
@@ -264,5 +265,41 @@ export class MainScene extends Phaser.Scene {
         });
       }
     );
+  }
+
+  /**
+ * After quiz complete: crow pushes word from right onto sign, then idles. Calls onDone when finished.
+ */
+  crowReturnWordAfterQuiz(onDone?: () => void) {
+    if (!this.crow || !this.letterText || !this.crowController) {
+      if (onDone) onDone();
+      return;
+    }
+    const cam = this.cameras.main;
+    const targetX = this.cameras.main.centerX;
+    const textY = this.letterText.y; // keep text centered on sign
+    const crowY = this.letterText.y + 80; // crow is lower, as in letter-taking
+    const crowIdleX = cam.width - 100;
+    const crowIdleY = cam.height - 20;
+
+    // Step 0: Crow walks off screen right quickly, then brings text back
+    const fastOffX = cam.width + 120;
+    this.crowController.walkOffRightFast(fastOffX, crowY, () => {
+      // Step 1: Crow pushes text on
+      this.crowController.walkWordOnFromRight(
+        this.letterText,
+        targetX,
+        textY,
+        crowY,
+        () => {
+          // Step 2: Crow hops down to idle spot
+          this.crowController.hopTo(crowIdleX, crowIdleY, () => {
+            // Step 3: Crow hops in place repeatedly until told to stop
+            this.crowController.startHoppingInPlace();
+            if (onDone) onDone();
+          });
+        }
+      );
+    });
   }
 }

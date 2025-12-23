@@ -135,8 +135,22 @@ const QuizView: React.FC = () => {
                 setQuestionIdx(q => q + 1);
               } else {
                 setPhase('done');
-                await playAudio('/audio/system/success.wav');
-                setTimeout(() => navigate('/'), 1200);
+                // Crow pushes text back on sign while success.wav plays, then delay, then menu
+                const crowReturnPromise = new Promise<void>(resolve => {
+                  if (mainSceneRef.current && typeof mainSceneRef.current.crowReturnWordAfterQuiz === 'function') {
+                    mainSceneRef.current.crowReturnWordAfterQuiz(() => resolve());
+                  } else {
+                    resolve();
+                  }
+                });
+                const audioPromise = playAudio('/audio/system/success.wav', true);
+                await Promise.all([crowReturnPromise, audioPromise]);
+                await new Promise(res => setTimeout(res, 2000));
+                // Stop crow hopping before navigating away
+                if (mainSceneRef.current && typeof mainSceneRef.current.crowController?.stopHoppingInPlace === 'function') {
+                  mainSceneRef.current.crowController.stopHoppingInPlace();
+                }
+                navigate('/');
               }
             } else {
               // For crow-take-letter question, hide answers until callback
@@ -150,8 +164,22 @@ const QuizView: React.FC = () => {
                   setPhase('answers');
                 } else {
                   setPhase('done');
-                  await playAudio('/audio/system/success.wav');
-                  setTimeout(() => navigate('/'), 1200);
+                  // Crow pushes text back on sign while success.wav plays, then delay, then menu
+                  const crowReturnPromise = new Promise<void>(resolve => {
+                    if (mainSceneRef.current && typeof mainSceneRef.current.crowReturnWordAfterQuiz === 'function') {
+                      mainSceneRef.current.crowReturnWordAfterQuiz(() => resolve());
+                    } else {
+                      resolve();
+                    }
+                  });
+                  const audioPromise = playAudio('/audio/system/success.wav', true);
+                  await Promise.all([crowReturnPromise, audioPromise]);
+                  await new Promise(res => setTimeout(res, 2000));
+                  // Stop crow hopping before navigating away
+                  if (mainSceneRef.current && typeof mainSceneRef.current.crowController?.stopHoppingInPlace === 'function') {
+                    mainSceneRef.current.crowController.stopHoppingInPlace();
+                  }
+                  navigate('/');
                 }
               };
             }
@@ -217,9 +245,10 @@ const QuizView: React.FC = () => {
             <div className="quiz-answers-fixed" style={{ opacity: 0, pointerEvents: 'none' }} />
           )}
           {phase === 'done' && (
-            <div style={{ marginTop: 48, fontSize: '2rem', color: '#50bc37', textAlign: 'center' }}>
-              Quiz complete!
-            </div>
+            // <div style={{ marginTop: 48, fontSize: '2rem', color: '#50bc37', textAlign: 'center' }}>
+            //   Quiz complete!
+            // </div>
+            <></>
           )}
         </div>
       </div>
