@@ -108,10 +108,6 @@ const QuizView: React.FC = () => {
     setAttempts(a => a + 1);
     const isCorrect = word === question.correctAnswer;
     setFeedback(isCorrect ? 'correct' : 'wrong');
-    // Notify Phaser MainScene after each answer
-    if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
-      mainSceneRef.current.onQuestionAnswered();
-    }
     // Record recent result only on first attempt
     if (!progressRecorded && attempts === 0) {
       const unitId = quiz.unit;
@@ -127,6 +123,10 @@ const QuizView: React.FC = () => {
       setSelected(null);
       setFeedback(null);
       if (isCorrect) {
+        // Notify Phaser MainScene only after correct answer
+        if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
+          mainSceneRef.current.onQuestionAnswered();
+        }
         setAttempts(0); // reset for next question
         setProgressRecorded(false);
         if (questionIdx < quiz.questions.length - 1) {
