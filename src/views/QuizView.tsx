@@ -9,7 +9,7 @@ import '../styles/phaser.css';
 import { PhaserGame } from '../components/PhaserGame';
 import { useRef } from 'react';
 
-type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done';
+type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done' | 'crow-taking-letter';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
