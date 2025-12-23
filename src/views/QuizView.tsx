@@ -5,9 +5,10 @@ import { phonicsUnits } from '../data/phonicsUnits';
 import { usePlayAudio, stopAllAudio } from '../utils/audioUtils';
 import { updatePhonicsUnitProgress, getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
 import './QuizView.css';
+import '../styles/phaser.css';
+import { PhaserGame } from '../components/PhaserGame';
 
 type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done';
-
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -23,7 +24,6 @@ const getQuizById = (quizId: string | null) => {
   return quiz || quizzes[0];
 };
 
-
 const QuizView: React.FC = () => {
   const navigate = useNavigate();
   const query = useQuery();
@@ -36,6 +36,11 @@ const QuizView: React.FC = () => {
   const [attempts, setAttempts] = useState(0);
   const [progressRecorded, setProgressRecorded] = useState(false);
   const question = quiz.questions[questionIdx];
+  const unitId = quiz.unit;
+  const unitName = phonicsUnits.find(u => u.id === unitId)?.name || unitId;
+  const progress = getPhonicsProgress();
+  const unitProgress = progress.phonicsUnits[unitId];
+  const recentConfidence = unitProgress ? getRecentConfidence(unitProgress) : 0;
 
   // Shuffle utility
   function shuffle<T>(array: T[]): T[] {
@@ -52,15 +57,7 @@ const QuizView: React.FC = () => {
   useEffect(() => {
     setShuffleKey(k => k + 1);
   }, [questionIdx]);
-
   const shuffledWords = useMemo(() => shuffle(question.words), [questionIdx, shuffleKey]);
-  const unitId = quiz.unit;
-  const unitName = phonicsUnits.find(u => u.id === unitId)?.name || unitId;
-
-  // Confidence score for current unit
-  const progress = getPhonicsProgress();
-  const unitProgress = progress.phonicsUnits[unitId];
-  const recentConfidence = unitProgress ? getRecentConfidence(unitProgress) : 0;
 
   const playAudio = usePlayAudio();
   // Orchestrate the quiz sequence
@@ -139,34 +136,57 @@ const QuizView: React.FC = () => {
 
   return (
     <div className="quiz-root">
-      <button className="quiz-back" onClick={() => navigate('/')}>⬅ Back</button>
-      <h2 className="quiz-title">{unitName}</h2>
-      {/* Recent confidence score at top right, no label */}
-      <div style={{ position: 'absolute', top: 24, right: 32, fontSize: '2rem', color: '#7aa7e9', fontWeight: 700, zIndex: 10 }}>{recentConfidence}%</div>
-      {(phase === 'answers' || phase === 'feedback') && (
-        <>
-          <div className="quiz-answers">
-            {shuffledWords.map(word => {
-              const isSelected = selected === word;
-              const isCorrect = feedback === 'correct' && word === question.correctAnswer;
-              const isWrong = feedback === 'wrong' && word === selected;
-              let animateClass = '';
-              if (isSelected && feedback === 'correct') animateClass = ' animate-scale';
-              if (isSelected && feedback === 'wrong') animateClass = ' animate-shake';
-              return (
-                <button
-                  key={word}
-                  className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animateClass}`}
-                  onClick={() => handleAnswer(word)}
-                  disabled={!!selected}
-                >
-                  {word}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+      <div className="quiz-header">
+        <button className="quiz-back" onClick={() => navigate('/')}>⬅ Back</button>
+        <div className="quiz-progress-score">{recentConfidence}%</div>
+      </div>
+      <div className="responsive-quiz-layout">
+        <div className="phaser-container">
+          <PhaserGame width={480} height={320} unitName={unitName} />
+        </div>
+        <div className="quiz-content">
+          {/* <h2 className="quiz-title">{unitName}</h2> */}
+          {phase === 'intro' && (
+            // <div style={{ marginTop: 48, fontSize: '2rem', color: '#444', textAlign: 'center' }}>
+            //   Listen to the letter introduction...
+            // </div>
+            <></>
+          )}
+          {phase === 'prompt' && (
+            // <div style={{ marginTop: 48, fontSize: '2rem', color: '#444', textAlign: 'center' }}>
+            //   Listen to the prompt...
+            // </div>
+            <></>
+          )}
+          {(phase === 'answers' || phase === 'feedback') && (
+            <div className="quiz-answers">
+              {shuffledWords.map(word => {
+                const isSelected = selected === word;
+                const isCorrect = feedback === 'correct' && word === question.correctAnswer;
+                const isWrong = feedback === 'wrong' && word === selected;
+                let animateClass = '';
+                if (isSelected && feedback === 'correct') animateClass = ' animate-scale';
+                if (isSelected && feedback === 'wrong') animateClass = ' animate-shake';
+                return (
+                  <button
+                    key={word}
+                    className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animateClass}`}
+                    onClick={() => handleAnswer(word)}
+                    disabled={!!selected}
+                  >
+                    {word}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {phase === 'done' && (
+            <div style={{ marginTop: 48, fontSize: '2rem', color: '#50bc37', textAlign: 'center' }}>
+              Quiz complete!
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
