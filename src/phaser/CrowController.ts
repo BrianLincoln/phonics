@@ -2,306 +2,190 @@ import Phaser from 'phaser';
 import { Crow } from './Crow';
 
 export class CrowController {
+  private putzBounds?: Phaser.Geom.Rectangle;
+
   private scene: Phaser.Scene;
   private crow: Crow;
-  private putzArea: { w: number; h: number };
-  private margin: number = 60;
-  private centerPadX: number = 180;
-  private centerPadY: number = 120;
-  private crowHeight: number = 200 * 0.5;
-  private walkSpeed: number = 400 * 0.35;
-  private walkAnimTimer: number = 0;
-  private walkFrame: number = 1;
-  private lastDirection: 'left' | 'right' = 'left';
-  private isWalking: boolean = false;
-  private target?: { x: number; y: number };
+
+  private margin = 30;
+  private walkSpeed = 100;
+
+  private walkAnimTimer = 0;
+  private walkFrame: 1 | 2 | 3 = 1;
 
   constructor(scene: Phaser.Scene, crow: Crow) {
     this.scene = scene;
     this.crow = crow;
-    this.putzArea = { w: scene.cameras.main.width, h: scene.cameras.main.height };
   }
+
+  private createPutzBounds() {
+    const cam = this.scene.cameras.main;
+
+    this.putzBounds = new Phaser.Geom.Rectangle(
+      cam.width * 0.7,                  // left edge (halfway)
+      this.margin,                 // top edge (lower portion)
+      cam.width * 0.3 - this.margin,    // width
+      cam.height - this.margin * 2    // height
+    );
+  }
+
 
   startPutzing() {
-    // Start crow off screen at bottom left
-    const w = this.putzArea.w;
-    const h = this.putzArea.h;
-    this.crow.x = -100;
-    this.crow.y = h - 20;
     this.crow.setVisible(true);
     this.crow.setDepth(2);
-    this.crow.setFrame(1);
-    // Always face direction of movement
-    this.crow.setFlipX(true); // right
-    this.crow.setOrigin(1, 1);
-    // Tween to bottom right in a straight line, slower
+    this.walkToRandomPoint();
+  }
+
+  public playIntroThenPutz() {
+    const cam = this.scene.cameras.main;
+
+    // Start off-screen bottom-left
+    this.crow.setVisible(true);
+    this.crow.setDepth(2);
+    this.crow.setFacing('right');
+
+    this.crow.setPosition(-100, cam.height - 20);
+
+    this.startWalking();
+
     this.scene.tweens.add({
       targets: this.crow,
-      x: w - 100,
-      y: h - 20,
-      duration: 2500,
-      ease: 'Linear',
-      onStart: () => {
-        this.crow.setFrame(1);
-        this.crow.setFlipX(true);
-        this.crow.setOrigin(1, 1);
+      x: cam.width - 100,
+      y: cam.height - 20,
+      duration: 3000,
+      ease: 'Sine.easeOut',
+
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
       },
-      onUpdate: (tween, target) => {
-        // Always face direction of movement
-        if (tween.data[0].end > tween.data[0].start) {
-          this.crow.setFlipX(true);
-          this.crow.setOrigin(1, 1);
-        } else {
-          this.crow.setFlipX(false);
-          this.crow.setOrigin(0, 1);
-        }
-        // Animate walking frames
-        this.walkAnimTimer += 16;
-        if (this.walkAnimTimer > 200) {
-          this.walkFrame = this.walkFrame === 3 ? 1 : this.walkFrame + 1;
-          this.crow.setFrame(this.walkFrame);
-          this.walkAnimTimer = 0;
-        }
-      },
+
       onComplete: () => {
         this.crow.setIdle();
-        this._putzPauseAndLoop();
+
+        this.scene.time.delayedCall(3000, () => {
+          this.createPutzBounds(); // ensure bounds exist + drawn
+          this.walkToRandomPoint();
+        });
       },
     });
   }
 
-  // Helper for the putzing loop
-  private _putzPauseAndLoop() {
-    // Pause 3 seconds, then putz for 2 seconds, then repeat
-    this.crow.setIdle();
-    this.scene.time.delayedCall(3000, () => {
-      this._putzInBottomRight(2000, () => {
-        this.scene.time.delayedCall(3000, () => {
-          this._putzInBottomRight(2000, () => {
-            this._putzPauseAndLoop();
-          });
-        });
-      });
+
+  private walkToRandomPoint() {
+    if (!this.putzBounds) {
+      this.createPutzBounds();
+    }
+
+    const b = this.putzBounds!;
+
+    const tx = Phaser.Math.Between(b.left, b.right);
+    const ty = Phaser.Math.Between(b.top, b.bottom);
+
+    const dx = tx - this.crow.x;
+    const dy = ty - this.crow.y;
+    const distance = Math.hypot(dx, dy);
+    const duration = (distance / this.walkSpeed) * 1000;
+
+    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.startWalking();
+
+    this.scene.tweens.add({
+      targets: this.crow,
+      x: tx,
+      y: ty,
+      duration,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => this.advanceWalkAnimation(16),
+      onComplete: () => {
+        this.crow.setIdle();
+        this.scene.time.delayedCall(3000, () => this.walkToRandomPoint());
+      },
     });
   }
 
-  // Putz around a small area in the bottom right for a given duration
-  private _putzInBottomRight(duration: number, onDone: () => void) {
-    const w = this.putzArea.w;
-    const h = this.putzArea.h;
-    const area = {
-      left: w - 180,
-      right: w - 40,
-      top: h - 120,
-      bottom: h - 20,
-    };
-    let elapsed = 0;
-    const moveCrow = () => {
-      if (elapsed >= duration) {
-        this.crow.setIdle();
-        onDone();
-        return;
-      }
-      // Pick a random point in the area
-      const tx = Phaser.Math.Between(area.left, area.right);
-      const ty = Phaser.Math.Between(area.top, area.bottom);
-      // Face direction
-      if (tx > this.crow.x) {
-        this.crow.setFlipX(true);
-        this.crow.setOrigin(1, 1);
-      } else {
-        this.crow.setFlipX(false);
-        this.crow.setOrigin(0, 1);
-      }
-      this.scene.tweens.add({
-        targets: this.crow,
-        x: tx,
-        y: ty,
-        duration: 600,
-        ease: 'Sine.easeInOut',
-        onStart: () => {
-          this.crow.setFrame(1);
-        },
-        onUpdate: (tween, target) => {
-          // Always face direction of movement
-          if (tween.data[0].end > tween.data[0].start) {
-            this.crow.setFlipX(true);
-            this.crow.setOrigin(1, 1);
-          } else {
-            this.crow.setFlipX(false);
-            this.crow.setOrigin(0, 1);
-          }
-          this.walkAnimTimer += 16;
-          if (this.walkAnimTimer > 200) {
-            this.walkFrame = this.walkFrame === 3 ? 1 : this.walkFrame + 1;
-            this.crow.setFrame(this.walkFrame);
-            this.walkAnimTimer = 0;
-          }
-        },
-        onComplete: () => {
-          this.crow.setIdle();
-          elapsed += 600;
-          this.scene.time.delayedCall(120, moveCrow);
-        },
-      });
-    };
-    moveCrow();
+
+  private startWalking() {
+    this.walkFrame = 1;
+    this.walkAnimTimer = 0;
+    this.crow.setFrame(this.walkFrame);
   }
 
-  stopPutzing() {
-    this.isWalking = false;
-  }
+  private advanceWalkAnimation(deltaMs: number) {
+    this.walkAnimTimer += deltaMs;
 
-  setRandomTarget() {
-    const w = this.putzArea.w;
-    const h = this.putzArea.h;
-    let x, y, tries = 0;
-    do {
-      x = Phaser.Math.Between(this.margin, w - this.margin);
-      y = Phaser.Math.Between(this.margin + this.crowHeight, h - this.margin);
-      tries++;
-    } while (
-      Math.abs(x - w / 2) < this.centerPadX &&
-      Math.abs(y - h / 2) < this.centerPadY &&
-      tries < 10
-    );
-    this.target = { x, y };
-    this.isWalking = true;
-  }
-
-  update(delta: number) {
-    if (!this.isWalking || !this.target) return;
-    const speed = this.walkSpeed * (delta / 1000);
-    const dx = this.target.x - this.crow.x;
-    const dy = this.target.y - this.crow.y;
-    if (dx > 0) {
-      if (!this.crow.flipX) {
-        this.crow.setFlipX(true);
-        this.crow.x -= 50;
-        this.crow.setOrigin(1, 1);
-      }
-      this.lastDirection = 'right';
-    } else if (dx < 0) {
-      if (this.crow.flipX) {
-        this.crow.setFlipX(false);
-        this.crow.x += 50;
-        this.crow.setOrigin(0, 1);
-      }
-      this.lastDirection = 'left';
-    }
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 5) {
-      const moveX = (dx / dist) * Math.min(dist, speed);
-      const moveY = (dy / dist) * Math.min(dist, speed);
-      this.crow.x += moveX;
-      this.crow.y += moveY;
-      this.walkAnimTimer += delta;
-      if (this.walkAnimTimer > 150) {
-        this.walkFrame = this.walkFrame === 3 ? 1 : this.walkFrame + 1;
-        this.crow.setFrame(this.walkFrame);
-        this.walkAnimTimer = 0;
-      }
-    } else {
-      this.crow.x = this.target.x;
-      this.crow.y = this.target.y;
-      this.crow.setIdle();
-      this.isWalking = false;
-      if (this.lastDirection === 'right' && !this.crow.flipX) {
-        this.crow.setFlipX(true);
-        this.crow.x -= 50;
-        this.crow.setOrigin(1, 1);
-      } else if (this.lastDirection === 'left' && this.crow.flipX) {
-        this.crow.setFlipX(false);
-        this.crow.x += 50;
-        this.crow.setOrigin(0, 1);
-      }
-      this.scene.time.delayedCall(Phaser.Math.Between(600, 1200), () => {
-        this.setRandomTarget();
-      });
+    if (this.walkAnimTimer >= 150) {
+      this.walkFrame = this.walkFrame === 3 ? 1 : ((this.walkFrame + 1) as 1 | 2 | 3);
+      this.crow.setFrame(this.walkFrame);
+      this.walkAnimTimer = 0;
     }
   }
 
   /**
-   * Walks the crow to the left of the given (x, y), then performs a look left/right sequence,
-   * then calls the provided callback.
+   * Walks the crow to the left of the given word, then idles.
    */
-  public walkToLeftOfWordAndLook(wordX: number, wordY: number, onDone: () => void) {
-    // Target is to the left of the word
-    const crowTargetX = wordX - 100;
-    const crowTargetY = wordY + 80;
-    this.crow.setDepth(2);
+  walkToLeftOfWordAndLook(
+    wordX: number,
+    wordY: number,
+    onDone: () => void
+  ) {
+    const targetX = wordX - 100;
+    const targetY = wordY + 80;
+
+    const dx = targetX - this.crow.x;
+
     this.crow.setVisible(true);
-    this.crow.setFrame(1);
-    // Face the direction of movement
-    if (this.crow.x > crowTargetX) {
-      this.crow.setFlipX(false);
-      this.crow.setOrigin(0, 1);
-    } else {
-      this.crow.setFlipX(true);
-      this.crow.setOrigin(1, 1);
-    }
+    this.crow.setDepth(2);
+    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.startWalking();
+
     this.scene.tweens.add({
       targets: this.crow,
-      x: crowTargetX,
-      y: crowTargetY,
+      x: targetX,
+      y: targetY,
       duration: 900,
       ease: 'Sine.easeInOut',
-      onStart: () => {
-        this.crow.setFrame(1);
-      },
+
       onUpdate: () => {
-        // Animate walking frames
-        this.walkAnimTimer += 16; // approx per frame
-        if (this.walkAnimTimer > 150) {
-          this.walkFrame = this.walkFrame === 3 ? 1 : this.walkFrame + 1;
-          this.crow.setFrame(this.walkFrame);
-          this.walkAnimTimer = 0;
-        }
+        this.advanceWalkAnimation(16);
       },
+
       onComplete: () => {
         this.crow.setIdle();
         onDone();
       },
     });
   }
-
-  // lookLeftRightSequence removed (no longer used)
 
   /**
    * Walks the crow and the word off to the right together.
    */
-  public walkWordOffRight(word: Phaser.GameObjects.Text, onDone: () => void) {
-    // Face right
-    this.crow.setFlipX(true);
-    this.crow.setOrigin(1, 1);
-    this.crow.setFrame(1);
+  walkWordOffRight(
+    word: Phaser.GameObjects.Text,
+    onDone: () => void
+  ) {
+    this.crow.setFacing('right');
+    this.startWalking();
+
     this.scene.tweens.add({
       targets: [this.crow, word],
       x: '+=600',
       duration: 1200,
       ease: 'Quad.easeIn',
-      onStart: () => {
-        this.crow.setFrame(1);
-        this.crow.setFlipX(true);
-        this.crow.setOrigin(1, 1);
-      },
+
       onUpdate: () => {
-        // Ensure crow always faces right during tween
-        this.crow.setFlipX(true);
-        this.crow.setOrigin(1, 1);
-        // Animate walking frames
-        this.walkAnimTimer += 16;
-        if (this.walkAnimTimer > 150) {
-          this.walkFrame = this.walkFrame === 3 ? 1 : this.walkFrame + 1;
-          this.crow.setFrame(this.walkFrame);
-          this.walkAnimTimer = 0;
-        }
+        this.advanceWalkAnimation(16);
       },
+
       onComplete: () => {
         this.crow.setVisible(false);
         word.setVisible(false);
         onDone();
       },
     });
+  }
+
+  stopPutzing() {
+    this.scene.tweens.killTweensOf(this.crow);
+    this.crow.setIdle();
   }
 }

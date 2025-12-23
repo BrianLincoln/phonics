@@ -151,8 +151,6 @@ const QuizView: React.FC = () => {
       <div className="quiz-stacked-layout">
         <div className="phaser-container">
           <PhaserGame
-            width={480}
-            height={320}
             unitName={unitName}
             onSceneReady={scene => { mainSceneRef.current = scene; }}
           />

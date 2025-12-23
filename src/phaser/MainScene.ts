@@ -63,15 +63,7 @@ export class MainScene extends Phaser.Scene {
 
     // Use CrowController for putzing
     this.crowController = new CrowController(this, this.crow);
-    this.crowController.startPutzing();
-  }
-
-  // CrowController handles putzing logic
-
-  update(_time: number, delta: number) {
-    if (this.crowController) {
-      this.crowController.update(delta);
-    }
+    this.crowController.playIntroThenPutz();
   }
 
   // putzCrow removed; handled by update loop
@@ -88,15 +80,7 @@ export class MainScene extends Phaser.Scene {
   crowTakeLetter() {
     if (!this.crow || !this.letterText || !this.crowController) return;
     this.crowTakingLetter = true;
-    // Show debug text
-    // eslint-disable-next-line no-console
-    console.log('Crow is taking the letter!');
-    const debugText = this.add.text(
-      this.cameras.main.centerX,
-      this.cameras.main.centerY + 180,
-      'Crow is taking the letter!',
-      { font: 'bold 40px Arial', color: '#ff0000', backgroundColor: '#fffbe6', align: 'center', padding: { left: 20, right: 20, top: 10, bottom: 10 } }
-    ).setOrigin(0.5).setDepth(1000);
+
     // Stop putzing immediately
     this.crowController.stopPutzing();
     this.letterText.setDepth(1);
@@ -107,7 +91,6 @@ export class MainScene extends Phaser.Scene {
       () => {
         this.crowController.walkWordOffRight(this.letterText!, () => {
           this.crowTakingLetter = false;
-          debugText.destroy();
         });
       }
     );
