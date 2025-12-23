@@ -3,6 +3,32 @@ import { Crow } from './Crow';
 
 export class CrowController {
   /**
+   * Re-enters from the right and calls onDone when finished.
+   */
+  playReEnterFromRightWithCallback(onDone?: () => void) {
+    const cam = this.scene.cameras.main;
+    this.crow.setVisible(true);
+    this.crow.setDepth(2);
+    this.crow.setFacing('left');
+    // Start off-screen right
+    this.crow.setPosition(cam.width + 100, cam.height - 20);
+    this.startWalking();
+    this.scene.tweens.add({
+      targets: this.crow,
+      x: cam.width - 100,
+      y: cam.height - 20,
+      duration: 3000,
+      ease: 'Sine.easeOut',
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
+      },
+      onComplete: () => {
+        this.crow.setIdle();
+        if (onDone) onDone();
+      },
+    });
+  }
+  /**
    * Makes the crow re-enter from the right side of the screen and walk to its idle position.
    */
   public playReEnterFromRight() {

@@ -122,18 +122,36 @@ const QuizView: React.FC = () => {
     setTimeout(() => {
       setSelected(null);
       setFeedback(null);
+      // If we're on the crow-take-letter question, set a special phase to hide answers
+      const isCrowTakeLetter = (questionIdx + 1 === mainSceneRef.current?.constructor?.CROW_TAKE_LETTER_QUESTION);
       if (isCorrect) {
-        // Notify Phaser MainScene only after correct answer
         if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
-          // Wait for crow hop animation to finish before advancing
+          // Wait for crow hop or crow-take-letter animation before advancing
           mainSceneRef.current.onQuestionAnswered(true, () => {
             setAttempts(0); // reset for next question
             setProgressRecorded(false);
-            if (questionIdx < quiz.questions.length - 1) {
-              setQuestionIdx(q => q + 1);
+            if (!isCrowTakeLetter) {
+              if (questionIdx < quiz.questions.length - 1) {
+                setQuestionIdx(q => q + 1);
+              } else {
+                setPhase('done');
+                setTimeout(() => navigate('/'), 1200);
+              }
             } else {
-              setPhase('done');
-              setTimeout(() => navigate('/'), 1200);
+              // For crow-take-letter question, hide answers until callback
+              setPhase('crow-taking-letter');
+              // The callback from crowTakeLetter should advance the question
+              // So we need a way for Phaser to notify React to advance
+              // We'll use a ref to store a function to call after crow re-enters
+              mainSceneRef.current._afterCrowReEnter = () => {
+                if (questionIdx < quiz.questions.length - 1) {
+                  setQuestionIdx(q => q + 1);
+                  setPhase('answers');
+                } else {
+                  setPhase('done');
+                  setTimeout(() => navigate('/'), 1200);
+                }
+              };
             }
           });
         }
@@ -192,6 +210,9 @@ const QuizView: React.FC = () => {
                 );
               })}
             </div>
+          )}
+          {phase === 'crow-taking-letter' && (
+            <div className="quiz-answers-fixed" style={{ opacity: 0, pointerEvents: 'none' }} />
           )}
           {phase === 'done' && (
             <div style={{ marginTop: 48, fontSize: '2rem', color: '#50bc37', textAlign: 'center' }}>

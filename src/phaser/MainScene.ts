@@ -97,7 +97,15 @@ export class MainScene extends Phaser.Scene {
     }
     if (this.questionCount === MainScene.CROW_TAKE_LETTER_QUESTION && this.crowActive) {
       this.crowActive = false;
-      this.crowTakeLetter();
+      // If called with explicit params, pass onDone to crowTakeLetter
+      if (typeof arguments[0] === 'boolean') {
+        const onDone = arguments[1];
+        this.crowTakeLetter(onDone);
+      } else if (typeof arguments[0] === 'object' && arguments[0]?.onDone) {
+        this.crowTakeLetter(arguments[0].onDone);
+      } else {
+        this.crowTakeLetter();
+      }
     }
   }
 
@@ -119,13 +127,18 @@ export class MainScene extends Phaser.Scene {
       () => {
         this.crowController.walkWordOffRight(this.letterText!, () => {
           this.crowTakingLetter = false;
+          // Advance to next question immediately after letter is taken
+          if (afterCrowDone) afterCrowDone();
+          if (this._afterCrowReEnter) {
+            this._afterCrowReEnter();
+            this._afterCrowReEnter = null;
+          }
           // Make crow re-enter from the right after taking the letter
           setTimeout(() => {
             if (this.crowController) {
-              this.crowController.playReEnterFromRight();
+              this.crowController.playReEnterFromRightWithCallback();
             }
-            if (afterCrowDone) afterCrowDone();
-          }, 600); // delay for effect
+          }, 600); // delay for effect before re-enter
         });
       }
     );
