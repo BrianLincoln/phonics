@@ -3,6 +3,31 @@ import { Crow } from './Crow';
 
 export class CrowController {
   /**
+   * Makes the crow re-enter from the right side of the screen and walk to its idle position.
+   */
+  public playReEnterFromRight() {
+    const cam = this.scene.cameras.main;
+    this.crow.setVisible(true);
+    this.crow.setDepth(2);
+    this.crow.setFacing('left');
+    // Start off-screen right
+    this.crow.setPosition(cam.width + 100, cam.height - 20);
+    this.startWalking();
+    this.scene.tweens.add({
+      targets: this.crow,
+      x: cam.width - 100,
+      y: cam.height - 20,
+      duration: 3000,
+      ease: 'Sine.easeOut',
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
+      },
+      onComplete: () => {
+        this.crow.setIdle();
+      },
+    });
+  }
+  /**
    * Makes the crow do two quick hops animation.
    */
   hop(onDone?: () => void) {
@@ -60,13 +85,15 @@ export class CrowController {
   }
 
 
+  // Deprecated: startPutzing is no longer called, but code is kept for future use
   startPutzing() {
     this.crow.setVisible(true);
     this.crow.setDepth(2);
     this.walkToRandomPoint();
   }
 
-  public playIntroThenPutz() {
+  // Renamed: playIntroWalkIn (no putzing after walk-in)
+  public playIntroWalkIn() {
     const cam = this.scene.cameras.main;
 
     // Start off-screen bottom-left
@@ -91,11 +118,7 @@ export class CrowController {
 
       onComplete: () => {
         this.crow.setIdle();
-
-        this.scene.time.delayedCall(3000, () => {
-          this.createPutzBounds(); // ensure bounds exist + drawn
-          this.walkToRandomPoint();
-        });
+        // No putzing after walk-in
       },
     });
   }
