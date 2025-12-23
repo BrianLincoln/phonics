@@ -8,7 +8,7 @@ export class CrowController {
   playReEnterFromRightWithCallback(onDone?: () => void) {
     const cam = this.scene.cameras.main;
     this.crow.setVisible(true);
-    this.crow.setDepth(2);
+    this.crow.setDepth(9);
     this.crow.setFacing('left');
     // Start off-screen right
     this.crow.setPosition(cam.width + 100, cam.height - 20);
@@ -34,7 +34,7 @@ export class CrowController {
   public playReEnterFromRight() {
     const cam = this.scene.cameras.main;
     this.crow.setVisible(true);
-    this.crow.setDepth(2);
+    this.crow.setDepth(9);
     this.crow.setFacing('left');
     // Start off-screen right
     this.crow.setPosition(cam.width + 100, cam.height - 20);
@@ -114,7 +114,7 @@ export class CrowController {
   // Deprecated: startPutzing is no longer called, but code is kept for future use
   startPutzing() {
     this.crow.setVisible(true);
-    this.crow.setDepth(2);
+    this.crow.setDepth(9);
     this.walkToRandomPoint();
   }
 
@@ -124,7 +124,7 @@ export class CrowController {
 
     // Start off-screen bottom-left
     this.crow.setVisible(true);
-    this.crow.setDepth(2);
+    this.crow.setDepth(9);
     this.crow.setFacing('right');
 
     this.crow.setPosition(-100, cam.height - 20);
@@ -213,7 +213,7 @@ export class CrowController {
     const dx = targetX - this.crow.x;
 
     this.crow.setVisible(true);
-    this.crow.setDepth(2);
+    this.crow.setDepth(9);
     this.crow.setFacing(dx >= 0 ? 'right' : 'left');
     this.startWalking();
 

@@ -169,6 +169,25 @@ export class MainScene extends Phaser.Scene {
     hills.fillEllipse(w * 0.55, h * 0.8, 140, 50);
     hills.fillEllipse(w * 0.8, h * 0.9, 120, 40);
 
+
+    // Add a "sign" behind the letter text
+    const signWidth = 340;
+    const signHeight = 200;
+    const signX = this.cameras.main.centerX;
+    const signY = this.cameras.main.centerY + 10;
+    const sign = this.add.graphics();
+    sign.setDepth(6); // in front of clouds, behind crow and text
+    // Draw sign background (rounded rectangle)
+    sign.fillStyle(0xf7e6b2, 1); // light wood color
+    sign.fillRoundedRect(signX - signWidth / 2, signY - signHeight / 2, signWidth, signHeight, 32);
+    // Draw sign border
+    sign.lineStyle(6, 0x9e7b4f, 1); // darker brown
+    sign.strokeRoundedRect(signX - signWidth / 2, signY - signHeight / 2, signWidth, signHeight, 32);
+    // Draw sign posts
+    sign.fillStyle(0x9e7b4f, 1);
+    sign.fillRect(signX - signWidth / 2 + 30, signY + signHeight / 2 - 10, 18, 60);
+    sign.fillRect(signX + signWidth / 2 - 48, signY + signHeight / 2 - 10, 18, 60);
+
     // Add crow, scaled down and behind the letter
     this.crow = new Crow({
       scene: this,
@@ -176,10 +195,10 @@ export class MainScene extends Phaser.Scene {
       y: this.cameras.main.centerY + 80,
     });
     this.crow.setScale(0.5);
-    this.crow.setDepth(0);
+    this.crow.setDepth(9); // in front of sign (6), behind letter (10)
     this.crow.setIdle();
 
-    // Add letter text (after clouds, in front)
+    // Add letter text (after clouds and sign, in front)
     this.letterText = this.add.text(
       this.cameras.main.centerX,
       this.cameras.main.centerY,
@@ -191,7 +210,7 @@ export class MainScene extends Phaser.Scene {
         wordWrap: { width: this.cameras.main.width - 40 },
       }
     ).setOrigin(0.5);
-    this.letterText.setDepth(10); // ensure in front of clouds
+    this.letterText.setDepth(10); // ensure in front of sign and clouds
 
     this.crowController = new CrowController(this, this.crow);
     this.crowController.playIntroWalkIn();
