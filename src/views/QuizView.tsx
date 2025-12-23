@@ -140,7 +140,7 @@ const QuizView: React.FC = () => {
         <button className="quiz-back" onClick={() => navigate('/')}>⬅ Back</button>
         <div className="quiz-progress-score">{recentConfidence}%</div>
       </div>
-      <div className="responsive-quiz-layout">
+      <div className="quiz-stacked-layout">
         <div className="phaser-container">
           <PhaserGame width={480} height={320} unitName={unitName} />
         </div>
@@ -159,7 +159,7 @@ const QuizView: React.FC = () => {
             <></>
           )}
           {(phase === 'answers' || phase === 'feedback') && (
-            <div className="quiz-answers">
+            <div className="quiz-answers-fixed">
               {shuffledWords.map(word => {
                 const isSelected = selected === word;
                 const isCorrect = feedback === 'correct' && word === question.correctAnswer;
