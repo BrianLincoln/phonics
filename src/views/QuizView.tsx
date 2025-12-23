@@ -127,7 +127,7 @@ const QuizView: React.FC = () => {
       if (isCorrect) {
         if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
           // Wait for crow hop or crow-take-letter animation before advancing
-          mainSceneRef.current.onQuestionAnswered(true, () => {
+          mainSceneRef.current.onQuestionAnswered(true, async () => {
             setAttempts(0); // reset for next question
             setProgressRecorded(false);
             if (!isCrowTakeLetter) {
@@ -135,6 +135,7 @@ const QuizView: React.FC = () => {
                 setQuestionIdx(q => q + 1);
               } else {
                 setPhase('done');
+                await playAudio('/audio/system/success.wav');
                 setTimeout(() => navigate('/'), 1200);
               }
             } else {
@@ -143,12 +144,13 @@ const QuizView: React.FC = () => {
               // The callback from crowTakeLetter should advance the question
               // So we need a way for Phaser to notify React to advance
               // We'll use a ref to store a function to call after crow re-enters
-              mainSceneRef.current._afterCrowReEnter = () => {
+              mainSceneRef.current._afterCrowReEnter = async () => {
                 if (questionIdx < quiz.questions.length - 1) {
                   setQuestionIdx(q => q + 1);
                   setPhase('answers');
                 } else {
                   setPhase('done');
+                  await playAudio('/audio/system/success.wav');
                   setTimeout(() => navigate('/'), 1200);
                 }
               };
