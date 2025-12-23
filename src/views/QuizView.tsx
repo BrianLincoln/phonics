@@ -7,6 +7,7 @@ import { updatePhonicsUnitProgress, getPhonicsProgress, getRecentConfidence } fr
 import './QuizView.css';
 import '../styles/phaser.css';
 import { PhaserGame } from '../components/PhaserGame';
+import { useRef } from 'react';
 
 type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done';
 
@@ -41,6 +42,9 @@ const QuizView: React.FC = () => {
   const progress = getPhonicsProgress();
   const unitProgress = progress.phonicsUnits[unitId];
   const recentConfidence = unitProgress ? getRecentConfidence(unitProgress) : 0;
+
+  // Ref to MainScene instance
+  const mainSceneRef = useRef<any>(null);
 
   // Shuffle utility
   function shuffle<T>(array: T[]): T[] {
@@ -104,6 +108,10 @@ const QuizView: React.FC = () => {
     setAttempts(a => a + 1);
     const isCorrect = word === question.correctAnswer;
     setFeedback(isCorrect ? 'correct' : 'wrong');
+    // Notify Phaser MainScene after each answer
+    if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
+      mainSceneRef.current.onQuestionAnswered();
+    }
     // Record recent result only on first attempt
     if (!progressRecorded && attempts === 0) {
       const unitId = quiz.unit;
@@ -142,7 +150,12 @@ const QuizView: React.FC = () => {
       </div>
       <div className="quiz-stacked-layout">
         <div className="phaser-container">
-          <PhaserGame width={480} height={320} unitName={unitName} />
+          <PhaserGame
+            width={480}
+            height={320}
+            unitName={unitName}
+            onSceneReady={scene => { mainSceneRef.current = scene; }}
+          />
         </div>
         <div className="quiz-content">
           {/* <h2 className="quiz-title">{unitName}</h2> */}
