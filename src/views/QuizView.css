@@ -75,7 +75,7 @@
   z-index: 100;
 }
 .quiz-answer {
-   appearance: none;
+  appearance: none;
   border: 3px solid #2c3e50;
   border-radius: 18px;
   background: #ffffff;
@@ -103,12 +103,12 @@
   outline: none;
 }
 .quiz-answer.correct {
-  background: #44d424;
+  background: #5fc149;
   color: #fff;
   border-color: #2c5aa0;
 }
 .quiz-answer.wrong {
-  background: #c81e1e;
+  background: #c22727;
   color: #fff;
   border-color: #a00;
 }
@@ -145,6 +145,5 @@
   z-index: 1;
 }
 .quiz-answer:disabled {
-  opacity: 0.7;
   cursor: not-allowed;
 }
