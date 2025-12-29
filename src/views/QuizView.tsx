@@ -63,7 +63,7 @@ const QuizView: React.FC = () => {
   useEffect(() => {
     setShuffleKey(k => k + 1);
   }, [questionIdx]);
-  const shuffledWords = useMemo(() => shuffle(question.words), [questionIdx, shuffleKey]);
+  const shuffledOptions = useMemo(() => shuffle(question.options), [questionIdx, shuffleKey]);
 
   const playAudio = usePlayAudio();
   // Orchestrate the quiz sequence
@@ -228,24 +228,39 @@ const QuizView: React.FC = () => {
           )}
           {(phase === 'answers' || phase === 'feedback') && (
             <div className="quiz-answers-fixed">
-              {shuffledWords.map(word => {
-                const isSelected = selected === word;
-                const isCorrect = feedback === 'correct' && word === question.correctAnswer;
-                const isWrong = feedback === 'wrong' && word === selected;
-                let animateClass = '';
-                if (isSelected && feedback === 'correct') animateClass = ' animate-scale';
-                if (isSelected && feedback === 'wrong') animateClass = ' animate-shake';
-                return (
-                  <button
-                    key={word}
-                    className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animateClass}`}
-                    onClick={() => handleAnswer(word)}
-                    disabled={!!selected}
-                  >
-                    {word}
-                  </button>
-                );
-              })}
+              {(() => {
+                switch (question.questionType) {
+                  case 'multiple-choice-word-start':
+                  case 'multiple-choice-phoneme':
+                    return shuffledOptions.map(option => {
+                      const isSelected = selected === option;
+                      const isCorrect = feedback === 'correct' && option === question.correctAnswer;
+                      const isWrong = feedback === 'wrong' && option === selected;
+                      let animateClass = '';
+                      if (isSelected && feedback === 'correct') animateClass = ' animate-scale';
+                      if (isSelected && feedback === 'wrong') animateClass = ' animate-shake';
+                      return (
+                        <button
+                          key={option}
+                          className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animateClass}`}
+                          onClick={() => handleAnswer(option)}
+                          disabled={!!selected}
+                        >
+                          {option}
+                        </button>
+                      );
+                    });
+                  case 'leaf-phoneme':
+                    // Placeholder for graphical/interactive leaf quiz
+                    return (
+                      <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
+                        <em>Leaf-phoneme quiz type coming soon!</em>
+                      </div>
+                    );
+                  default:
+                    return null;
+                }
+              })()}
             </div>
           )}
           {phase === 'crow-taking-letter' && (
