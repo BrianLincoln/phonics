@@ -45,8 +45,8 @@ const QuizView: React.FC = () => {
   const unitProgress = progress.phonicsUnits[unitId];
   const recentConfidence = unitProgress ? getRecentConfidence(unitProgress) : 0;
 
-  // Ref to MainScene instance
-  const mainSceneRef = useRef<any>(null);
+  // Ref to Phaser scene instance (MultipleChoice or AntLeaf)
+  const sceneRef = useRef<any>(null);
 
   // Shuffle utility
   function shuffle<T>(array: T[]): T[] {
@@ -63,7 +63,13 @@ const QuizView: React.FC = () => {
   useEffect(() => {
     setShuffleKey(k => k + 1);
   }, [questionIdx]);
-  const shuffledOptions = useMemo(() => shuffle(question.options), [questionIdx, shuffleKey]);
+  // Use type guard to access options safely
+  const shuffledOptions = useMemo(() => {
+    if ('options' in question && Array.isArray(question.options)) {
+      return shuffle(question.options);
+    }
+    return [];
+  }, [question, questionIdx, shuffleKey]);
 
   const playAudio = usePlayAudio();
   // Orchestrate the quiz sequence
@@ -108,7 +114,12 @@ const QuizView: React.FC = () => {
     setSelected(word);
     setPhase('feedback');
     setAttempts(a => a + 1);
-    const isCorrect = word === question.correctAnswer;
+    let isCorrect = false;
+    if (question.questionType === 'multiple-choice-word-start' || question.questionType === 'multiple-choice-phoneme') {
+      isCorrect = word === question.correctAnswer;
+    } else if (question.questionType === 'leaf-phoneme') {
+      isCorrect = word === question.targetLetter;
+    }
     setFeedback(isCorrect ? 'correct' : 'wrong');
     // Record recent result only on first attempt
     if (!progressRecorded && attempts === 0) {
@@ -118,85 +129,48 @@ const QuizView: React.FC = () => {
     }
     // Play feedback audio
     const feedbackAudio = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
-    try {
-      await playAudio(feedbackAudio);
-    } catch { }
-    setTimeout(() => {
-      setSelected(null);
-      setFeedback(null);
-      // If we're on the crow-take-letter question, set a special phase to hide answers
-      const isCrowTakeLetter = (questionIdx + 1 === mainSceneRef.current?.constructor?.CROW_TAKE_LETTER_QUESTION);
-      if (isCorrect) {
-        if (mainSceneRef.current && typeof mainSceneRef.current.onQuestionAnswered === 'function') {
-          // Wait for crow hop or crow-take-letter animation before advancing
-          mainSceneRef.current.onQuestionAnswered(true, async () => {
-            setAttempts(0); // reset for next question
-            setProgressRecorded(false);
-            if (!isCrowTakeLetter) {
-              if (questionIdx < quiz.questions.length - 1) {
-                setQuestionIdx(q => q + 1);
-              } else {
-                setPhase('done');
-                // Crow pushes text back on sign while success.wav plays, then delay, then menu
-                const crowReturnPromise = new Promise<void>(resolve => {
-                  if (mainSceneRef.current && typeof mainSceneRef.current.crowReturnWordAfterQuiz === 'function') {
-                    mainSceneRef.current.crowReturnWordAfterQuiz(() => resolve());
-                  } else {
-                    resolve();
-                  }
-                });
-                const audioPromise = playAudio('/audio/system/success.wav', true);
-                await Promise.all([crowReturnPromise, audioPromise]);
-                await new Promise(res => setTimeout(res, 2000));
-                // Fade out before navigating away
-                setFadeOut(true);
-                // Stop crow hopping before navigating away
-                if (mainSceneRef.current && typeof mainSceneRef.current.crowController?.stopHoppingInPlace === 'function') {
-                  mainSceneRef.current.crowController.stopHoppingInPlace();
-                }
-                setTimeout(() => navigate('/'), 600);
-              }
-            } else {
-              // For crow-take-letter question, hide answers until callback
-              setPhase('crow-taking-letter');
-              // The callback from crowTakeLetter should advance the question
-              // So we need a way for Phaser to notify React to advance
-              // We'll use a ref to store a function to call after crow re-enters
-              mainSceneRef.current._afterCrowReEnter = async () => {
-                if (questionIdx < quiz.questions.length - 1) {
-                  setQuestionIdx(q => q + 1);
-                  setPhase('answers');
-                } else {
-                  setPhase('done');
-                  // Crow pushes text back on sign while success.wav plays, then delay, then menu
-                  const crowReturnPromise = new Promise<void>(resolve => {
-                    if (mainSceneRef.current && typeof mainSceneRef.current.crowReturnWordAfterQuiz === 'function') {
-                      mainSceneRef.current.crowReturnWordAfterQuiz(() => resolve());
-                    } else {
-                      resolve();
-                    }
-                  });
-                  const audioPromise = playAudio('/audio/system/success.wav', true);
-                  await Promise.all([crowReturnPromise, audioPromise]);
-                  await new Promise(res => setTimeout(res, 2000));
-                  // Fade out before navigating away
-                  setFadeOut(true);
-                  // Stop crow hopping before navigating away
-                  if (mainSceneRef.current && typeof mainSceneRef.current.crowController?.stopHoppingInPlace === 'function') {
-                    mainSceneRef.current.crowController.stopHoppingInPlace();
-                  }
-                  setTimeout(() => navigate('/'), 600);
-                }
-              };
-            }
-          });
+    await playAudio(feedbackAudio, true).catch(() => { });
+    // Optionally, add a delay before moving to next question or phase
+    if (isCorrect) {
+      setTimeout(() => {
+        if (questionIdx < quiz.questions.length - 1) {
+          setQuestionIdx(q => q + 1);
+          setSelected(null);
+          setFeedback(null);
+          setAttempts(0);
+          setProgressRecorded(false);
+        } else {
+          setPhase('done');
         }
-      } else {
+      }, 1000);
+    } else {
+      setTimeout(() => {
         setPhase('answers');
-        setShuffleKey(k => k + 1); // re-shuffle on wrong answer
-      }
-    }, 400);
+        setSelected(null);
+        setFeedback(null);
+      }, 1000);
+    }
   };
+
+  // Determine sceneType based on question.questionType
+  let sceneType: 'multiple-choice' | 'ant-leaf';
+  switch (question.questionType) {
+    case 'leaf-phoneme':
+      sceneType = 'ant-leaf';
+      break;
+    case 'multiple-choice-word-start':
+    case 'multiple-choice-phoneme':
+    default:
+      sceneType = 'multiple-choice';
+      break;
+  }
+  // Runtime assertion: never allow AntLeafScene with wrong question type
+  if (sceneType === 'ant-leaf' && question.questionType !== 'leaf-phoneme') {
+    throw new Error('sceneType ant-leaf requires questionType leaf-phoneme');
+  }
+  if (sceneType === 'multiple-choice' && question.questionType === 'leaf-phoneme') {
+    throw new Error('sceneType multiple-choice cannot be used with questionType leaf-phoneme');
+  }
 
   return (
     <div className="quiz-root">
@@ -209,8 +183,10 @@ const QuizView: React.FC = () => {
         <div className="phaser-container">
           <PhaserGame
             unitName={unitName}
-            onSceneReady={scene => { mainSceneRef.current = scene; }}
-            sceneType={question.questionType === 'leaf-phoneme' ? 'ant-leaf' : 'main'}
+            onSceneReady={scene => { sceneRef.current = scene; }}
+            sceneType={sceneType}
+            question={question}
+            playAudio={playAudio}
           />
         </div>
         <div className="quiz-content">
@@ -242,12 +218,12 @@ const QuizView: React.FC = () => {
                       if (isSelected && feedback === 'wrong') animateClass = ' animate-shake';
                       return (
                         <button
-                          key={option}
+                          key={String(option)}
                           className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animateClass}`}
-                          onClick={() => handleAnswer(option)}
+                          onClick={() => handleAnswer(String(option))}
                           disabled={!!selected}
                         >
-                          {option}
+                          {String(option)}
                         </button>
                       );
                     });

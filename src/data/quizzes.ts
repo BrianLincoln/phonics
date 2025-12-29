@@ -21,19 +21,39 @@ export const questionTypeToSkills: Record<QuestionType, Skill[]> = {
 };
 
 
-export interface QuizQuestion {
+
+// Discriminated union for question types
+interface BaseQuestion {
   id: string;
+  questionType: QuestionType;
+  skills: Skill[];
+}
+
+export interface LeafPhonemeQuestion extends BaseQuestion {
+  questionType: typeof QuestionType.LEAF_PHONEME;
+  targetLetter: string; // always required for this type
+  phonemeFile: string;
+  promptFile: string;
+}
+
+export interface MultipleChoiceWordStartQuestion extends BaseQuestion {
+  questionType: typeof QuestionType.MULTIPLE_CHOICE_WORD_START;
   options: string[];
   correctAnswer: string;
   phonemeFile: string;
   promptFile: string;
-  hideLetter?: boolean; // for MC phoneme/word
-  questionType: QuestionType;
-  skills: Skill[];
-  // For leaf-phoneme type, you may add more properties as needed, e.g.:
-  targetLetter?: string;
-  leafOptions?: string[];
 }
+
+export interface MultipleChoicePhonemeQuestion extends BaseQuestion {
+  questionType: typeof QuestionType.MULTIPLE_CHOICE_PHONEME;
+  options: string[];
+  correctAnswer: string;
+  phonemeFile: string;
+  promptFile: string;
+  hideLetter?: boolean;
+}
+
+export type QuizQuestion = LeafPhonemeQuestion | MultipleChoiceWordStartQuestion | MultipleChoicePhonemeQuestion;
 
 
 export interface Quiz {
@@ -140,8 +160,6 @@ export const quizzes: Quiz[] = [
     questions: [
       {
         id: 'antLeaf1',
-        options: ['c', 'a', 't', 'm'],
-        correctAnswer: 'c',
         phonemeFile: '/audio/phonics-units/c-sound.wav',
         // Updated prompt to reflect ants carrying leaves
         promptFile: '/audio/prompts/which-ant-carrying-a-leaf-has-the-sound.wav',
@@ -150,6 +168,5 @@ export const quizzes: Quiz[] = [
         targetLetter: 'c',
       },
     ],
-    showLetterIntro: false,
   },
 ];

@@ -1,4 +1,3 @@
-
 import Phaser from 'phaser';
 import { Crow } from './Crow';
 import { CrowController } from './CrowController';
@@ -6,7 +5,7 @@ import { CrowController } from './CrowController';
 const CROW_WALK_SPEED = 400;
 const CROW_FLIP_OFFSET = 50;
 
-export class MainScene extends Phaser.Scene {
+export class MultipleChoiceScene extends Phaser.Scene {
   /**
    * Used by React to advance the question after crow re-enters (set as a function ref)
    */
@@ -15,7 +14,7 @@ export class MainScene extends Phaser.Scene {
   private unitName: string = '';
 
   constructor() {
-    super('MainScene');
+    super('MultipleChoiceScene');
   }
 
   preload() {
@@ -24,13 +23,8 @@ export class MainScene extends Phaser.Scene {
       frameWidth: 200, // match deprecated working version
       frameHeight: 200,
     });
-    // Load ant sprite (3 frames, 100x100px)
-    this.load.spritesheet('ant', '/src/assets/ant_sprite.png', {
-      frameWidth: 100,
-      frameHeight: 100,
-    });
   }
-  marchingAnts: Phaser.GameObjects.Sprite[] = [];
+
 
 
   crow?: Crow;
@@ -44,7 +38,7 @@ export class MainScene extends Phaser.Scene {
   crowWalkFrame: number = 1;
   crowLastDirection: 'left' | 'right' = 'left';
 
-  create() {
+  create(data?: { unitName?: string; question?: any }) {
     // --- Simple landscape background ---
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
@@ -157,7 +151,8 @@ export class MainScene extends Phaser.Scene {
         });
       }
     });
-    this.unitName = (this.constructor as any).unitName || '';
+    // Set unitName from data, fallback to static if needed
+    this.unitName = (data && data.unitName) || (this.constructor as any).unitName || '';
     this.cameras.main.setBackgroundColor('#87ceeb'); // sky blue
     this.cameras.main.setRoundPixels(true);
 
@@ -206,10 +201,12 @@ export class MainScene extends Phaser.Scene {
     this.crow.setIdle();
 
     // Add letter text (after clouds and sign, in front)
+    // Determine what to show on the sign: show the current letter/word if available, else unitName
+    let signText = this.unitName;
     this.letterText = this.add.text(
       this.cameras.main.centerX,
       this.cameras.main.centerY,
-      this.unitName || 'Phaser Ready',
+      signText,
       {
         font: '160px Arial',
         color: '#1e1e2f',
@@ -222,72 +219,20 @@ export class MainScene extends Phaser.Scene {
     this.crowController = new CrowController(this, this.crow);
     this.crowController.playIntroWalkIn();
 
-    // --- Marching Ants ---
-    // Endless, memory-friendly marching ants
-    const antSpacing = 90;
-    const antY = h * 0.6 + 40;
-    const antStartX = -120;
-    const antEndX = w + 120;
-    // Calculate how many ants are needed to fill the screen plus buffer
-    const antCount = Math.ceil((w + 2 * Math.abs(antStartX)) / antSpacing) + 2;
-    if (!this.anims.exists('ant-walk')) {
-      this.anims.create({
-        key: 'ant-walk',
-        frames: this.anims.generateFrameNumbers('ant', { start: 0, end: 2 }),
-        frameRate: 8,
-        repeat: -1,
-      });
-    }
-    this.marchingAnts = [];
-    for (let i = 0; i < antCount; i++) {
-      const ant = this.add.sprite(
-        antStartX + i * antSpacing,
-        antY,
-        'ant',
-        0
-      );
-      ant.setScale(0.7);
-      ant.setDepth(7);
-      ant.play('ant-walk');
-      this.marchingAnts.push(ant);
-    }
+
   }
   update(time: number, delta: number) {
-    // Marching ants movement (guaranteed endless, always spaced)
-    if (this.marchingAnts && this.marchingAnts.length > 0) {
-      const w = this.cameras.main.width;
-      const antSpacing = 90;
-      const antSpeed = 400; // px/sec (TEST: super fast, revert to 60 for production)
-      const antStartX = -120;
-      const antEndX = w + 120;
-      // Move all ants
-      for (let i = 0; i < this.marchingAnts.length; i++) {
-        this.marchingAnts[i].x += (antSpeed * delta) / 1000;
-      }
-      // Sort ants by x so we always know the leftmost
-      this.marchingAnts.sort((a, b) => a.x - b.x);
-      // Wrap ants that have gone past the end, and keep spacing
-      let leftmostX = this.marchingAnts[0].x;
-      for (let i = 0; i < this.marchingAnts.length; i++) {
-        if (this.marchingAnts[i].x > antEndX) {
-          // Place exactly one antSpacing before the leftmost
-          this.marchingAnts[i].x = leftmostX - antSpacing;
-          // Update leftmostX for next wrap
-          leftmostX = this.marchingAnts[i].x;
-        }
-      }
-    }
     // Call crow update if needed
     if (super.update) super.update(time, delta);
   }
 
   /**
-   * Called by React: onQuestionAnswered(isCorrect: boolean, onDone?: () => void)
-   */
+ * Called by React: onQuestionAnswered(isCorrect: boolean, onDone?: () => void)
+ */
   onQuestionAnswered(isCorrect: boolean, onDone?: () => void) {
     this.questionCount++;
     // Only hop for correct answer, except on the crow-take-letter question
-    if (isCorrect && this.questionCount !== MainScene.CROW_TAKE_LETTER_QUESTION) {
+    if (isCorrect && this.questionCount !== MultipleChoiceScene.CROW_TAKE_LETTER_QUESTION) {
       if (this.crowController) {
         this.crowController.hop(onDone);
       } else if (onDone) {
@@ -296,7 +241,7 @@ export class MainScene extends Phaser.Scene {
     } else if (onDone) {
       onDone();
     }
-    if (this.questionCount === MainScene.CROW_TAKE_LETTER_QUESTION && this.crowActive) {
+    if (this.questionCount === MultipleChoiceScene.CROW_TAKE_LETTER_QUESTION && this.crowActive) {
       this.crowActive = false;
       this.crowTakeLetter(onDone);
     }

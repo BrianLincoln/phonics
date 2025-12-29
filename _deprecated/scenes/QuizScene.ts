@@ -311,7 +311,7 @@ export class QuizScene extends Phaser.Scene {
     const isCorrect = selected === correct;
     // Update phonics progress for this quiz's unit
     if (this.quiz && this.quiz.unit) {
-      updatePhonicsUnitProgress(this.quiz.unit, isCorrect);
+      updatePhonicsUnitProgress(this.quiz.unit, isCorrect, isCorrect); // Assuming first try is same as isCorrect here
     }
     // Disable all button input
     this.wordButtons.forEach(btn => btn.hit.disableInteractive());

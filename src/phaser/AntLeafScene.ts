@@ -40,45 +40,83 @@ export function createLeafTexture(scene: Phaser.Scene): void {
 // Example usage (inside a Phaser.Scene):
 // createLeafTexture(this);
 // this.add.image(x, y, 'leaf');
+
+
 import Phaser from 'phaser';
+import { playQuizAudioSequence } from '../helpers/quizAudioOrchestrator';
+import { QuizQuestion } from '../data/quizzes';
+
 
 export class AntLeafScene extends Phaser.Scene {
   marchingAnts: Phaser.GameObjects.Container[] = [];
   antLeafGroups: Phaser.GameObjects.Container[] = [];
-  frameWidth = 100;
-  antSpacing = 100;
-  antStartX = this.frameWidth - this.antSpacing; // start just off left edge
-  antEndX = this.antSpacing
-  antSpeed = 60;
+  frameWidth: number = 100;
+  antSpacing: number = 100;
+  antStartX: number = 0;
+  antEndX: number = 0;
+  antSpeed: number = 60;
+  targetLetter: string = '';
+  distractorLetters: string[] = [];
+  sinceLastCorrect: number = 0;
+  promptFile: string = '';
+  phonemeFile: string = '';
+  playAudio!: (src: string, waitForEnd?: boolean) => Promise<any>;
+  unitName?: string;
 
   constructor() {
     super('AntLeafScene');
   }
 
   preload() {
-    this.load.spritesheet('ant', '/src/assets/ant_sprite.png', {
-      frameWidth: this.frameWidth,
-      frameHeight: 100,
-    });
-    // Load the leaf image (single 300x300 PNG)
-    this.load.image('leaf', '/src/assets/leaf.png');
+    // Load ant sprite (3 frames, 100x100px) only if not already loaded
+    if (!this.textures.exists('ant')) {
+      this.load.spritesheet('ant', '/src/assets/ant_sprite.png', {
+        frameWidth: 100,
+        frameHeight: 100,
+      });
+    }
+    // Load leaf image only if not already loaded
+    if (!this.textures.exists('leaf')) {
+      this.load.image('leaf', '/src/assets/leaf.png');
+    }
   }
 
-  create() {
+  create(data: {
+    question: QuizQuestion;
+    playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
+    unitName?: string;
+  }) {
+    // Validate and extract ant-leaf question data
+    const { question, playAudio, unitName } = data;
+    if (!question || question.questionType !== 'leaf-phoneme') {
+      throw new Error('AntLeafScene requires a question of type leaf-phoneme');
+    }
+    // Now TypeScript knows this is a LeafPhonemeQuestion
+    this.targetLetter = question.targetLetter;
+    if (!this.targetLetter || this.targetLetter.length !== 1) {
+      throw new Error('AntLeafScene requires a valid targetLetter');
+    }
+    this.promptFile = question.promptFile || '';
+    this.phonemeFile = question.phonemeFile || '';
+    this.playAudio = playAudio;
+    this.unitName = unitName;
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
-    this.cameras.main.setBackgroundColor('#e0f7fa'); // light blue, different from MainScene
+    this.cameras.main.setBackgroundColor('#e0f7fa');
     this.cameras.main.setRoundPixels(true);
 
-    // --- Ants Carrying Leaves with Letters ---
-    // Example options for demo; replace with quiz data as needed
-    const options = ['c', 'a', 't', 'm'];
+    // Use distractorLetters from question if present, else default
+    if ('distractorLetters' in question && Array.isArray((question as any).distractorLetters) && (question as any).distractorLetters.length > 0) {
+      this.distractorLetters = (question as any).distractorLetters.map((l: string) => l.toLowerCase()).filter((l: string) => l !== this.targetLetter);
+    } else {
+      this.distractorLetters = Array.from('abcdefghijklmnopqrstuvwxyz').filter(l => l !== this.targetLetter);
+    }
     this.antLeafGroups = [];
 
     // --- Marching Ants ---
     const antCount = 8;
     this.antEndX = w + this.antSpacing;
-    const antY = h * 0.7; // slightly lower than before
+    const antY = h * 0.7;
     if (!this.anims.exists('ant-walk')) {
       this.anims.create({
         key: 'ant-walk',
@@ -89,36 +127,68 @@ export class AntLeafScene extends Phaser.Scene {
     }
     this.marchingAnts = [];
     for (let i = 0; i < antCount; i++) {
-      // Create a container for ant, leaf, and letter
       const group = this.add.container();
-      // Ant sprite
       const ant = this.add.sprite(0, 0, 'ant', 0);
       ant.setScale(0.7);
       ant.setDepth(2);
       ant.play('ant-walk');
-      // Leaf image (positioned above ant, so ant appears to carry it)
       const leaf = this.add.image(0, -40, 'leaf');
       leaf.setDisplaySize(75, 75);
       leaf.setDepth(1);
-      // Letter text (centered on leaf)
-      const letter = this.add.text(0, -40, options[i % options.length] || '?', {
+      const letterChar = this.getNextAntLetter();
+      const letter = this.add.text(0, -40, letterChar, {
         fontFamily: 'Arial',
         fontSize: '40px',
         color: '#fff',
         fontStyle: 'bold',
-        stroke: '#222',
-        strokeThickness: 3,
         align: 'center',
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000',
+          blur: 2,
+          stroke: true,
+          fill: true
+        }
       }).setOrigin(0.5);
       letter.setDepth(3);
-      // Add to container
+      // Add click handler for letter
+      letter.setInteractive({ useHandCursor: true });
+      letter.on('pointerdown', async () => {
+        if (!this.playAudio) return;
+        // Try to play phoneme file for this letter if it exists
+        const phonemePath = `/audio/phonics-units/${letter.text}-sound.wav`;
+        let phonemePlayed = false;
+        try {
+          await this.playAudio(phonemePath, true);
+          phonemePlayed = true;
+        } catch (e) {
+          // File may not exist, ignore
+        }
+        // Play correct/incorrect sound
+        const isCorrect = letter.text === this.targetLetter;
+        const feedbackPath = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
+        try {
+          await this.playAudio(feedbackPath, true);
+        } catch (e) {
+          // ignore
+        }
+      });
       group.add([leaf, ant, letter]);
-      // Position container
       group.x = this.antStartX - i * this.antSpacing;
       group.y = antY;
       this.add.existing(group);
       this.marchingAnts.push(group);
       this.antLeafGroups.push(group);
+    }
+
+    // Play audio sequence if playAudio is provided
+    if (this.playAudio && (this.promptFile || this.phonemeFile)) {
+      playQuizAudioSequence({
+        promptFile: this.promptFile,
+        phonemeFile: this.phonemeFile,
+        playAudio: this.playAudio,
+      });
     }
   }
 
@@ -137,8 +207,37 @@ export class AntLeafScene extends Phaser.Scene {
             if (this.marchingAnts[j].x < leftmost.x) leftmost = this.marchingAnts[j];
           }
           this.marchingAnts[i].x = leftmost.x - this.antSpacing;
+          // Re-assign letter on reset
+          const group = this.marchingAnts[i];
+          const letterText = group.list.find(obj => obj instanceof Phaser.GameObjects.Text) as Phaser.GameObjects.Text;
+          if (letterText && typeof this.getNextAntLetter === 'function') {
+            letterText.setText(this.getNextAntLetter());
+          }
         }
       }
+    }
+  }
+  /**
+   * Returns the next letter for an ant, ensuring the correct letter appears every 2-5 ants.
+   */
+  getNextAntLetter(): string {
+    // If we've gone 5 ants without a correct, force correct
+    if (this.sinceLastCorrect >= 5) {
+      this.sinceLastCorrect = 0;
+      return this.targetLetter;
+    }
+    // If last correct was <2 ants ago, force distractor
+    if (this.sinceLastCorrect < 2) {
+      this.sinceLastCorrect++;
+      return Phaser.Utils.Array.GetRandom(this.distractorLetters);
+    }
+    // Otherwise, random: 1 in 3 chance for correct
+    if (Phaser.Math.Between(1, 3) === 1) {
+      this.sinceLastCorrect = 0;
+      return this.targetLetter;
+    } else {
+      this.sinceLastCorrect++;
+      return Phaser.Utils.Array.GetRandom(this.distractorLetters);
     }
   }
 }
