@@ -210,6 +210,7 @@ const QuizView: React.FC = () => {
           <PhaserGame
             unitName={unitName}
             onSceneReady={scene => { mainSceneRef.current = scene; }}
+            sceneType={question.questionType === 'leaf-phoneme' ? 'ant-leaf' : 'main'}
           />
         </div>
         <div className="quiz-content">

@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { MainScene } from '../phaser/MainScene';
+import { AntLeafScene } from '../phaser/AntLeafScene';
 
 interface PhaserGameProps {
   className?: string;
   unitName?: string;
   onSceneReady?: (scene: Phaser.Scene) => void;
+  sceneType?: 'main' | 'ant-leaf';
 }
 
-export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onSceneReady }) => {
+export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onSceneReady, sceneType = 'main' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<Phaser.Scene | null>(null);
@@ -30,6 +32,7 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onS
     const width = Math.floor(rect.width);
     const height = Math.floor(rect.height);
 
+    const sceneClass = sceneType === 'ant-leaf' ? AntLeafScene : MainScene;
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width,
@@ -37,19 +40,18 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onS
       parent: containerRef.current,
       backgroundColor: '#ffffff',
       scale: {
-        mode: Phaser.Scale.NONE, // don't auto-scale, canvas is exact size
+        mode: Phaser.Scale.NONE,
       },
-      scene: [MainScene],
+      scene: [sceneClass],
     };
 
     gameRef.current = new Phaser.Game({
       ...config,
       callbacks: {
         postBoot: (game) => {
-          // Get the MainScene instance and pass to parent
-          const mainScene = game.scene.getScene('MainScene');
-          sceneRef.current = mainScene;
-          if (onSceneReady && mainScene) onSceneReady(mainScene);
+          const sceneInstance = game.scene.getScene(sceneType === 'ant-leaf' ? 'AntLeafScene' : 'MainScene');
+          sceneRef.current = sceneInstance;
+          if (onSceneReady && sceneInstance) onSceneReady(sceneInstance);
         },
       },
     });

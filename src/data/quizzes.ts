@@ -135,19 +135,19 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
-    id: 'quiz-leaf-demo',
-    unit: 'leaf-demo',
+    id: 'quiz-ant-leaf-demo',
+    unit: 'ant-leaf-demo',
     questions: [
       {
-        id: 'leaf1',
+        id: 'antLeaf1',
         options: ['c', 'a', 't', 'm'],
         correctAnswer: 'c',
         phonemeFile: '/audio/phonics-units/c-sound.wav',
-        promptFile: '/audio/prompts/which-leaf-has-the-sound.wav',
-        questionType: QuestionType.LEAF_PHONEME,
+        // Updated prompt to reflect ants carrying leaves
+        promptFile: '/audio/prompts/which-ant-carrying-a-leaf-has-the-sound.wav',
+        questionType: QuestionType.LEAF_PHONEME, // Still using LEAF_PHONEME for now
         skills: [SKILL_LETTER_SOUND_MAPPING],
         targetLetter: 'c',
-        leafOptions: ['c', 'a', 't', 'm'],
       },
     ],
     showLetterIntro: false,

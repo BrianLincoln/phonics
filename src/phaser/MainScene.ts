@@ -24,7 +24,13 @@ export class MainScene extends Phaser.Scene {
       frameWidth: 200, // match deprecated working version
       frameHeight: 200,
     });
+    // Load ant sprite (3 frames, 100x100px)
+    this.load.spritesheet('ant', '/src/assets/ant_sprite.png', {
+      frameWidth: 100,
+      frameHeight: 100,
+    });
   }
+  marchingAnts: Phaser.GameObjects.Sprite[] = [];
 
 
   crow?: Crow;
@@ -215,6 +221,64 @@ export class MainScene extends Phaser.Scene {
 
     this.crowController = new CrowController(this, this.crow);
     this.crowController.playIntroWalkIn();
+
+    // --- Marching Ants ---
+    // Endless, memory-friendly marching ants
+    const antSpacing = 90;
+    const antY = h * 0.6 + 40;
+    const antStartX = -120;
+    const antEndX = w + 120;
+    // Calculate how many ants are needed to fill the screen plus buffer
+    const antCount = Math.ceil((w + 2 * Math.abs(antStartX)) / antSpacing) + 2;
+    if (!this.anims.exists('ant-walk')) {
+      this.anims.create({
+        key: 'ant-walk',
+        frames: this.anims.generateFrameNumbers('ant', { start: 0, end: 2 }),
+        frameRate: 8,
+        repeat: -1,
+      });
+    }
+    this.marchingAnts = [];
+    for (let i = 0; i < antCount; i++) {
+      const ant = this.add.sprite(
+        antStartX + i * antSpacing,
+        antY,
+        'ant',
+        0
+      );
+      ant.setScale(0.7);
+      ant.setDepth(7);
+      ant.play('ant-walk');
+      this.marchingAnts.push(ant);
+    }
+  }
+  update(time: number, delta: number) {
+    // Marching ants movement (guaranteed endless, always spaced)
+    if (this.marchingAnts && this.marchingAnts.length > 0) {
+      const w = this.cameras.main.width;
+      const antSpacing = 90;
+      const antSpeed = 400; // px/sec (TEST: super fast, revert to 60 for production)
+      const antStartX = -120;
+      const antEndX = w + 120;
+      // Move all ants
+      for (let i = 0; i < this.marchingAnts.length; i++) {
+        this.marchingAnts[i].x += (antSpeed * delta) / 1000;
+      }
+      // Sort ants by x so we always know the leftmost
+      this.marchingAnts.sort((a, b) => a.x - b.x);
+      // Wrap ants that have gone past the end, and keep spacing
+      let leftmostX = this.marchingAnts[0].x;
+      for (let i = 0; i < this.marchingAnts.length; i++) {
+        if (this.marchingAnts[i].x > antEndX) {
+          // Place exactly one antSpacing before the leftmost
+          this.marchingAnts[i].x = leftmostX - antSpacing;
+          // Update leftmostX for next wrap
+          leftmostX = this.marchingAnts[i].x;
+        }
+      }
+    }
+    // Call crow update if needed
+    if (super.update) super.update(time, delta);
   }
 
   /**
