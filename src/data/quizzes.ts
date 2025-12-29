@@ -162,7 +162,7 @@ export const quizzes: Quiz[] = [
         id: 'antLeaf1',
         phonemeFile: '/audio/phonics-units/c-sound.wav',
         // Updated prompt to reflect ants carrying leaves
-        promptFile: '/audio/prompts/which-ant-carrying-a-leaf-has-the-sound.wav',
+        promptFile: '/audio/prompts/which-letter-makes-the-sound.wav',
         questionType: QuestionType.LEAF_PHONEME, // Still using LEAF_PHONEME for now
         skills: [SKILL_LETTER_SOUND_MAPPING],
         targetLetter: 'c',

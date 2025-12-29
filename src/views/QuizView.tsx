@@ -77,8 +77,8 @@ const QuizView: React.FC = () => {
     let cancelled = false;
     stopAllAudio();
     async function runSequence() {
-      // 1. Letter intro (always, for every quiz, on first question)
-      if (questionIdx === 0) {
+      // 1. Letter intro (only if showLetterIntro is true for this quiz)
+      if (questionIdx === 0 && quiz.showLetterIntro) {
         setPhase('intro');
         await playAudio('/audio/prompts/this-is-the-letter.wav', true).catch(() => { });
         if (cancelled) return;

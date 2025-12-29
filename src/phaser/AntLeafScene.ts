@@ -85,6 +85,7 @@ export class AntLeafScene extends Phaser.Scene {
     question: QuizQuestion;
     playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
     unitName?: string;
+    playIntroAudio?: boolean;
   }) {
     // Validate and extract ant-leaf question data
     const { question, playAudio, unitName } = data;
@@ -182,8 +183,8 @@ export class AntLeafScene extends Phaser.Scene {
       this.antLeafGroups.push(group);
     }
 
-    // Play audio sequence if playAudio is provided
-    if (this.playAudio && (this.promptFile || this.phonemeFile)) {
+    // Play audio sequence only if explicitly requested
+    if (data.playIntroAudio && this.playAudio && (this.promptFile || this.phonemeFile)) {
       playQuizAudioSequence({
         promptFile: this.promptFile,
         phonemeFile: this.phonemeFile,
