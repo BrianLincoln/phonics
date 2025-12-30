@@ -62,6 +62,7 @@ export class AntLeafScene extends Phaser.Scene {
   phonemeFile: string = '';
   playAudio!: (src: string, waitForEnd?: boolean) => Promise<any>;
   unitName?: string;
+  feedbackMarks: { mark: Phaser.GameObjects.Text; x: number; y: number }[] = [];
 
   constructor() {
     super('AntLeafScene');
@@ -153,8 +154,15 @@ export class AntLeafScene extends Phaser.Scene {
         }
       }).setOrigin(0.5);
       letter.setDepth(3);
-      // Add click handler for letter
-      letter.setInteractive({ useHandCursor: true });
+      // Add click handler for letter with padded hit area
+      const padding = 32;
+      letter.setInteractive(new Phaser.Geom.Rectangle(
+        -letter.displayWidth / 2 - padding,
+        -letter.displayHeight / 2 - padding,
+        letter.displayWidth + padding * 2,
+        letter.displayHeight + padding * 2
+      ), Phaser.Geom.Rectangle.Contains);
+      letter.input.cursor = 'pointer';
       letter.on('pointerdown', async () => {
         if (!this.playAudio) return;
         // Try to play phoneme file for this letter if it exists
@@ -166,14 +174,50 @@ export class AntLeafScene extends Phaser.Scene {
         } catch (e) {
           // File may not exist, ignore
         }
-        // Play correct/incorrect sound
+        // Play correct/incorrect sound AND animate transition at the same time
         const isCorrect = letter.text === this.targetLetter;
         const feedbackPath = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
-        try {
-          await this.playAudio(feedbackPath, true);
-        } catch (e) {
-          // ignore
-        }
+        this.playAudio(feedbackPath, true).catch(() => { }); // fire and forget
+        this.tweens.add({
+          targets: group,
+          scale: 0,
+          alpha: 0,
+          duration: 120,
+          ease: 'Back.easeIn',
+          onComplete: () => {
+            group.removeAll(true);
+            // Draw feedback mark (✓ or ✗) as text and animate it in
+            const mark = this.add.text(
+              group.x,
+              group.y - 20,
+              isCorrect ? '✓' : 'x',
+              {
+                fontFamily: 'Arial',
+                fontSize: '64px',
+                fontStyle: 'bold',
+                color: isCorrect ? '#50bc37' : '#e74c3c',
+                align: 'center',
+                stroke: '#000',
+                strokeThickness: 2,
+              }
+            ).setOrigin(0.5);
+            mark.setDepth(10);
+            mark.setScale(0.5);
+            mark.setAlpha(0);
+            this.add.existing(mark);
+            this.tweens.add({
+              targets: mark,
+              scale: 1,
+              alpha: 1,
+              duration: 120,
+              ease: 'Back.easeOut',
+              onComplete: () => {
+                // Track the mark for animation
+                this.feedbackMarks.push({ mark, x: group.x, y: group.y - 20 });
+              }
+            });
+          }
+        });
       });
       group.add([leaf, ant, letter]);
       group.x = this.antStartX - i * this.antSpacing;
@@ -194,8 +238,8 @@ export class AntLeafScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    // Move all ant+leaf+letter containers
     if (this.marchingAnts && this.marchingAnts.length > 0) {
-      // Move all ant+leaf+letter containers
       for (let i = 0; i < this.marchingAnts.length; i++) {
         this.marchingAnts[i].x += (this.antSpeed * delta) / 1000;
       }
@@ -214,6 +258,125 @@ export class AntLeafScene extends Phaser.Scene {
           if (letterText && typeof this.getNextAntLetter === 'function') {
             letterText.setText(this.getNextAntLetter());
           }
+        }
+      }
+    }
+
+    // Animate feedback marks (X/check) rightward, and reset with new ant+leaf+letter
+    if (this.feedbackMarks && this.feedbackMarks.length > 0) {
+      for (let i = this.feedbackMarks.length - 1; i >= 0; i--) {
+        const markObj = this.feedbackMarks[i];
+        markObj.x += (this.antSpeed * delta) / 1000;
+        markObj.mark.setPosition(markObj.x, markObj.y);
+        if (markObj.x > this.antEndX) {
+          // Remove mark
+          markObj.mark.destroy();
+          this.feedbackMarks.splice(i, 1);
+          // Spawn new ant+leaf+letter group at leftmost position
+          let leftmost = this.marchingAnts[0];
+          for (let j = 1; j < this.marchingAnts.length; j++) {
+            if (this.marchingAnts[j].x < leftmost.x) leftmost = this.marchingAnts[j];
+          }
+          const group = this.add.container();
+          const ant = this.add.sprite(0, 0, 'ant', 0);
+          ant.setScale(0.7);
+          ant.setDepth(2);
+          ant.play('ant-walk');
+          const leaf = this.add.image(0, -40, 'leaf');
+          leaf.setDisplaySize(75, 75);
+          leaf.setDepth(1);
+          const letterChar = this.getNextAntLetter();
+          const letter = this.add.text(0, -40, letterChar, {
+            fontFamily: 'Arial',
+            fontSize: '40px',
+            color: '#fff',
+            fontStyle: 'bold',
+            align: 'center',
+            shadow: {
+              offsetX: 2,
+              offsetY: 2,
+              color: '#000',
+              blur: 2,
+              stroke: true,
+              fill: true
+            }
+          }).setOrigin(0.5);
+          letter.setDepth(3);
+          // Add click handler for letter with padded hit area
+          const padding2 = 32;
+          letter.setInteractive(new Phaser.Geom.Rectangle(
+            -letter.displayWidth / 2 - padding2,
+            -letter.displayHeight / 2 - padding2,
+            letter.displayWidth + padding2 * 2,
+            letter.displayHeight + padding2 * 2
+          ), Phaser.Geom.Rectangle.Contains);
+          letter.input.cursor = 'pointer';
+          // Reuse the same click handler logic
+          letter.on('pointerdown', async () => {
+            if (!this.playAudio) return;
+            const phonemePath = `/audio/phonics-units/${letter.text}-sound.wav`;
+            let phonemePlayed = false;
+            try {
+              await this.playAudio(phonemePath, true);
+              phonemePlayed = true;
+            } catch (e) { }
+            const isCorrect = letter.text === this.targetLetter;
+            const feedbackPath = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
+            this.playAudio(feedbackPath, true).catch(() => { }); // fire and forget
+            this.tweens.add({
+              targets: group,
+              scale: 0,
+              alpha: 0,
+              duration: 120,
+              ease: 'Back.easeIn',
+              onComplete: () => {
+                group.removeAll(true);
+                // Draw feedback mark (✓ or ✗) as text and animate it in
+                const mark = this.add.text(
+                  group.x,
+                  group.y - 20,
+                  isCorrect ? '✓' : '✗',
+                  {
+                    fontFamily: 'Arial',
+                    fontSize: '64px',
+                    fontStyle: 'bold',
+                    color: isCorrect ? '#50bc37' : '#e74c3c',
+                    align: 'center',
+                    stroke: '#fff',
+                    strokeThickness: 4,
+                    shadow: {
+                      offsetX: 2,
+                      offsetY: 2,
+                      color: '#000',
+                      blur: 2,
+                      stroke: true,
+                      fill: true
+                    }
+                  }
+                ).setOrigin(0.5);
+                mark.setDepth(10);
+                mark.setScale(0.5);
+                mark.setAlpha(0);
+                this.add.existing(mark);
+                this.tweens.add({
+                  targets: mark,
+                  scale: 1,
+                  alpha: 1,
+                  duration: 120,
+                  ease: 'Back.easeOut',
+                  onComplete: () => {
+                    this.feedbackMarks.push({ mark, x: group.x, y: group.y - 20 });
+                  }
+                });
+              }
+            });
+          });
+          group.add([leaf, ant, letter]);
+          group.x = leftmost.x - this.antSpacing;
+          group.y = this.cameras.main.height * 0.7;
+          this.add.existing(group);
+          this.marchingAnts.push(group);
+          this.antLeafGroups.push(group);
         }
       }
     }
