@@ -1,95 +1,86 @@
 import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { AntLeafScene } from '../phaser/AntLeafScene';
-import { MultipleChoiceScene } from '../phaser/MultipleChoiceScene';
+import { MultipleChoiceScene, MultipleChoiceSceneData } from '../phaser/MultipleChoiceScene';
 import { SuccessScene } from '../phaser/SuccessScene';
-import { QuizQuestion } from '../data/quizzes';
 
-type SceneType = 'multiple-choice' | 'ant-leaf' | 'success';
+type SceneType = 'multiple-choice' | 'leaf-parade' | 'success';
+
 interface PhaserGameProps {
-  className?: string;
-  unitName?: string;
-  onSceneReady?: (scene: Phaser.Scene) => void;
   sceneType: SceneType;
-  question?: QuizQuestion;
-  onSuccessComplete?: () => void;
-  playAudio?: (src: string, waitForEnd?: boolean) => Promise<any>;
+  sceneData?: MultipleChoiceSceneData; // optional, only used for multiple-choice
+  onSceneReady?: (scene: Phaser.Scene) => void;
 }
 
-export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onSceneReady, sceneType, question, playAudio, onSuccessComplete }) => {
+export const PhaserGame: React.FC<PhaserGameProps> = ({
+  sceneType,
+  sceneData,
+  onSceneReady,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<Phaser.Scene | null>(null);
 
+  // 1. Create game once
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || gameRef.current) return;
 
-    // Destroy existing game if present
-    if (gameRef.current) {
-      gameRef.current.destroy(true);
-      gameRef.current = null;
-    }
+    const { width, height } = containerRef.current.getBoundingClientRect();
 
-    // Prepare data to inject into the scene
-    const sceneData = {
-      unitName,
-      question,
-      playAudio,
-      onSuccessComplete,
-    };
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const width = Math.floor(rect.width);
-    const height = Math.floor(rect.height);
-
-    let sceneClass, sceneKey;
-    if (sceneType === 'ant-leaf') {
-      sceneClass = AntLeafScene;
-      sceneKey = 'AntLeafScene';
-    } else if (sceneType === 'multiple-choice') {
-      sceneClass = MultipleChoiceScene;
-      sceneKey = 'MultipleChoiceScene';
-    } else if (sceneType === 'success') {
-      sceneClass = SuccessScene;
-      sceneKey = 'SuccessScene';
-    }
-    const config: Phaser.Types.Core.GameConfig = {
+    const game = new Phaser.Game({
       type: Phaser.AUTO,
-      width,
-      height,
+      width: Math.floor(width),
+      height: Math.floor(height),
       parent: containerRef.current,
       backgroundColor: '#ffffff',
-      scale: {
-        mode: Phaser.Scale.NONE,
-      },
-      // Do NOT include scene here; we'll add it after game creation
-    };
-
-    gameRef.current = new Phaser.Game({
-      ...config,
-      callbacks: {
-        postBoot: (game) => {
-          // Add and start the scene with data (best practice)
-          game.scene.add(sceneKey, sceneClass, true, sceneData);
-          const sceneInstance = game.scene.getScene(sceneKey);
-          sceneRef.current = sceneInstance;
-          if (onSceneReady && sceneInstance) onSceneReady(sceneInstance);
-        },
-      },
+      scale: { mode: Phaser.Scale.NONE },
     });
 
-    // Return cleanup
+    gameRef.current = game;
+
     return () => {
-      gameRef.current?.destroy(true);
+      game.destroy(true);
       gameRef.current = null;
       sceneRef.current = null;
     };
-  }, [unitName, sceneType, question]);
+  }, []);
 
-  return (
-    <div
-      ref={containerRef}
-      className="phaser-container"
-    />
-  );
+  // 2. Switch scenes without recreating the game
+  useEffect(() => {
+    const game = gameRef.current;
+    if (!game) return;
+
+    let sceneClass: typeof Phaser.Scene;
+    let sceneKey: string;
+
+    switch (sceneType) {
+      case 'leaf-parade':
+        sceneClass = AntLeafScene;
+        sceneKey = 'LeafParadeScene';
+        break;
+      case 'multiple-choice':
+        sceneClass = MultipleChoiceScene;
+        sceneKey = 'MultipleChoiceScene';
+        break;
+      case 'success':
+        sceneClass = SuccessScene;
+        sceneKey = 'SuccessScene';
+        break;
+      default:
+        throw new Error(`Unsupported scene type: ${sceneType}`);
+    }
+
+    if (game.scene.isActive(sceneKey)) {
+      sceneRef.current = game.scene.getScene(sceneKey);
+      onSceneReady?.(sceneRef.current);
+      return;
+    }
+
+    game.scene.stop(sceneKey);
+    game.scene.add(sceneKey, sceneClass, true, sceneData);
+    sceneRef.current = game.scene.getScene(sceneKey);
+    onSceneReady?.(sceneRef.current);
+  }, [sceneType, sceneData]);
+
+  return <div ref={containerRef} className="phaser-container" />;
 };

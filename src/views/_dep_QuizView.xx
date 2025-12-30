@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { quizzes } from '../data/quizzes';
-import { phonicsUnits } from '../data/phonicsUnits';
+// import { QuestionType, quizzes } from '../data/quizzes';
+import { units } from '../data/units';
 import { usePlayAudio, stopAllAudio } from '../utils/audioUtils';
 import { updatePhonicsUnitProgress, getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
 import './QuizView.css';
 import '../styles/phaser.css';
 import { PhaserGame } from '../components/PhaserGame';
+import MultipleChoice from './MultipleChoice';
 import { useRef } from 'react';
 
 type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done' | 'crow-taking-letter' | 'success';
@@ -40,9 +41,9 @@ const QuizView: React.FC = () => {
   const [progressRecorded, setProgressRecorded] = useState(false);
   const question = quiz.questions[questionIdx];
   const unitId = quiz.unit;
-  const unitName = phonicsUnits.find(u => u.id === unitId)?.name || unitId;
+  const unitName = units.find(u => u.id === unitId)?.name || unitId;
   const progress = getPhonicsProgress();
-  const unitProgress = progress.phonicsUnits[unitId];
+  const unitProgress = progress.units[unitId];
   const recentConfidence = unitProgress ? getRecentConfidence(unitProgress) : 0;
 
   // Ref to Phaser scene instance (MultipleChoice or AntLeaf)
@@ -73,6 +74,7 @@ const QuizView: React.FC = () => {
   }, [question, questionIdx, shuffleKey]);
 
   const playAudio = usePlayAudio();
+
   // Orchestrate the quiz sequence
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +86,7 @@ const QuizView: React.FC = () => {
         await playAudio('/audio/prompts/this-is-the-letter.wav', true).catch(() => { });
         if (cancelled) return;
         const unitId = quiz.unit;
-        const unit = phonicsUnits.find(u => u.id === unitId);
+        const unit = units.find(u => u.id === unitId);
         if (unit?.nameAudio) {
           await playAudio(unit.nameAudio, true).catch(() => { });
           if (cancelled) return;
@@ -174,13 +176,6 @@ const QuizView: React.FC = () => {
       sceneType = 'multiple-choice';
       break;
   }
-  // Runtime assertion: never allow AntLeafScene with wrong question type
-  if (sceneType === 'ant-leaf' && question.questionType !== 'leaf-phoneme') {
-    throw new Error('sceneType ant-leaf requires questionType leaf-phoneme');
-  }
-  if (sceneType === 'multiple-choice' && question.questionType === 'leaf-phoneme') {
-    throw new Error('sceneType multiple-choice cannot be used with questionType leaf-phoneme');
-  }
 
   return (
     <div className="quiz-root">
@@ -200,47 +195,24 @@ const QuizView: React.FC = () => {
             onSuccessComplete={() => navigate('/')}
           />
         </div>
-        <div className="quiz-content">
-          {/* <h2 className="quiz-title">{unitName}</h2> */}
-          {phase === 'intro' && <></>}
-          {phase === 'prompt' && <></>}
-          {(phase === 'answers' || phase === 'feedback') && (
-            <div className="quiz-answers-fixed">
-              {(() => {
-                switch (question.questionType) {
-                  case 'multiple-choice-word-start':
-                  case 'multiple-choice-phoneme':
-                    return shuffledOptions.map(option => {
-                      const isSelected = selected === option;
-                      const isCorrect = feedback === 'correct' && option === question.correctAnswer;
-                      const isWrong = feedback === 'wrong' && option === selected;
-                      let animateClass = '';
-                      if (isSelected && feedback === 'correct') animateClass = ' animate-scale';
-                      if (isSelected && feedback === 'wrong') animateClass = ' animate-shake';
-                      return (
-                        <button
-                          key={String(option)}
-                          className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animateClass}`}
-                          onClick={() => handleAnswer(String(option))}
-                          disabled={!!selected}
-                        >
-                          {String(option)}
-                        </button>
-                      );
-                    });
-                  case 'leaf-phoneme':
-                    // No answers UI for ant-leaf, handled in Phaser
-                    return null;
-                  default:
-                    return null;
-                }
-              })()}
-            </div>
-          )}
-          {phase === 'crow-taking-letter' && (
-            <div className="quiz-answers-fixed" style={{ opacity: 0, pointerEvents: 'none' }} />
-          )}
-        </div>
+
+        {(question.questionType === QuestionType.MULTIPLE_CHOICE_PHONEME || question.questionType === QuestionType.MULTIPLE_CHOICE_WORD_START) && (
+          <MultipleChoice
+            question={question}
+            phase={phase}
+            shuffledOptions={shuffledOptions}
+            onComplete={() => {
+              // Optionally update progress, stats, etc. here
+              if (questionIdx < quiz.questions.length - 1) {
+                setQuestionIdx(q => q + 1);
+                setPhase('answers');
+              } else {
+                setPhase('success');
+              }
+            }}
+          />
+        )}
+
       </div>
     </div>
   );

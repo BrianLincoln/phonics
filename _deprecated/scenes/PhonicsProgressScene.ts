@@ -31,7 +31,7 @@ export class PhonicsProgressScene extends Phaser.Scene {
     this.add.text(colX[5], startY, 'Last Seen', { fontSize: '22px', color: '#333' });
 
     let i = 0;
-    Object.entries(progress.phonicsUnits).forEach(([unit, data]) => {
+    Object.entries(progress.units).forEach(([unit, data]) => {
       const y = startY + 40 + i * 36;
       this.add.text(colX[0], y, unit, { fontSize: '20px', color: '#222' });
       this.add.text(colX[1], y, String(data.correct), { fontSize: '20px', color: '#222' });

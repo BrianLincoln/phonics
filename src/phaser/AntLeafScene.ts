@@ -39,7 +39,8 @@ export function createLeafTexture(scene: Phaser.Scene): void {
 
 import Phaser from 'phaser';
 import { playQuizAudioSequence } from '../helpers/quizAudioOrchestrator';
-import { QuizQuestion } from '../data/quizzes';
+import { ActivityType, LeafParadeActivity } from '../data/activities';
+// import { QuizQuestion } from '../data/quizzes';
 
 
 export class AntLeafScene extends Phaser.Scene {
@@ -81,32 +82,32 @@ export class AntLeafScene extends Phaser.Scene {
   }
 
   create(data: {
-    question: QuizQuestion;
+    activity: LeafParadeActivity;
     playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
     unitName?: string;
     playIntroAudio?: boolean;
     onQuestionComplete?: () => void;
   }) {
     // Validate and extract ant-leaf question data
-    const { question, playAudio, unitName } = data;
-    if (!question || question.questionType !== 'leaf-phoneme') {
+    const { activity, playAudio, unitName } = data;
+    if (!activity || activity.activityType !== ActivityType.LEAF_PARADE) {
       throw new Error('AntLeafScene requires a question of type leaf-phoneme');
     }
-    // Now TypeScript knows this is a LeafPhonemeQuestion
-    this.targetLetter = question.targetLetter;
+    // Now TypeScript knows this is a LeafParadeActivity
+    this.targetLetter = activity.targetLetter;
     if (!this.targetLetter || this.targetLetter.length !== 1) {
       throw new Error('AntLeafScene requires a valid targetLetter');
     }
-    this.promptFile = question.promptFile || '';
-    this.phonemeFile = question.phonemeFile || '';
+    this.promptFile = activity.promptFile || '';
+    this.phonemeFile = activity.phonemeFile || '';
     this.playAudio = playAudio;
     this.unitName = unitName;
     this.correctCount = 0;
     this.questionComplete = false;
-    if ('numberToComplete' in question && typeof question.numberToComplete === 'number') {
-      this.numberToComplete = question.numberToComplete;
+    if ('numberToComplete' in activity && typeof activity.numberToComplete === 'number') {
+      this.numberToComplete = activity.numberToComplete;
     } else {
-      throw new Error('LeafPhonemeQuestion requires numberToComplete');
+      throw new Error('LeafParadeActivity requires numberToComplete');
     }
     this.events.removeAllListeners('question-complete');
     const w = this.cameras.main.width;
@@ -114,9 +115,9 @@ export class AntLeafScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#e0f7fa');
     this.cameras.main.setRoundPixels(true);
 
-    // Use distractorLetters from question if present, else default
-    if ('distractorLetters' in question && Array.isArray((question as any).distractorLetters) && (question as any).distractorLetters.length > 0) {
-      this.distractorLetters = (question as any).distractorLetters.map((l: string) => l.toLowerCase()).filter((l: string) => l !== this.targetLetter);
+    // Use distractorLetters from activity if present, else default
+    if ('distractorLetters' in activity && Array.isArray((activity as any).distractorLetters) && (activity as any).distractorLetters.length > 0) {
+      this.distractorLetters = (activity as any).distractorLetters.map((l: string) => l.toLowerCase()).filter((l: string) => l !== this.targetLetter);
     } else {
       this.distractorLetters = Array.from('abcdefghijklmnopqrstuvwxyz').filter(l => l !== this.targetLetter);
     }
@@ -323,7 +324,7 @@ export class AntLeafScene extends Phaser.Scene {
    */
   getNextAntLetter(): string {
     // If we've gone 5 ants without a correct, force correct
-    if (this.sinceLastCorrect >= 2) {
+    if (this.sinceLastCorrect >= 5) {
       this.sinceLastCorrect = 0;
       return this.targetLetter;
     }

@@ -2,7 +2,7 @@
 import Phaser from 'phaser';
 
 import { quizzes } from '../data/quizzes';
-import { phonicsUnits } from '../data/phonicsUnits';
+import { units } from '../data/units';
 
 import { createButton } from '../helpers/createButton';
 
@@ -57,7 +57,7 @@ export class QuizIndexScene extends Phaser.Scene {
       const row = Math.floor(i / gridCols);
       const x = gridStartX + col * (buttonSize + gridSpacing);
       const y = gridStartY + row * (buttonSize + gridSpacing);
-      let unitName = quiz.unit ? (phonicsUnits.find(u => u.id === quiz.unit)?.name || quiz.unit) : quiz.id;
+      let unitName = quiz.unit ? (units.find(u => u.id === quiz.unit)?.name || quiz.unit) : quiz.id;
       const btn = createButton({
         scene: this,
         x,

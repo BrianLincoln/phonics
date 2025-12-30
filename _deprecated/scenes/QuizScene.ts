@@ -3,7 +3,7 @@ import { Crow } from '../entities/Crow';
 import { quizzes, type Quiz } from '../data/quizzes';
 import { createButton } from '../helpers/createButton';
 import { updatePhonicsUnitProgress } from '../helpers/quizProgress';
-import { phonicsUnits } from '../data/phonicsUnits';
+import { units } from '../data/phonicsUnits';
 
 interface SceneData {
   quizId: string;
@@ -81,7 +81,7 @@ export class QuizScene extends Phaser.Scene {
       this.introPlayed = true;
       // Show quiz unit name and back button while intro audio plays
       this.cameras.main.setBackgroundColor('#fff');
-      let unitName = this.quiz.unit ? (phonicsUnits.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit) : this.quiz.id;
+      let unitName = this.quiz.unit ? (units.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit) : this.quiz.id;
       const quizTitle = this.add.text(this.scale.width / 2, 200, unitName, {
         fontSize: '200px',
         color: '#222',
@@ -100,7 +100,7 @@ export class QuizScene extends Phaser.Scene {
       // Play intro audio if available for this unit
       const { unit } = this.quiz;
       if (unit) {
-        const unitObj = phonicsUnits.find(u => u.id === unit);
+        const unitObj = units.find(u => u.id === unit);
         if (unitObj && unitObj.nameAudio && unitObj.soundAudio) {
           this.load.audio('intro1', '/audio/prompts/this-is-the-letter.wav');
           this.load.audio('intro2', unitObj.nameAudio);
@@ -177,7 +177,7 @@ export class QuizScene extends Phaser.Scene {
     if (!question.hideLetter) {
       let unitName: string | undefined;
       if (this.quiz.unit) {
-        unitName = phonicsUnits.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit;
+        unitName = units.find(u => u.id === this.quiz!.unit)?.name || this.quiz.unit;
       } else {
         // Try to infer from first question's correct answer if possible
         const firstWord = question.words.find(w => w.length === 1 && /[a-zA-Z]/.test(w));

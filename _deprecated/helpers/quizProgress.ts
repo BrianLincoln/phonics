@@ -21,7 +21,7 @@ export interface PhonicsUnitProgress {
 }
 
 export interface PhonicsProgress {
-  phonicsUnits: Record<string, PhonicsUnitProgress>;
+  units: Record<string, PhonicsUnitProgress>;
 }
 
 
@@ -41,12 +41,12 @@ export function getDefaultUnitProgress(): PhonicsUnitProgress {
 export function getPhonicsProgress(): PhonicsProgress {
   const data = localStorage.getItem(PHONICS_PROGRESS_KEY);
   if (!data) {
-    return { phonicsUnits: {} };
+    return { units: {} };
   }
   try {
     return JSON.parse(data);
   } catch {
-    return { phonicsUnits: {} };
+    return { units: {} };
   }
 }
 
@@ -60,7 +60,7 @@ export function setPhonicsProgress(progress: PhonicsProgress) {
 export function updatePhonicsUnitProgress(unitId: string, correct: boolean, firstTryCorrect: boolean) {
   const progress = getPhonicsProgress();
   const now = new Date().toISOString();
-  let unit = progress.phonicsUnits[unitId] || getDefaultUnitProgress();
+  let unit = progress.units[unitId] || getDefaultUnitProgress();
 
   if (correct) {
     unit.correct += 1;
@@ -77,7 +77,7 @@ export function updatePhonicsUnitProgress(unitId: string, correct: boolean, firs
   if (unit.recent.length > RECENT_ATTEMPTS) {
     unit.recent = unit.recent.slice(-RECENT_ATTEMPTS);
   }
-  progress.phonicsUnits[unitId] = unit;
+  progress.units[unitId] = unit;
   setPhonicsProgress(progress);
 }
 

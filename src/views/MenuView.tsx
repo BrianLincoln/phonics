@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNextQuizId } from '../utils/quizSelectionUtils';
+import { getNextActivityId } from '../utils/getNextActivityId';
 import { usePlayAudio } from '../utils/audioUtils';
 import { CLICK_SOUND } from '../utils/clickSound';
 import './MenuView.css';
@@ -17,8 +17,8 @@ const MenuView: React.FC = () => {
           className="menu-btn play"
           onClick={async () => {
             await playAudio(CLICK_SOUND).catch(() => { });
-            const nextQuizId = getNextQuizId();
-            navigate(`/quiz?quizId=${nextQuizId}`);
+            const nextActivityId = getNextActivityId();
+            navigate(`/activity/${nextActivityId}`);
           }}
         >
           ▶ Play

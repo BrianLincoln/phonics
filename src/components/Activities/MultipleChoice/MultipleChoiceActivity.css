@@ -1,0 +1,34 @@
+
+
+.activity-root {
+  padding: 5px;
+  min-height: 100vh;
+  background: #fff;
+}
+
+/* TO MOVE TO SHARED ACTIVITY */
+.activity-stacked-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.phaser-container {
+  width: 100%;
+  max-width: 600px;
+  height: 300px;
+  min-height: 200px;
+  margin: 0 auto 32px auto;
+  background: #eee; /* for debugging */
+}
+
+.activity-content {
+  position: relative;
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+

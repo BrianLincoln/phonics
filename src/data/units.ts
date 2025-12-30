@@ -5,7 +5,7 @@ export type Unit = {
   soundAudio?: string;
 };
 
-export const phonicsUnits: Unit[] = [
+export const units: Unit[] = [
   // Single consonants
   { id: 'm', name: 'Mm', nameAudio: '/audio/phonics-units/m-name.wav', soundAudio: '/audio/phonics-units/m-sound.wav' },
   { id: 's', name: 'Ss', nameAudio: '/audio/phonics-units/s-name.wav', soundAudio: '/audio/phonics-units/s-sound.wav' },
