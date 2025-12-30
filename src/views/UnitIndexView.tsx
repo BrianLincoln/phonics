@@ -32,7 +32,8 @@ export const UnitIndexView: React.FC = () => {
               {activitiesByUnit[unit.id].map((activity) => (
                 <button
                   key={activity.id}
-                  className="unit-index-activity-btn"
+                  className="menu-btn unit-index-activity-btn"
+                  style={{ minWidth: 160, minHeight: 56, fontSize: '1.25rem', padding: '0.9em 1.5em' }}
                   onClick={() => navigate(`/activity/${activity.id}`)}
                 >
                   <span className="unit-index-activity-label">
