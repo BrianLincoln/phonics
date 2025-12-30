@@ -34,6 +34,7 @@ export interface LeafPhonemeQuestion extends BaseQuestion {
   targetLetter: string; // always required for this type
   phonemeFile: string;
   promptFile: string;
+  numberToComplete: number;
 }
 
 export interface MultipleChoiceWordStartQuestion extends BaseQuestion {
@@ -166,6 +167,7 @@ export const quizzes: Quiz[] = [
         questionType: QuestionType.LEAF_PHONEME, // Still using LEAF_PHONEME for now
         skills: [SKILL_LETTER_SOUND_MAPPING],
         targetLetter: 'c',
+        numberToComplete: 5,
       },
     ],
   },

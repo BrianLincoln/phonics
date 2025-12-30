@@ -37,11 +37,6 @@ export function createLeafTexture(scene: Phaser.Scene): void {
   g.destroy();
 }
 
-// Example usage (inside a Phaser.Scene):
-// createLeafTexture(this);
-// this.add.image(x, y, 'leaf');
-
-
 import Phaser from 'phaser';
 import { playQuizAudioSequence } from '../helpers/quizAudioOrchestrator';
 import { QuizQuestion } from '../data/quizzes';
@@ -63,6 +58,9 @@ export class AntLeafScene extends Phaser.Scene {
   playAudio!: (src: string, waitForEnd?: boolean) => Promise<any>;
   unitName?: string;
   feedbackMarks: { mark: Phaser.GameObjects.Text; x: number; y: number }[] = [];
+  correctCount: number = 0;
+  numberToComplete: number = 5;
+  questionComplete: boolean = false;
 
   constructor() {
     super('AntLeafScene');
@@ -87,6 +85,7 @@ export class AntLeafScene extends Phaser.Scene {
     playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
     unitName?: string;
     playIntroAudio?: boolean;
+    onQuestionComplete?: () => void;
   }) {
     // Validate and extract ant-leaf question data
     const { question, playAudio, unitName } = data;
@@ -102,6 +101,14 @@ export class AntLeafScene extends Phaser.Scene {
     this.phonemeFile = question.phonemeFile || '';
     this.playAudio = playAudio;
     this.unitName = unitName;
+    this.correctCount = 0;
+    this.questionComplete = false;
+    if ('numberToComplete' in question && typeof question.numberToComplete === 'number') {
+      this.numberToComplete = question.numberToComplete;
+    } else {
+      throw new Error('LeafPhonemeQuestion requires numberToComplete');
+    }
+    this.events.removeAllListeners('question-complete');
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
     this.cameras.main.setBackgroundColor('#e0f7fa');
@@ -129,103 +136,126 @@ export class AntLeafScene extends Phaser.Scene {
     }
     this.marchingAnts = [];
     for (let i = 0; i < antCount; i++) {
-      const group = this.add.container();
-      const ant = this.add.sprite(0, 0, 'ant', 0);
-      ant.setScale(0.7);
-      ant.setDepth(2);
-      ant.play('ant-walk');
-      const leaf = this.add.image(0, -40, 'leaf');
-      leaf.setDisplaySize(75, 75);
-      leaf.setDepth(1);
-      const letterChar = this.getNextAntLetter();
-      const letter = this.add.text(0, -40, letterChar, {
-        fontFamily: 'Arial',
-        fontSize: '40px',
-        color: '#fff',
-        fontStyle: 'bold',
-        align: 'center',
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000',
-          blur: 2,
-          stroke: true,
-          fill: true
-        }
-      }).setOrigin(0.5);
-      letter.setDepth(3);
-      // Add click handler for letter with padded hit area
-      const padding = 32;
-      letter.setInteractive(new Phaser.Geom.Rectangle(
-        -letter.displayWidth / 2 - padding,
-        -letter.displayHeight / 2 - padding,
-        letter.displayWidth + padding * 2,
-        letter.displayHeight + padding * 2
-      ), Phaser.Geom.Rectangle.Contains);
-      letter.input.cursor = 'pointer';
-      letter.on('pointerdown', async () => {
-        if (!this.playAudio) return;
-        // Try to play phoneme file for this letter if it exists
-        const phonemePath = `/audio/phonics-units/${letter.text}-sound.wav`;
-        let phonemePlayed = false;
-        try {
-          await this.playAudio(phonemePath, true);
-          phonemePlayed = true;
-        } catch (e) {
-          // File may not exist, ignore
-        }
-        // Play correct/incorrect sound AND animate transition at the same time
-        const isCorrect = letter.text === this.targetLetter;
-        const feedbackPath = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
-        this.playAudio(feedbackPath, true).catch(() => { }); // fire and forget
-        this.tweens.add({
-          targets: group,
-          scale: 0,
-          alpha: 0,
-          duration: 120,
-          ease: 'Back.easeIn',
-          onComplete: () => {
-            group.removeAll(true);
-            // Draw feedback mark (✓ or ✗) as text and animate it in
-            const mark = this.add.text(
-              group.x,
-              group.y - 20,
-              isCorrect ? '✓' : 'x',
-              {
-                fontFamily: 'Arial',
-                fontSize: '64px',
-                fontStyle: 'bold',
-                color: isCorrect ? '#50bc37' : '#e74c3c',
-                align: 'center',
-                stroke: '#000',
-                strokeThickness: 2,
-              }
-            ).setOrigin(0.5);
-            mark.setDepth(10);
-            mark.setScale(0.5);
-            mark.setAlpha(0);
-            this.add.existing(mark);
-            this.tweens.add({
-              targets: mark,
-              scale: 1,
-              alpha: 1,
-              duration: 120,
-              ease: 'Back.easeOut',
-              onComplete: () => {
-                // Track the mark for animation
-                this.feedbackMarks.push({ mark, x: group.x, y: group.y - 20 });
-              }
-            });
-          }
-        });
-      });
-      group.add([leaf, ant, letter]);
+      const group = this.createAntLeafGroup(data);
       group.x = this.antStartX - i * this.antSpacing;
       group.y = antY;
       this.add.existing(group);
       this.marchingAnts.push(group);
       this.antLeafGroups.push(group);
     }
+  }
+  /**
+   * Creates an ant+leaf+letter group with the correct click handler logic.
+   */
+  createAntLeafGroup(data: any): Phaser.GameObjects.Container {
+    const group = this.add.container();
+    const ant = this.add.sprite(0, 0, 'ant', 0);
+    ant.setScale(0.7);
+    ant.setDepth(2);
+    ant.play('ant-walk');
+    const leaf = this.add.image(0, -40, 'leaf');
+    leaf.setDisplaySize(75, 75);
+    leaf.setDepth(1);
+    const letterChar = this.getNextAntLetter();
+    const letter = this.add.text(0, -40, letterChar, {
+      fontFamily: 'Arial',
+      fontSize: '40px',
+      color: '#fff',
+      fontStyle: 'bold',
+      align: 'center',
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000',
+        blur: 2,
+        stroke: true,
+        fill: true
+      }
+    }).setOrigin(0.5);
+    letter.setDepth(3);
+    // Add click handler for letter with padded hit area
+    const padding = 32;
+    letter.setInteractive(new Phaser.Geom.Rectangle(
+      -letter.displayWidth / 2 - padding,
+      -letter.displayHeight / 2 - padding,
+      letter.displayWidth + padding * 2,
+      letter.displayHeight + padding * 2
+    ), Phaser.Geom.Rectangle.Contains);
+    letter.input.cursor = 'pointer';
+    letter.on('pointerdown', async () => {
+      if (!this.playAudio) return;
+      // Try to play phoneme file for this letter if it exists
+      const phonemePath = `/audio/phonics-units/${letter.text}-sound.wav`;
+      let phonemePlayed = false;
+      try {
+        await this.playAudio(phonemePath, true);
+        phonemePlayed = true;
+      } catch (e) {
+        // File may not exist, ignore
+      }
+      // Play correct/incorrect sound AND animate transition at the same time
+      const isCorrect = letter.text === this.targetLetter;
+      if (this.questionComplete) return;
+      if (isCorrect) {
+        this.correctCount++;
+        console.log('correctCount', this.correctCount)
+        if (this.correctCount >= this.numberToComplete) {
+          console.log('COMPLETE')
+          this.questionComplete = true;
+          // Notify parent/bridge via event
+          this.events.emit('question-complete');
+          if (typeof (data as any).onQuestionComplete === 'function') {
+            (data as any).onQuestionComplete();
+          }
+        }
+      }
+      const feedbackPath = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
+      this.playAudio(feedbackPath, true).catch(() => { }); // fire and forget
+      this.tweens.add({
+        targets: group,
+        scale: 0,
+        alpha: 0,
+        duration: 120,
+        ease: 'Back.easeIn',
+        onComplete: () => {
+          group.removeAll(true);
+          // Draw feedback mark (✓ or ✗) as text and animate it in
+          const mark = this.add.text(
+            group.x,
+            group.y - 20,
+            isCorrect ? '✓' : 'x',
+            {
+              fontFamily: 'Arial',
+              fontSize: '64px',
+              fontStyle: 'bold',
+              color: isCorrect ? '#50bc37' : '#e74c3c',
+              align: 'center',
+              stroke: '#000',
+              strokeThickness: 2,
+            }
+          ).setOrigin(0.5);
+          mark.setDepth(10);
+          mark.setScale(0.5);
+          mark.setAlpha(0);
+          this.add.existing(mark);
+          this.tweens.add({
+            targets: mark,
+            scale: 1,
+            alpha: 1,
+            duration: 120,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+              // Track the mark for animation
+              this.feedbackMarks.push({ mark, x: group.x, y: group.y - 20 });
+            }
+          });
+        }
+      });
+    });
+    group.add([leaf, ant, letter]);
+    return group;
+
+
 
     // Play audio sequence only if explicitly requested
     if (data.playIntroAudio && this.playAudio && (this.promptFile || this.phonemeFile)) {
@@ -236,7 +266,6 @@ export class AntLeafScene extends Phaser.Scene {
       });
     }
   }
-
   update(time: number, delta: number) {
     // Move all ant+leaf+letter containers
     if (this.marchingAnts && this.marchingAnts.length > 0) {
@@ -277,101 +306,9 @@ export class AntLeafScene extends Phaser.Scene {
           for (let j = 1; j < this.marchingAnts.length; j++) {
             if (this.marchingAnts[j].x < leftmost.x) leftmost = this.marchingAnts[j];
           }
-          const group = this.add.container();
-          const ant = this.add.sprite(0, 0, 'ant', 0);
-          ant.setScale(0.7);
-          ant.setDepth(2);
-          ant.play('ant-walk');
-          const leaf = this.add.image(0, -40, 'leaf');
-          leaf.setDisplaySize(75, 75);
-          leaf.setDepth(1);
-          const letterChar = this.getNextAntLetter();
-          const letter = this.add.text(0, -40, letterChar, {
-            fontFamily: 'Arial',
-            fontSize: '40px',
-            color: '#fff',
-            fontStyle: 'bold',
-            align: 'center',
-            shadow: {
-              offsetX: 2,
-              offsetY: 2,
-              color: '#000',
-              blur: 2,
-              stroke: true,
-              fill: true
-            }
-          }).setOrigin(0.5);
-          letter.setDepth(3);
-          // Add click handler for letter with padded hit area
-          const padding2 = 32;
-          letter.setInteractive(new Phaser.Geom.Rectangle(
-            -letter.displayWidth / 2 - padding2,
-            -letter.displayHeight / 2 - padding2,
-            letter.displayWidth + padding2 * 2,
-            letter.displayHeight + padding2 * 2
-          ), Phaser.Geom.Rectangle.Contains);
-          letter.input.cursor = 'pointer';
-          // Reuse the same click handler logic
-          letter.on('pointerdown', async () => {
-            if (!this.playAudio) return;
-            const phonemePath = `/audio/phonics-units/${letter.text}-sound.wav`;
-            let phonemePlayed = false;
-            try {
-              await this.playAudio(phonemePath, true);
-              phonemePlayed = true;
-            } catch (e) { }
-            const isCorrect = letter.text === this.targetLetter;
-            const feedbackPath = isCorrect ? '/audio/system/correct.wav' : '/audio/system/incorrect.wav';
-            this.playAudio(feedbackPath, true).catch(() => { }); // fire and forget
-            this.tweens.add({
-              targets: group,
-              scale: 0,
-              alpha: 0,
-              duration: 120,
-              ease: 'Back.easeIn',
-              onComplete: () => {
-                group.removeAll(true);
-                // Draw feedback mark (✓ or ✗) as text and animate it in
-                const mark = this.add.text(
-                  group.x,
-                  group.y - 20,
-                  isCorrect ? '✓' : '✗',
-                  {
-                    fontFamily: 'Arial',
-                    fontSize: '64px',
-                    fontStyle: 'bold',
-                    color: isCorrect ? '#50bc37' : '#e74c3c',
-                    align: 'center',
-                    stroke: '#fff',
-                    strokeThickness: 4,
-                    shadow: {
-                      offsetX: 2,
-                      offsetY: 2,
-                      color: '#000',
-                      blur: 2,
-                      stroke: true,
-                      fill: true
-                    }
-                  }
-                ).setOrigin(0.5);
-                mark.setDepth(10);
-                mark.setScale(0.5);
-                mark.setAlpha(0);
-                this.add.existing(mark);
-                this.tweens.add({
-                  targets: mark,
-                  scale: 1,
-                  alpha: 1,
-                  duration: 120,
-                  ease: 'Back.easeOut',
-                  onComplete: () => {
-                    this.feedbackMarks.push({ mark, x: group.x, y: group.y - 20 });
-                  }
-                });
-              }
-            });
+          const group = this.createAntLeafGroup({
+            ...this.data
           });
-          group.add([leaf, ant, letter]);
           group.x = leftmost.x - this.antSpacing;
           group.y = this.cameras.main.height * 0.7;
           this.add.existing(group);
@@ -386,7 +323,7 @@ export class AntLeafScene extends Phaser.Scene {
    */
   getNextAntLetter(): string {
     // If we've gone 5 ants without a correct, force correct
-    if (this.sinceLastCorrect >= 5) {
+    if (this.sinceLastCorrect >= 2) {
       this.sinceLastCorrect = 0;
       return this.targetLetter;
     }

@@ -2,19 +2,21 @@ import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { AntLeafScene } from '../phaser/AntLeafScene';
 import { MultipleChoiceScene } from '../phaser/MultipleChoiceScene';
+import { SuccessScene } from '../phaser/SuccessScene';
 import { QuizQuestion } from '../data/quizzes';
 
-type SceneType = 'multiple-choice' | 'ant-leaf';
+type SceneType = 'multiple-choice' | 'ant-leaf' | 'success';
 interface PhaserGameProps {
   className?: string;
   unitName?: string;
   onSceneReady?: (scene: Phaser.Scene) => void;
   sceneType: SceneType;
-  question: QuizQuestion;
+  question?: QuizQuestion;
+  onSuccessComplete?: () => void;
   playAudio?: (src: string, waitForEnd?: boolean) => Promise<any>;
 }
 
-export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onSceneReady, sceneType, question, playAudio }) => {
+export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onSceneReady, sceneType, question, playAudio, onSuccessComplete }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<Phaser.Scene | null>(null);
@@ -33,14 +35,24 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onS
       unitName,
       question,
       playAudio,
+      onSuccessComplete,
     };
 
     const rect = containerRef.current.getBoundingClientRect();
     const width = Math.floor(rect.width);
     const height = Math.floor(rect.height);
 
-    const sceneClass = sceneType === 'ant-leaf' ? AntLeafScene : MultipleChoiceScene;
-    const sceneKey = sceneType === 'ant-leaf' ? 'AntLeafScene' : 'MultipleChoiceScene';
+    let sceneClass, sceneKey;
+    if (sceneType === 'ant-leaf') {
+      sceneClass = AntLeafScene;
+      sceneKey = 'AntLeafScene';
+    } else if (sceneType === 'multiple-choice') {
+      sceneClass = MultipleChoiceScene;
+      sceneKey = 'MultipleChoiceScene';
+    } else if (sceneType === 'success') {
+      sceneClass = SuccessScene;
+      sceneKey = 'SuccessScene';
+    }
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width,
@@ -57,7 +69,6 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onS
       ...config,
       callbacks: {
         postBoot: (game) => {
-
           // Add and start the scene with data (best practice)
           game.scene.add(sceneKey, sceneClass, true, sceneData);
           const sceneInstance = game.scene.getScene(sceneKey);
@@ -73,7 +84,7 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ className, unitName, onS
       gameRef.current = null;
       sceneRef.current = null;
     };
-  }, [unitName]);
+  }, [unitName, sceneType, question]);
 
   return (
     <div

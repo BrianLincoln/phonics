@@ -9,7 +9,7 @@ import '../styles/phaser.css';
 import { PhaserGame } from '../components/PhaserGame';
 import { useRef } from 'react';
 
-type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done' | 'crow-taking-letter';
+type Phase = 'intro' | 'prompt' | 'answers' | 'feedback' | 'done' | 'crow-taking-letter' | 'success';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -47,6 +47,7 @@ const QuizView: React.FC = () => {
 
   // Ref to Phaser scene instance (MultipleChoice or AntLeaf)
   const sceneRef = useRef<any>(null);
+  const [questionComplete, setQuestionComplete] = useState(false);
 
   // Shuffle utility
   function shuffle<T>(array: T[]): T[] {
@@ -111,6 +112,15 @@ const QuizView: React.FC = () => {
 
   // Handle answer selection and feedback
   const handleAnswer = async (word: string) => {
+    // Listen for question-complete event from AntLeafScene
+    useEffect(() => {
+      if (sceneRef.current && sceneType === 'ant-leaf') {
+        const scene = sceneRef.current;
+        const handler = () => setQuestionComplete(true);
+        scene.events?.on('question-complete', handler);
+        return () => scene.events?.off('question-complete', handler);
+      }
+    }, [sceneType, questionIdx]);
     setSelected(word);
     setPhase('feedback');
     setAttempts(a => a + 1);
@@ -140,7 +150,7 @@ const QuizView: React.FC = () => {
           setAttempts(0);
           setProgressRecorded(false);
         } else {
-          setPhase('done');
+          setPhase('success');
         }
       }, 1000);
     } else {
@@ -184,25 +194,16 @@ const QuizView: React.FC = () => {
           <PhaserGame
             unitName={unitName}
             onSceneReady={scene => { sceneRef.current = scene; }}
-            sceneType={sceneType}
-            question={question}
+            sceneType={phase === 'success' ? 'success' : sceneType}
+            question={phase === 'success' ? undefined : question}
             playAudio={playAudio}
+            onSuccessComplete={() => navigate('/')}
           />
         </div>
         <div className="quiz-content">
           {/* <h2 className="quiz-title">{unitName}</h2> */}
-          {phase === 'intro' && (
-            // <div style={{ marginTop: 48, fontSize: '2rem', color: '#444', textAlign: 'center' }}>
-            //   Listen to the letter introduction...
-            // </div>
-            <></>
-          )}
-          {phase === 'prompt' && (
-            // <div style={{ marginTop: 48, fontSize: '2rem', color: '#444', textAlign: 'center' }}>
-            //   Listen to the prompt...
-            // </div>
-            <></>
-          )}
+          {phase === 'intro' && <></>}
+          {phase === 'prompt' && <></>}
           {(phase === 'answers' || phase === 'feedback') && (
             <div className="quiz-answers-fixed">
               {(() => {
@@ -228,12 +229,8 @@ const QuizView: React.FC = () => {
                       );
                     });
                   case 'leaf-phoneme':
-                    // Placeholder for graphical/interactive leaf quiz
-                    return (
-                      <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
-                        <em>Leaf-phoneme quiz type coming soon!</em>
-                      </div>
-                    );
+                    // No answers UI for ant-leaf, handled in Phaser
+                    return null;
                   default:
                     return null;
                 }
@@ -242,12 +239,6 @@ const QuizView: React.FC = () => {
           )}
           {phase === 'crow-taking-letter' && (
             <div className="quiz-answers-fixed" style={{ opacity: 0, pointerEvents: 'none' }} />
-          )}
-          {phase === 'done' && (
-            // <div style={{ marginTop: 48, fontSize: '2rem', color: '#50bc37', textAlign: 'center' }}>
-            //   Quiz complete!
-            // </div>
-            <></>
           )}
         </div>
       </div>
