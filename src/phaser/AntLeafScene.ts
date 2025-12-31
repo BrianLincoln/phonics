@@ -43,6 +43,7 @@ import { ActivityType, LeafParadeActivityType } from '../data/activities';
 
 export interface LeafParadeSceneData {
   activity: LeafParadeActivityType;
+  playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
 }
 
 export class AntLeafScene extends Phaser.Scene {
@@ -88,6 +89,9 @@ export class AntLeafScene extends Phaser.Scene {
   // Receive data from React via game.scene.start(sceneKey, data)
   init(data: LeafParadeSceneData) {
     this.sceneData = data;
+    if (data && typeof data.playAudio === 'function') {
+      this.playAudio = data.playAudio;
+    }
   }
 
   create() {

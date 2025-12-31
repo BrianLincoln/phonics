@@ -77,9 +77,19 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
     }
 
     game.scene.stop(sceneKey);
+    // Listen for scene start to inject playAudio and call onSceneReady
+    const handleSceneStart = (startedScene: Phaser.Scene) => {
+      if (startedScene.scene.key === sceneKey) {
+        sceneRef.current = startedScene;
+        if (sceneType === 'leaf-parade' && sceneData && 'playAudio' in sceneData) {
+          (sceneRef.current as any).playAudio = (sceneData as any).playAudio;
+        }
+        onSceneReady?.(sceneRef.current);
+        game.events.off('start', handleSceneStart);
+      }
+    };
+    game.events.on('start', handleSceneStart);
     game.scene.add(sceneKey, sceneClass, true, sceneData);
-    sceneRef.current = game.scene.getScene(sceneKey);
-    onSceneReady?.(sceneRef.current);
   }, [sceneType, sceneData]);
 
   return <div ref={containerRef} className="phaser-container" />;

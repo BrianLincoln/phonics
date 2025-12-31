@@ -36,7 +36,7 @@ export const LeafParadeActivity: React.FC<LeafParadeActivityProps> = ({ activity
       <div className="activity-stacked-layout">
         <PhaserGame
           sceneType="leaf-parade"
-          sceneData={{ activity: activity }}
+          sceneData={{ activity: activity, playAudio }}
           onSceneReady={scene => { phaserRef.current = scene; }}
         />
       </div>

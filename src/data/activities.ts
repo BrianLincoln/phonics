@@ -45,7 +45,7 @@ export interface LeafParadeActivityType {
   numberToComplete: number;
 }
 
-export type Activity = MultipleChoiceActivity | LeafParadeActivity;
+export type Activity = MultipleChoiceActivity | LeafParadeActivityType;
 
 // Skills union type and constants
 export const SKILL_PHONEME_IDENTIFICATION = 'phoneme-identification' as const; // identifying the sound in a word
