@@ -1,0 +1,35 @@
+.activity-root {
+  padding: 5px;
+  min-height: 100vh;
+  background: #fff;
+}
+
+.activity-stacked-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.phaser-container {
+  width: 100%;
+  max-width: 600px;
+  height: 300px;
+  min-height: 200px;
+  margin: 0 auto 32px auto;
+  background: #eee; /* for debugging */
+}
+
+.activity-header {
+  margin-bottom: 12px;
+}
+
+.activity-back-btn {
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  color: #2c3e50;
+  cursor: pointer;
+  padding: 0.5em 1em;
+}

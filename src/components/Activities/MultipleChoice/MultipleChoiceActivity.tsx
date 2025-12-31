@@ -7,7 +7,6 @@ import MultipleChoice from './MultipleChoice';
 import './MultipleChoiceActivity.css';
 import { usePlayAudio } from '../../../utils/audioUtils';
 import { playFeedbackAudio } from '../../../helpers/feedbackAudio';
-import { use } from 'matter';
 
 interface MCQActivityProps {
   activity: MultipleChoiceActivity;

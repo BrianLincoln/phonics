@@ -5,7 +5,6 @@ import { CrowController } from './CrowController';
 export interface MultipleChoiceSceneData {
   unitName: string;
   questionIndex: number;
-  promptText?: string;
 }
 
 export class MultipleChoiceScene extends Phaser.Scene {
@@ -61,7 +60,7 @@ export class MultipleChoiceScene extends Phaser.Scene {
   private applySceneData() {
     if (!this.sceneData || !this.letterText) return;
     this.letterText.setText(
-      this.sceneData.promptText ?? this.sceneData.unitName
+      this.sceneData.unitName
     );
   }
 

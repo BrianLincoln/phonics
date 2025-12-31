@@ -39,9 +39,12 @@ export function createLeafTexture(scene: Phaser.Scene): void {
 
 import Phaser from 'phaser';
 import { playQuizAudioSequence } from '../helpers/quizAudioOrchestrator';
-import { ActivityType, LeafParadeActivity } from '../data/activities';
-// import { QuizQuestion } from '../data/quizzes';
+import { ActivityType, LeafParadeActivityType } from '../data/activities';
+import { act } from 'react';
 
+export interface LeafParadeSceneData {
+  activity: LeafParadeActivityType;
+}
 
 export class AntLeafScene extends Phaser.Scene {
   marchingAnts: Phaser.GameObjects.Container[] = [];
@@ -81,27 +84,14 @@ export class AntLeafScene extends Phaser.Scene {
     }
   }
 
-  create(data: {
-    activity: LeafParadeActivity;
-    playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
-    unitName?: string;
-    playIntroAudio?: boolean;
-    onQuestionComplete?: () => void;
-  }) {
+  create(data) {
+    console.log(data)
     // Validate and extract ant-leaf question data
-    const { activity, playAudio, unitName } = data;
-    if (!activity || activity.activityType !== ActivityType.LEAF_PARADE) {
-      throw new Error('AntLeafScene requires a question of type leaf-phoneme');
-    }
-    // Now TypeScript knows this is a LeafParadeActivity
-    this.targetLetter = activity.targetLetter;
-    if (!this.targetLetter || this.targetLetter.length !== 1) {
-      throw new Error('AntLeafScene requires a valid targetLetter');
-    }
+    const { activity } = data;
+
     this.promptFile = activity.promptFile || '';
     this.phonemeFile = activity.phonemeFile || '';
-    this.playAudio = playAudio;
-    this.unitName = unitName;
+    this.unitName = activity.unit;
     this.correctCount = 0;
     this.questionComplete = false;
     if ('numberToComplete' in activity && typeof activity.numberToComplete === 'number') {
@@ -109,7 +99,11 @@ export class AntLeafScene extends Phaser.Scene {
     } else {
       throw new Error('LeafParadeActivity requires numberToComplete');
     }
+    // Remove all listeners and re-add for robust communication
     this.events.removeAllListeners('question-complete');
+    // if (typeof onQuestionComplete === 'function') {
+    //   this.events.on('question-complete', onQuestionComplete);
+    // }
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
     this.cameras.main.setBackgroundColor('#e0f7fa');
@@ -199,11 +193,9 @@ export class AntLeafScene extends Phaser.Scene {
       if (this.questionComplete) return;
       if (isCorrect) {
         this.correctCount++;
-        console.log('correctCount', this.correctCount)
         if (this.correctCount >= this.numberToComplete) {
-          console.log('COMPLETE')
           this.questionComplete = true;
-          // Notify parent/bridge via event
+          // Notify parent/bridge via event and callback
           this.events.emit('question-complete');
           if (typeof (data as any).onQuestionComplete === 'function') {
             (data as any).onQuestionComplete();

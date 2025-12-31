@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
-import { AntLeafScene } from '../phaser/AntLeafScene';
+import { AntLeafScene, LeafParadeSceneData } from '../phaser/AntLeafScene';
 import { MultipleChoiceScene, MultipleChoiceSceneData } from '../phaser/MultipleChoiceScene';
 import { SuccessScene } from '../phaser/SuccessScene';
 
@@ -8,7 +8,7 @@ type SceneType = 'multiple-choice' | 'leaf-parade' | 'success';
 
 interface PhaserGameProps {
   sceneType: SceneType;
-  sceneData?: MultipleChoiceSceneData; // optional, only used for multiple-choice
+  sceneData?: MultipleChoiceSceneData | LeafParadeSceneData;
   onSceneReady?: (scene: Phaser.Scene) => void;
 }
 
@@ -17,6 +17,7 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
   sceneData,
   onSceneReady,
 }) => {
+  console.log('PhaserGame sceneData:', sceneData);
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<Phaser.Scene | null>(null);

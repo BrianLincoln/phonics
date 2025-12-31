@@ -24,11 +24,9 @@ const App: React.FC = () => {
     <Routes>
       <Route path="/" element={<MenuView />} />
       <Route path="/activity/:activityId" element={<ActivityView />} />
-      {/* <Route path="/quiz" element={<QuizView />} /> */}
       <Route path="/audiotest" element={<AudioTest />} />
       <Route path="/units" element={<UnitIndexView />} />
       <Route path="/progress" element={<ProgressView />} />
-      {/* <Route path="/crow-demo" element={<CrowDemoView />} /> */}
     </Routes>
   );
 };

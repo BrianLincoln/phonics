@@ -33,7 +33,7 @@ export interface MultipleChoiceActivity {
   questions: MCQuestion[];
 }
 
-export interface LeafParadeActivity {
+export interface LeafParadeActivityType {
   id: string;
   unit: string;
   activityType: ActivityType.LEAF_PARADE;
