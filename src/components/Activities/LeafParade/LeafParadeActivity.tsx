@@ -20,13 +20,23 @@ export const LeafParadeActivity: React.FC<LeafParadeActivityProps> = ({ activity
     onComplete(true);
   };
 
+
   useEffect(() => {
+    const scene = phaserRef.current;
+    if (!scene) return;
+    const handleComplete = () => {
+      // Optionally call onComplete(true) if you want to notify parent
+      onComplete(true);
+      navigate('/');
+    };
+    scene.events?.on && scene.events.on('question-complete', handleComplete);
     return () => {
-      if (phaserRef.current) {
-        phaserRef.current?.scene.stop();
+      scene.events?.off && scene.events.off('question-complete', handleComplete);
+      if (scene.scene?.stop) {
+        scene.scene.stop();
       }
     };
-  }, []);
+  }, [phaserRef.current]);
 
   return (
     <div className="activity-root">
@@ -36,7 +46,7 @@ export const LeafParadeActivity: React.FC<LeafParadeActivityProps> = ({ activity
       <div className="activity-stacked-layout">
         <PhaserGame
           sceneType="leaf-parade"
-          sceneData={{ activity: activity, playAudio }}
+          sceneData={{ activity: activity, playAudio, onQuestionComplete: handleComplete }}
           onSceneReady={scene => { phaserRef.current = scene; }}
         />
       </div>

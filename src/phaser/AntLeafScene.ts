@@ -44,6 +44,7 @@ import { ActivityType, LeafParadeActivityType } from '../data/activities';
 export interface LeafParadeSceneData {
   activity: LeafParadeActivityType;
   playAudio: (src: string, waitForEnd?: boolean) => Promise<any>;
+  onQuestionComplete?: () => void;
 }
 
 export class AntLeafScene extends Phaser.Scene {
@@ -84,13 +85,14 @@ export class AntLeafScene extends Phaser.Scene {
     }
   }
 
-
-
   // Receive data from React via game.scene.start(sceneKey, data)
   init(data: LeafParadeSceneData) {
     this.sceneData = data;
     if (data && typeof data.playAudio === 'function') {
       this.playAudio = data.playAudio;
+    }
+    if (data && typeof data.onQuestionComplete === 'function') {
+      (this.sceneData as any).onQuestionComplete = data.onQuestionComplete;
     }
   }
 
