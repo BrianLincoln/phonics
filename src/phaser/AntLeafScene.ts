@@ -40,13 +40,13 @@ export function createLeafTexture(scene: Phaser.Scene): void {
 import Phaser from 'phaser';
 import { playQuizAudioSequence } from '../helpers/quizAudioOrchestrator';
 import { ActivityType, LeafParadeActivityType } from '../data/activities';
-import { act } from 'react';
 
 export interface LeafParadeSceneData {
   activity: LeafParadeActivityType;
 }
 
 export class AntLeafScene extends Phaser.Scene {
+  private sceneData!: LeafParadeSceneData;
   marchingAnts: Phaser.GameObjects.Container[] = [];
   antLeafGroups: Phaser.GameObjects.Container[] = [];
   frameWidth: number = 100;
@@ -60,7 +60,6 @@ export class AntLeafScene extends Phaser.Scene {
   promptFile: string = '';
   phonemeFile: string = '';
   playAudio!: (src: string, waitForEnd?: boolean) => Promise<any>;
-  unitName?: string;
   feedbackMarks: { mark: Phaser.GameObjects.Text; x: number; y: number }[] = [];
   correctCount: number = 0;
   numberToComplete: number = 5;
@@ -84,14 +83,19 @@ export class AntLeafScene extends Phaser.Scene {
     }
   }
 
-  create(data) {
-    console.log(data)
-    // Validate and extract ant-leaf question data
-    const { activity } = data;
 
+
+  // Receive data from React via game.scene.start(sceneKey, data)
+  init(data: LeafParadeSceneData) {
+    this.sceneData = data;
+  }
+
+  create() {
+    const { activity } = this.sceneData;
+
+    this.targetLetter = activity.targetLetter;
     this.promptFile = activity.promptFile || '';
     this.phonemeFile = activity.phonemeFile || '';
-    this.unitName = activity.unit;
     this.correctCount = 0;
     this.questionComplete = false;
     if ('numberToComplete' in activity && typeof activity.numberToComplete === 'number') {
@@ -101,9 +105,6 @@ export class AntLeafScene extends Phaser.Scene {
     }
     // Remove all listeners and re-add for robust communication
     this.events.removeAllListeners('question-complete');
-    // if (typeof onQuestionComplete === 'function') {
-    //   this.events.on('question-complete', onQuestionComplete);
-    // }
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
     this.cameras.main.setBackgroundColor('#e0f7fa');
@@ -131,7 +132,7 @@ export class AntLeafScene extends Phaser.Scene {
     }
     this.marchingAnts = [];
     for (let i = 0; i < antCount; i++) {
-      const group = this.createAntLeafGroup(data);
+      const group = this.createAntLeafGroup(this.sceneData);
       group.x = this.antStartX - i * this.antSpacing;
       group.y = antY;
       this.add.existing(group);
@@ -299,9 +300,7 @@ export class AntLeafScene extends Phaser.Scene {
           for (let j = 1; j < this.marchingAnts.length; j++) {
             if (this.marchingAnts[j].x < leftmost.x) leftmost = this.marchingAnts[j];
           }
-          const group = this.createAntLeafGroup({
-            ...this.data
-          });
+          const group = this.createAntLeafGroup(this.sceneData);
           group.x = leftmost.x - this.antSpacing;
           group.y = this.cameras.main.height * 0.7;
           this.add.existing(group);

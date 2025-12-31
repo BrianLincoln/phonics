@@ -17,7 +17,6 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
   sceneData,
   onSceneReady,
 }) => {
-  console.log('PhaserGame sceneData:', sceneData);
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<Phaser.Scene | null>(null);
@@ -57,7 +56,7 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
     switch (sceneType) {
       case 'leaf-parade':
         sceneClass = AntLeafScene;
-        sceneKey = 'LeafParadeScene';
+        sceneKey = 'AntLeafScene';
         break;
       case 'multiple-choice':
         sceneClass = MultipleChoiceScene;
