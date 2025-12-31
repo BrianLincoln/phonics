@@ -7,6 +7,7 @@ import { UnitIndexView } from '../views/UnitIndexView';
 import ProgressView from '../views/ProgressView';
 import { stopAllAudio } from '../utils/audioUtils';
 import { ActivityView } from '../views/ActivityView';
+import SuccessDemo from '../views/SuccessDemo';
 // ...existing code...
 // import ProgressView from './ProgressView';
 // import CrowDemoView from './CrowDemoView';
@@ -27,6 +28,7 @@ const App: React.FC = () => {
       <Route path="/audiotest" element={<AudioTest />} />
       <Route path="/units" element={<UnitIndexView />} />
       <Route path="/progress" element={<ProgressView />} />
+      <Route path="/success-demo" element={<SuccessDemo />} />
     </Routes>
   );
 };

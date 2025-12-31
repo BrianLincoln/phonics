@@ -14,16 +14,19 @@ export class SuccessScene extends Phaser.Scene {
     const h = this.cameras.main.height;
     this.cameras.main.setBackgroundColor('#fff');
     // Fade out any previous content
-    this.cameras.main.fadeOut(400, 255, 255, 255);
+    // this.cameras.main.fadeOut(400, 255, 255, 255);
     this.time.delayedCall(400, () => {
+
       // Play success sound
       const sound = this.sound.add('success');
       sound.play();
-      // Fade in emoji
-      const emoji = this.add.text(w / 2, h / 2, '🎉', {
-        fontSize: '180px',
-        fontFamily: 'Arial',
+      // Fade in emoji, with dynamic sizing and vertical offset for centering
+      const emojiSize = Math.min(w, h) * 0.5;
+      const emoji = this.add.text(w / 2, h / 2 - emojiSize * 0.1, '🎉', {
+        fontSize: `${emojiSize}px`,
+        fontFamily: 'Arial, sans-serif',
         color: '#222',
+        align: 'center',
       }).setOrigin(0.5);
       emoji.alpha = 0;
       this.tweens.add({

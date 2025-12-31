@@ -81,7 +81,7 @@ export class AntLeafScene extends Phaser.Scene {
     }
     // Load leaf image only if not already loaded
     if (!this.textures.exists('leaf')) {
-      this.load.image('leaf', '/src/assets/leaf.png');
+      this.load.image('leaf', '/src/assets/leaf2.png');
     }
   }
 
