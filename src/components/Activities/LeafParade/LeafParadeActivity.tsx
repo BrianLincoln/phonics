@@ -56,7 +56,7 @@ export const LeafParadeActivity: React.FC<LeafParadeActivityProps> = ({ activity
           sceneData={
             sceneType === 'leaf-parade'
               ? { activity: activity, playAudio, onQuestionComplete: handleComplete }
-              : { onComplete: handleSuccessComplete }
+              : undefined
           }
           onSceneReady={scene => { phaserRef.current = scene; }}
         />
