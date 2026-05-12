@@ -32,3 +32,6 @@ coverage/
 
 # Ignore audio output cache (if any)
 public/audio/**/*.cache
+
+# Claude Code local settings
+.claude/
