@@ -56,6 +56,7 @@ export const EndlessActivity: React.FC = () => {
       setTransition('idle');
     };
 
+    console.log('[EndlessActivity] handleAnswer', { isCorrect, hasScene: !!phaserRef.current, hasMethod: !!phaserRef.current?.onQuestionAnswered });
     if (phaserRef.current?.onQuestionAnswered) {
       phaserRef.current.onQuestionAnswered(isCorrect, doAdvance);
     } else {

@@ -46,7 +46,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
             key={option}
             style={{
               '--fan-x': fanX,
-              '--enter-delay': `${idx * 55}ms`,
+              '--enter-delay': `${idx * 25}ms`,
             } as React.CSSProperties}
             className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}${promptPlaying ? ' prompt-playing' : ''}`}
             onClick={() => onAnswer(option)}

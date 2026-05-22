@@ -250,15 +250,16 @@ export class MultipleChoiceScene extends Phaser.Scene {
   onQuestionAnswered(isCorrect: boolean, onDone?: () => void) {
     this.questionCount++;
 
-    if (isCorrect && this.questionCount !== MultipleChoiceScene.CROW_TAKE_LETTER_QUESTION) {
-      this.crowController?.hop(onDone);
-    } else {
-      onDone?.();
-    }
+    const isCrowTakeLetterQuestion =
+      this.questionCount === MultipleChoiceScene.CROW_TAKE_LETTER_QUESTION && this.crowActive;
 
-    if (this.questionCount === MultipleChoiceScene.CROW_TAKE_LETTER_QUESTION && this.crowActive) {
+    if (isCrowTakeLetterQuestion) {
       this.crowActive = false;
       this.crowTakeLetter(onDone);
+    } else if (isCorrect) {
+      this.crowController?.hop(onDone);
+    } else {
+      this.crowController?.shake(onDone);
     }
   }
 
