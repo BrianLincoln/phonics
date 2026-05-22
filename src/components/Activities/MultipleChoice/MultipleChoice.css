@@ -28,7 +28,7 @@
   pointer-events: none;
 }
 
-.multiple-choice-answers.exiting .quiz-answer {
+.multiple-choice-answers.exiting .quiz-answer:not(.eliminated) {
   animation: buttonExit 0.18s ease-in forwards;
 }
 
