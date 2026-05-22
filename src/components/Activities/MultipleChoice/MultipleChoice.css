@@ -110,6 +110,16 @@
 .quiz-answer:disabled {
   cursor: not-allowed;
 }
+
+@keyframes eliminateButton {
+  from { opacity: 1; transform: scale(1);             }
+  to   { opacity: 0; transform: scale(0.75) translateY(12px); }
+}
+
+.quiz-answer.eliminated {
+  animation: eliminateButton 0.3s ease-in forwards;
+  pointer-events: none;
+}
 .quiz-answer.prompt-playing {
   opacity: 0.5;
 }

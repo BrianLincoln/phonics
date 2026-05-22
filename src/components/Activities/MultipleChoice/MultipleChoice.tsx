@@ -25,16 +25,15 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
     return () => clearTimeout(timeout);
   }, [selected, feedback]);
 
-  const visibleOptions = question.options.filter((o: string) => !eliminated.includes(o));
-  const total = visibleOptions.length;
+  const total = question.options.length;
   const center = (total - 1) / 2;
 
   return (
     <div className={`multiple-choice-answers${transition === 'exiting' ? ' exiting' : transition === 'entering' ? ' entering' : ''}`}>
-      {visibleOptions.map((option: string, idx: number) => {
+      {question.options.map((option: string, idx: number) => {
+        const isEliminated = eliminated.includes(option);
         const fanX = `${((idx - center) * 22).toFixed(1)}vw`;
 
-        const isSelected = selected === option;
         const isCorrect = feedback === 'correct' && option === question.correctAnswer;
         const isWrong = feedback === 'wrong' && option === selected;
         let animClass = '';
@@ -48,9 +47,9 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
               '--fan-x': fanX,
               '--enter-delay': `${idx * 25}ms`,
             } as React.CSSProperties}
-            className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}${promptPlaying ? ' prompt-playing' : ''}`}
+            className={`quiz-answer${isEliminated ? ' eliminated' : ''}${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}${promptPlaying ? ' prompt-playing' : ''}`}
             onClick={() => onAnswer(option)}
-            disabled={!!selected || !!promptPlaying}
+            disabled={!!selected || !!promptPlaying || isEliminated}
           >
             {option}
           </button>
