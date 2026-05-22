@@ -35,7 +35,7 @@ export const EndlessActivity: React.FC = () => {
     playAudio(FEEDBACK_AUDIO[isCorrect ? 'correct' : 'wrong'], true).catch(() => {});
 
     if (isCorrect) {
-      setScore(s => ({ correct: s.correct + 1, total: s.total + 1 }));
+      setScore(s => ({ correct: s.correct + (eliminated.length === 0 ? 1 : 0), total: s.total + 1 }));
       const doAdvance = async () => {
         await delay(1500);
         setTransition('exiting');
