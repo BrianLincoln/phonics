@@ -138,13 +138,16 @@ export class EndlessScene extends Phaser.Scene {
     if (!this.textures.exists('cloud')) {
       const gfx = this.make.graphics({ x: 0, y: 0, add: false });
       gfx.fillStyle(0xffffff, 1);
-      gfx.fillCircle(40,  55, 28);
-      gfx.fillCircle(75,  40, 38);
-      gfx.fillCircle(120, 34, 44);
-      gfx.fillCircle(165, 40, 36);
-      gfx.fillCircle(195, 52, 26);
-      gfx.fillCircle(105, 58, 36);
-      gfx.generateTexture('cloud', 220, 90);
+      // Top bumps — all clear the top edge (y ≥ 6)
+      gfx.fillCircle(40,  80, 28);   // far left
+      gfx.fillCircle(78,  62, 38);   // left
+      gfx.fillCircle(122, 52, 46);   // center (tallest)
+      gfx.fillCircle(168, 62, 38);   // right
+      gfx.fillCircle(208, 78, 28);   // far right
+      // Bottom fill — keeps the cloud base rounded, stays inside texture
+      gfx.fillCircle(100, 78, 34);
+      gfx.fillCircle(148, 78, 34);
+      gfx.generateTexture('cloud', 240, 120);
       gfx.destroy();
     }
 
