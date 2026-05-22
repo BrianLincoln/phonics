@@ -86,17 +86,40 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
     game.scene.stop(sceneKey);
     game.scene.add(sceneKey, sceneClass, true, sceneData);
 
-    // Wait for the scene's create() to finish before calling onSceneReady —
-    // this guarantees crowController and other scene state are fully initialized.
-    const scene = game.scene.getScene(sceneKey);
-    if (scene) {
-      scene.events.once('create', () => {
+    // After add(), the scene may still be in Phaser's _pending queue (the game
+    // hasn't booted yet), so getScene() returns null until bootQueue runs.
+    // For scenes with no preload(), create() fires synchronously inside bootQueue,
+    // so by the time our 'ready' listener fires, the scene may already be active.
+    // We handle both cases: attach once('create') if not yet created, or call
+    // onSceneReady directly if create() already completed.
+    const attachCreateListener = () => {
+      const scene = game.scene.getScene(sceneKey);
+      if (!scene) return; // defensive guard
+
+      const init = () => {
         if (sceneType === 'leaf-parade' && sceneData && 'playAudio' in sceneData) {
           (scene as any).playAudio = (sceneData as any).playAudio;
         }
         sceneRef.current = scene;
         onSceneReady?.(scene);
-      });
+      };
+
+      if (game.scene.isActive(sceneKey)) {
+        // create() already fired (e.g. scene had no preload)
+        init();
+      } else {
+        scene.events.once('create', init);
+      }
+    };
+
+    if (game.scene.isBooted) {
+      // Game already running — add() registered the scene in keys[] immediately
+      attachCreateListener();
+    } else {
+      // Game still booting — scene is in _pending queue.
+      // SceneManager's bootQueue listener (registered first) runs on 'ready' and
+      // moves the scene into keys[] before our listener fires.
+      game.events.once('ready', attachCreateListener);
     }
   }, [sceneType, sceneData]);
 

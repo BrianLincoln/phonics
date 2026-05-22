@@ -3,6 +3,7 @@ const { createContext, useContext, useRef } = React;
 
 class AudioManager {
   private playing = new Set<HTMLAudioElement>();
+  private pendingResolvers = new Map<HTMLAudioElement, () => void>();
 
   private track(audio: HTMLAudioElement): HTMLAudioElement {
     this.playing.add(audio);
@@ -21,9 +22,20 @@ class AudioManager {
   async playAndWait(src: string): Promise<HTMLAudioElement> {
     return new Promise((resolve, reject) => {
       const audio = this.track(new Audio(src));
-      audio.addEventListener('ended', () => resolve(audio), { once: true });
-      audio.addEventListener('error', (e) => reject(e), { once: true });
-      audio.play().catch(reject);
+      const cleanup = () => {
+        this.pendingResolvers.delete(audio);
+        resolve(audio);
+      };
+      this.pendingResolvers.set(audio, cleanup);
+      audio.addEventListener('ended', cleanup, { once: true });
+      audio.addEventListener('error', (e) => {
+        this.pendingResolvers.delete(audio);
+        reject(e);
+      }, { once: true });
+      audio.play().catch((e) => {
+        this.pendingResolvers.delete(audio);
+        reject(e);
+      });
     });
   }
 
@@ -31,6 +43,11 @@ class AudioManager {
     this.playing.forEach(audio => {
       audio.pause();
       audio.currentTime = 0;
+      const resolve = this.pendingResolvers.get(audio);
+      if (resolve) {
+        this.pendingResolvers.delete(audio);
+        resolve();
+      }
     });
     this.playing.clear();
   }
