@@ -5,6 +5,8 @@ import { MultipleChoiceActivity } from '../../../data/activities';
 import MultipleChoice from './MultipleChoice';
 import './MultipleChoiceActivity.css';
 import { usePlayAudio, useStopAllAudio } from '../../../utils/audioUtils';
+import { useAudioUnlocked } from '../../../context/AudioManagerContext';
+import { AudioStartOverlay } from '../../AudioStartOverlay';
 
 const FEEDBACK_AUDIO = {
   correct: '/audio/system/correct.wav',
@@ -27,6 +29,7 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
   const [queueIdx, setQueueIdx] = useState(0);
   const question = queueRef.current[queueIdx];
 
+  const audioUnlocked = useAudioUnlocked();
   const phaserRef = useRef<any>(null);
   const playAudio = usePlayAudio();
   const stopAll = useStopAllAudio();
@@ -137,6 +140,7 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
 
   return (
     <div className='activity-root'>
+      {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
         <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
       </div>

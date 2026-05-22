@@ -1,5 +1,5 @@
 import * as React from "react";
-const { createContext, useContext, useRef } = React;
+const { createContext, useContext, useRef, useState, useEffect } = React;
 
 // ---------- user-interaction unlock ----------
 // Chrome blocks audio.play() until the user has interacted with the page.
@@ -7,6 +7,7 @@ const { createContext, useContext, useRef } = React;
 
 let userHasInteracted = false;
 const interactionListeners: (() => void)[] = [];
+const unlockedStateSetters = new Set<(v: boolean) => void>();
 
 function onFirstInteraction(cb: () => void) {
   if (userHasInteracted) { cb(); return; }
@@ -16,6 +17,7 @@ function onFirstInteraction(cb: () => void) {
 function markInteracted() {
   if (userHasInteracted) return;
   userHasInteracted = true;
+  unlockedStateSetters.forEach(s => s(true));
   interactionListeners.splice(0).forEach(cb => cb());
 }
 
@@ -23,6 +25,17 @@ if (typeof document !== 'undefined') {
   document.addEventListener('click',      markInteracted, { capture: true, once: true });
   document.addEventListener('keydown',    markInteracted, { capture: true, once: true });
   document.addEventListener('touchstart', markInteracted, { capture: true, once: true });
+}
+
+/** Returns true once the user has interacted with the page (audio is unlocked). */
+export function useAudioUnlocked(): boolean {
+  const [unlocked, setUnlocked] = useState(userHasInteracted);
+  useEffect(() => {
+    if (userHasInteracted) return;
+    unlockedStateSetters.add(setUnlocked);
+    return () => { unlockedStateSetters.delete(setUnlocked); };
+  }, []);
+  return unlocked;
 }
 // --------------------------------------------
 

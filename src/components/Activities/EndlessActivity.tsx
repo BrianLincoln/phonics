@@ -4,6 +4,8 @@ import { PhaserGame } from '../PhaserGame';
 import { generateQuestion } from '../../data/endlessMode';
 import MultipleChoice from './MultipleChoice/MultipleChoice';
 import { usePlayAudio, useStopAllAudio } from '../../utils/audioUtils';
+import { useAudioUnlocked } from '../../context/AudioManagerContext';
+import { AudioStartOverlay } from '../AudioStartOverlay';
 import './MultipleChoice/MultipleChoiceActivity.css';
 
 const FEEDBACK_AUDIO = {
@@ -22,6 +24,7 @@ export const EndlessActivity: React.FC = () => {
   const [transition, setTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const [promptPlaying, setPromptPlaying] = useState(true);
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const audioUnlocked = useAudioUnlocked();
   const phaserRef = useRef<any>(null);
   const playAudio = usePlayAudio();
   const stopAll = useStopAllAudio();
@@ -98,6 +101,7 @@ export const EndlessActivity: React.FC = () => {
 
   return (
     <div className='activity-root'>
+      {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
         <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
         <span className="endless-score">{score.correct} / {score.total}</span>

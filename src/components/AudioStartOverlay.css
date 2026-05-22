@@ -1,0 +1,46 @@
+.audio-start-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  /* Fade out when React unmounts it */
+  animation: overlayFadeIn 0.15s ease both;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.audio-start-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2.5rem 3rem;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  max-width: 320px;
+  pointer-events: none; /* let clicks pass to the overlay div */
+}
+
+.audio-start-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.audio-start-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 1.2rem;
+}
+
+.audio-start-hint {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
