@@ -32,6 +32,7 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
       height: window.innerHeight,
       parent: containerRef.current,
       backgroundColor: '#ffffff',
+      audio: { noAudio: true },
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.NO_CENTER,
@@ -85,17 +86,18 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
     game.scene.stop(sceneKey);
     game.scene.add(sceneKey, sceneClass, true, sceneData);
 
-    // Call onSceneReady after scene is added
-    setTimeout(() => {
-      const scene = game.scene.getScene(sceneKey);
-      if (scene) {
+    // Wait for the scene's create() to finish before calling onSceneReady —
+    // this guarantees crowController and other scene state are fully initialized.
+    const scene = game.scene.getScene(sceneKey);
+    if (scene) {
+      scene.events.once('create', () => {
         if (sceneType === 'leaf-parade' && sceneData && 'playAudio' in sceneData) {
           (scene as any).playAudio = (sceneData as any).playAudio;
         }
         sceneRef.current = scene;
         onSceneReady?.(scene);
-      }
-    }, 0);
+      });
+    }
   }, [sceneType, sceneData]);
 
   return <div ref={containerRef} className="phaser-container" />;
