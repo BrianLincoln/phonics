@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPhonicsProgress, getRecentConfidence } from '../helpers/quizProgress';
-import { stopAllAudio } from '../utils/audioUtils';
+import { useStopAllAudio } from '../utils/audioUtils';
 import type { PhonicsUnitProgress } from '../helpers/quizProgress';
 import { units } from '../data/units';
 import './ProgressView.css';
@@ -10,11 +10,13 @@ const ProgressView: React.FC = () => {
   const navigate = useNavigate();
   const [progress, setProgress] = useState<Record<string, PhonicsUnitProgress>>({});
 
+  const stopAll = useStopAllAudio();
+
   useEffect(() => {
     const data = getPhonicsProgress();
     setProgress(data.units);
     return () => {
-      stopAllAudio();
+      stopAll();
     };
   }, []);
 

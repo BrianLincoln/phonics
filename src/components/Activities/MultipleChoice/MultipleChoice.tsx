@@ -4,12 +4,15 @@ interface MultipleChoiceProps {
   question: any
   selected?: string | null
   feedback?: 'correct' | 'wrong' | null
+  revealCorrect?: boolean
+  transition?: 'idle' | 'exiting' | 'entering'
+  promptPlaying?: boolean
   onAnswer: (word: string) => void
 }
 
 import React, { useEffect, useState } from 'react';
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, feedback, onAnswer }) => {
+const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, feedback, revealCorrect, transition, promptPlaying, onAnswer }) => {
   const [animating, setAnimating] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,10 +27,15 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
   }, [selected, feedback]);
 
   return (
-    <div className="multiple-choice-answers">
-      {question.options.map(option => {
+    <div className={`multiple-choice-answers${transition === 'exiting' ? ' exiting' : transition === 'entering' ? ' entering' : ''}`}>
+      {question.options.map((option: string, idx: number) => {
+        const total = question.options.length;
+        const center = (total - 1) / 2;
+        const fanX = `${((idx - center) * 22).toFixed(1)}vw`;
+
         const isSelected = selected === option;
-        const isCorrect = feedback === 'correct' && option === question.correctAnswer;
+        const isCorrect = (feedback === 'correct' && option === question.correctAnswer)
+          || (feedback === 'wrong' && revealCorrect && option === question.correctAnswer);
         const isWrong = feedback === 'wrong' && option === selected;
         let animClass = '';
         if (animating === option) {
@@ -36,9 +44,13 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
         return (
           <button
             key={option}
-            className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}`}
+            style={{
+              '--fan-x': fanX,
+              '--enter-delay': `${idx * 55}ms`,
+            } as React.CSSProperties}
+            className={`quiz-answer${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}${promptPlaying ? ' prompt-playing' : ''}`}
             onClick={() => onAnswer(option)}
-            disabled={!!selected}
+            disabled={!!selected || !!promptPlaying}
           >
             {option}
           </button>

@@ -2,9 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { AntLeafScene, LeafParadeSceneData } from '../phaser/AntLeafScene';
 import { MultipleChoiceScene, MultipleChoiceSceneData } from '../phaser/MultipleChoiceScene';
+import { EndlessScene } from '../phaser/EndlessScene';
 import { SuccessScene } from '../phaser/SuccessScene';
 
-type SceneType = 'multiple-choice' | 'leaf-parade' | 'success';
+type SceneType = 'multiple-choice' | 'leaf-parade' | 'success' | 'endless';
 
 interface PhaserGameProps {
   sceneType: SceneType;
@@ -25,15 +26,16 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
 
-    const { width, height } = containerRef.current.getBoundingClientRect();
-
     const game = new Phaser.Game({
       type: Phaser.AUTO,
-      width: Math.floor(width),
-      height: Math.floor(height),
+      width: window.innerWidth,
+      height: window.innerHeight,
       parent: containerRef.current,
       backgroundColor: '#ffffff',
-      scale: { mode: Phaser.Scale.NONE },
+      scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.NO_CENTER,
+      },
     });
 
     gameRef.current = game;
@@ -62,6 +64,10 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
         sceneClass = MultipleChoiceScene;
         sceneKey = 'MultipleChoiceScene';
         break;
+      case 'endless':
+        sceneClass = EndlessScene;
+        sceneKey = 'EndlessScene';
+        break;
       case 'success':
         sceneClass = SuccessScene;
         sceneKey = 'SuccessScene';
@@ -77,19 +83,19 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
     }
 
     game.scene.stop(sceneKey);
-    // Listen for scene start to inject playAudio and call onSceneReady
-    const handleSceneStart = (startedScene: Phaser.Scene) => {
-      if (startedScene.scene.key === sceneKey) {
-        sceneRef.current = startedScene;
-        if (sceneType === 'leaf-parade' && sceneData && 'playAudio' in sceneData) {
-          (sceneRef.current as any).playAudio = (sceneData as any).playAudio;
-        }
-        onSceneReady?.(sceneRef.current);
-        game.events.off('start', handleSceneStart);
-      }
-    };
-    game.events.on('start', handleSceneStart);
     game.scene.add(sceneKey, sceneClass, true, sceneData);
+
+    // Call onSceneReady after scene is added
+    setTimeout(() => {
+      const scene = game.scene.getScene(sceneKey);
+      if (scene) {
+        if (sceneType === 'leaf-parade' && sceneData && 'playAudio' in sceneData) {
+          (scene as any).playAudio = (sceneData as any).playAudio;
+        }
+        sceneRef.current = scene;
+        onSceneReady?.(scene);
+      }
+    }, 0);
   }, [sceneType, sceneData]);
 
   return <div ref={containerRef} className="phaser-container" />;

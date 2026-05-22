@@ -2,78 +2,37 @@ import * as React from "react";
 const { createContext, useContext, useRef } = React;
 
 class AudioManager {
-  private unlocked = false;
-  private persistentAudio: HTMLAudioElement;
-  private silentSrc = "/audio/system/click.wav"; // Use a short, silent or near-silent wav
+  private playing = new Set<HTMLAudioElement>();
 
-  constructor() {
-    this.persistentAudio = new Audio();
-    this.persistentAudio.preload = "auto";
-    this.persistentAudio.src = this.silentSrc;
-  }
-
-  async unlock() {
-    // Play a silent sound to unlock audio for HTMLAudioElement
-    try {
-      this.persistentAudio.currentTime = 0;
-      await this.persistentAudio.play();
-    } catch (e) {
-      // ignore
-    }
-    this.unlocked = true;
-  }
-
-  isUnlocked() {
-    return this.unlocked;
-  }
-
-  async play(src: string) {
-    // Use a new HTMLAudioElement for each sound (allows overlap)
-    const audio = new Audio(src);
-    try {
-      await audio.play();
-      this.unlocked = true;
-    } catch (e) {
-      // fallback: try to unlock again and retry
-      try {
-        await this.unlock();
-        await audio.play();
-        this.unlocked = true;
-      } catch (err) {
-        // still failed
-      }
-    }
+  private track(audio: HTMLAudioElement): HTMLAudioElement {
+    this.playing.add(audio);
+    const release = () => this.playing.delete(audio);
+    audio.addEventListener('ended', release, { once: true });
+    audio.addEventListener('error', release, { once: true });
     return audio;
   }
 
-  async playAndWait(src: string) {
-    return new Promise<HTMLAudioElement>((resolve, reject) => {
-      const audio = new Audio(src);
-      audio.onended = () => {
-        this.unlocked = true;
-        resolve(audio);
-      };
-      audio.onerror = (e) => reject(e);
-      audio.play().then(() => {
-        this.unlocked = true;
-      }).catch(async (err) => {
-        try {
-          await this.unlock();
-          await audio.play();
-          this.unlocked = true;
-        } catch (e2) {
-          reject(e2);
-        }
-      });
+  async play(src: string): Promise<HTMLAudioElement> {
+    const audio = this.track(new Audio(src));
+    await audio.play().catch(() => this.playing.delete(audio));
+    return audio;
+  }
+
+  async playAndWait(src: string): Promise<HTMLAudioElement> {
+    return new Promise((resolve, reject) => {
+      const audio = this.track(new Audio(src));
+      audio.addEventListener('ended', () => resolve(audio), { once: true });
+      audio.addEventListener('error', (e) => reject(e), { once: true });
+      audio.play().catch(reject);
     });
   }
 
   stopAll() {
-    // Stop all <audio> elements in DOM
-    document.querySelectorAll('audio').forEach((el) => {
-      (el as HTMLAudioElement).pause();
-      (el as HTMLAudioElement).currentTime = 0;
+    this.playing.forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
     });
+    this.playing.clear();
   }
 }
 

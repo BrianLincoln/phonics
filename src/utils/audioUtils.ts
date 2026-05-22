@@ -1,9 +1,3 @@
-// audioUtils.ts
-// Simple audio utility for React quiz orchestration
-
-
-// Use AudioManager from context for all audio playback
-
 import { useAudioManager } from '../context/AudioManagerContext';
 
 export function usePlayAudio() {
@@ -12,10 +6,7 @@ export function usePlayAudio() {
     waitForEnd ? audioManager.playAndWait(src) : audioManager.play(src);
 }
 
-export function stopAllAudio() {
-  // Optionally implement stopAll in AudioManager and call here
-  document.querySelectorAll('audio').forEach((el) => {
-    (el as HTMLAudioElement).pause();
-    (el as HTMLAudioElement).currentTime = 0;
-  });
+export function useStopAllAudio() {
+  const audioManager = useAudioManager();
+  return () => audioManager.stopAll();
 }

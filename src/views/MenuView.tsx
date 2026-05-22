@@ -23,6 +23,7 @@ const MenuView: React.FC = () => {
         >
           ▶ Play
         </button>
+        <button className="menu-btn" onClick={async () => { await playAudio(CLICK_SOUND).catch(() => { }); navigate('/endless'); }}>∞ Endless</button>
         <button className="menu-btn" onClick={async () => { await playAudio(CLICK_SOUND).catch(() => { }); navigate('/units'); }}>Units</button>
         <button className="menu-btn" onClick={async () => { await playAudio(CLICK_SOUND).catch(() => { }); navigate('/progress'); }}>Progress</button>
         <button className="menu-btn" onClick={async () => { await playAudio(CLICK_SOUND).catch(() => { }); navigate('/crow-demo'); }}>Crow Demo</button>

@@ -58,12 +58,12 @@ export class CrowController {
     this.crow.setDepth(9);
     this.crow.setFacing('left');
     // Start off-screen right
-    this.crow.setPosition(cam.width + 100, cam.height - 20);
+    this.crow.setPosition(cam.width + 100, this.groundY);
     this.startWalking();
     this.scene.tweens.add({
       targets: this.crow,
       x: cam.width - 100,
-      y: cam.height - 20,
+      y: this.groundY,
       duration: 3000,
       ease: 'Sine.easeOut',
       onUpdate: () => {
@@ -84,12 +84,12 @@ export class CrowController {
     this.crow.setDepth(9);
     this.crow.setFacing('left');
     // Start off-screen right
-    this.crow.setPosition(cam.width + 100, cam.height - 20);
+    this.crow.setPosition(cam.width + 100, this.groundY);
     this.startWalking();
     this.scene.tweens.add({
       targets: this.crow,
       x: cam.width - 100,
-      y: cam.height - 20,
+      y: this.groundY,
       duration: 3000,
       ease: 'Sine.easeOut',
       onUpdate: () => {
@@ -111,16 +111,16 @@ export class CrowController {
     // First hop
     this.scene.tweens.add({
       targets: this.crow,
-      y: '-=30',
-      duration: 120,
+      y: '-=25',
+      duration: 100,
       yoyo: true,
       ease: 'Quad.easeOut',
       onComplete: () => {
         // Second hop
         this.scene.tweens.add({
           targets: this.crow,
-          y: '-=30',
-          duration: 120,
+          y: '-=25',
+          duration: 100,
           yoyo: true,
           ease: 'Quad.easeOut',
           onComplete: () => {
@@ -134,6 +134,7 @@ export class CrowController {
 
   private scene: Phaser.Scene;
   private crow: Crow;
+  readonly groundY: number;
 
   private margin = 30;
   private walkSpeed = 100;
@@ -144,6 +145,8 @@ export class CrowController {
   constructor(scene: Phaser.Scene, crow: Crow) {
     this.scene = scene;
     this.crow = crow;
+    // 0.78 keeps the crow on the grass and above fixed UI buttons at the bottom
+    this.groundY = scene.cameras.main.height * 0.78;
   }
 
   private createPutzBounds() {
@@ -173,12 +176,12 @@ export class CrowController {
     this.crow.setVisible(true);
     this.crow.setDepth(9);
     this.crow.setFacing('right');
-    this.crow.setPosition(-100, cam.height - 20);
+    this.crow.setPosition(-100, this.groundY);
     this.startWalking();
     this.scene.tweens.add({
       targets: this.crow,
       x: cam.width - 100,
-      y: cam.height - 20,
+      y: this.groundY,
       duration: 3000,
       ease: 'Sine.easeOut',
       onUpdate: () => {
@@ -320,7 +323,7 @@ export class CrowController {
     // Always face left if hopping to idle spot (bottom right)
     const cam = this.scene.cameras.main;
     const idleX = cam.width - 100;
-    const idleY = cam.height - 20;
+    const idleY = this.groundY;
     if (x === idleX && y === idleY) {
       this.crow.setFacing('left');
     } else {
@@ -352,7 +355,7 @@ export class CrowController {
     // Always face left if in idle spot
     const cam = this.scene.cameras.main;
     const idleX = cam.width - 100;
-    const idleY = cam.height - 20;
+    const idleY = this.groundY;
     this.crow.setFacing('left');
     const hopLoop = () => {
       if (!this.hoppingInPlace) return;
@@ -372,6 +375,25 @@ export class CrowController {
    */
   stopHoppingInPlace() {
     this.hoppingInPlace = false;
+  }
+
+  /**
+   * Show the skeptical/questioning frame (reaction) — used for wrong answers.
+   */
+  shake(onDone?: () => void) {
+    if (!this.crow.visible) {
+      onDone?.();
+      return;
+    }
+    // Wait a bit before reacting
+    this.scene.time.delayedCall(300, () => {
+      this.crow.setFrame(5);
+      // Hold the expression
+      this.scene.time.delayedCall(1000, () => {
+        this.crow.setIdle();
+        onDone?.();
+      });
+    });
   }
 
   /**
