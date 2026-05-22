@@ -178,8 +178,7 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   onQuestionAnswered(isCorrect: boolean, onDone?: () => void) {
-    console.log('[EndlessScene] onQuestionAnswered', { isCorrect, hasCrowController: !!this.crowController, crowVisible: this.crow?.visible });
-    if (isCorrect) {
+if (isCorrect) {
       this.crowController?.hop(onDone);
     } else {
       this.crowController?.shake(onDone);
