@@ -4,7 +4,7 @@ interface MultipleChoiceProps {
   question: any
   selected?: string | null
   feedback?: 'correct' | 'wrong' | null
-  revealCorrect?: boolean
+  eliminated?: string[]
   transition?: 'idle' | 'exiting' | 'entering'
   promptPlaying?: boolean
   onAnswer: (word: string) => void
@@ -12,7 +12,7 @@ interface MultipleChoiceProps {
 
 import React, { useEffect, useState } from 'react';
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, feedback, revealCorrect, transition, promptPlaying, onAnswer }) => {
+const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, feedback, eliminated = [], transition, promptPlaying, onAnswer }) => {
   const [animating, setAnimating] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,22 +20,22 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
       setAnimating(null);
       return;
     }
-    // Animate only the selected button
     setAnimating(selected);
     const timeout = setTimeout(() => setAnimating(null), 500);
     return () => clearTimeout(timeout);
   }, [selected, feedback]);
 
+  const visibleOptions = question.options.filter((o: string) => !eliminated.includes(o));
+  const total = visibleOptions.length;
+  const center = (total - 1) / 2;
+
   return (
     <div className={`multiple-choice-answers${transition === 'exiting' ? ' exiting' : transition === 'entering' ? ' entering' : ''}`}>
-      {question.options.map((option: string, idx: number) => {
-        const total = question.options.length;
-        const center = (total - 1) / 2;
+      {visibleOptions.map((option: string, idx: number) => {
         const fanX = `${((idx - center) * 22).toFixed(1)}vw`;
 
         const isSelected = selected === option;
-        const isCorrect = (feedback === 'correct' && option === question.correctAnswer)
-          || (feedback === 'wrong' && revealCorrect && option === question.correctAnswer);
+        const isCorrect = feedback === 'correct' && option === question.correctAnswer;
         const isWrong = feedback === 'wrong' && option === selected;
         let animClass = '';
         if (animating === option) {

@@ -18,7 +18,7 @@ export const EndlessActivity: React.FC = () => {
   const [{ question }, setGenerated] = useState(() => generateQuestion());
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
-  const [revealCorrect, setRevealCorrect] = useState(false);
+  const [eliminated, setEliminated] = useState<string[]>([]);
   const [transition, setTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const [promptPlaying, setPromptPlaying] = useState(true);
   const [score, setScore] = useState({ correct: 0, total: 0 });
@@ -32,34 +32,39 @@ export const EndlessActivity: React.FC = () => {
 
     setSelected(word);
     setFeedback(isCorrect ? 'correct' : 'wrong');
-    setScore(s => ({ correct: s.correct + (isCorrect ? 1 : 0), total: s.total + 1 }));
-
-    // Fire audio without awaiting — it plays concurrently with the crow animation.
-    // The delay below is long enough that the sound finishes before we advance.
     playAudio(FEEDBACK_AUDIO[isCorrect ? 'correct' : 'wrong'], true).catch(() => {});
 
-    const doAdvance = async () => {
-      if (isCorrect) {
+    if (isCorrect) {
+      setScore(s => ({ correct: s.correct + 1, total: s.total + 1 }));
+      const doAdvance = async () => {
         await delay(1500);
+        setTransition('exiting');
+        await delay(280);
+        setSelected(null);
+        setFeedback(null);
+        setEliminated([]);
+        setGenerated(generateQuestion());
+        setTransition('entering');
+        await delay(350);
+        setTransition('idle');
+      };
+      if (phaserRef.current?.onQuestionAnswered) {
+        phaserRef.current.onQuestionAnswered(true, doAdvance);
       } else {
-        setRevealCorrect(true);
-        await delay(1500);
-        setRevealCorrect(false);
+        doAdvance();
       }
-      setTransition('exiting');
-      await delay(280);
-      setSelected(null);
-      setFeedback(null);
-      setGenerated(generateQuestion());
-      setTransition('entering');
-      await delay(350);
-      setTransition('idle');
-    };
-
-if (phaserRef.current?.onQuestionAnswered) {
-      phaserRef.current.onQuestionAnswered(isCorrect, doAdvance);
     } else {
-      doAdvance();
+      setScore(s => ({ ...s, total: s.total + 1 }));
+      const doEliminate = async () => {
+        setEliminated(prev => [...prev, word]);
+        setSelected(null);
+        setFeedback(null);
+      };
+      if (phaserRef.current?.onQuestionAnswered) {
+        phaserRef.current.onQuestionAnswered(false, doEliminate);
+      } else {
+        doEliminate();
+      }
     }
   };
 
@@ -106,7 +111,7 @@ if (phaserRef.current?.onQuestionAnswered) {
           question={question as any}
           selected={selected}
           feedback={feedback}
-          revealCorrect={revealCorrect}
+          eliminated={eliminated}
           transition={transition}
           promptPlaying={promptPlaying}
           onAnswer={handleAnswer}

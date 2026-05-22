@@ -33,7 +33,8 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
 
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
-  const [revealCorrect, setRevealCorrect] = useState(false);
+  const [eliminated, setEliminated] = useState<string[]>([]);
+  const hadWrongRef = useRef(false);
   const [transition, setTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const [promptPlaying, setPromptPlaying] = useState(true);
 
@@ -61,29 +62,48 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
 
     setSelected(word);
     setFeedback(isCorrect ? 'correct' : 'wrong');
-
     playAudio(FEEDBACK_AUDIO[isCorrect ? 'correct' : 'wrong'], true).catch(() => {});
 
-    const doAdvance = async () => {
-      if (isCorrect) {
+    if (isCorrect) {
+      const doAdvance = async () => {
         await delay(1500);
+        setTransition('exiting');
+        await delay(280);
+        setSelected(null);
+        setFeedback(null);
+        setEliminated([]);
+        hadWrongRef.current = false;
+        advance(true);
+        setTransition('entering');
+        await delay(350);
+        setTransition('idle');
+      };
+      if (phaserRef.current?.onQuestionAnswered) {
+        phaserRef.current.onQuestionAnswered(true, doAdvance);
       } else {
-        setRevealCorrect(true);
-        await delay(1500);
-        setRevealCorrect(false);
+        doAdvance();
       }
-      setTransition('exiting');
-      await delay(280);
-      setSelected(null);
-      setFeedback(null);
-      advance(isCorrect);
-      setTransition('entering');
-      await delay(350);
-      setTransition('idle');
-    };
+    } else {
+      hadWrongRef.current = true;
+      // Re-queue now so it comes back even if they get it right on retry
+      const q = queueRef.current[queueIdx];
+      const id = q.correctAnswer;
+      if (!requeuedIds.current.has(id)) {
+        requeuedIds.current.add(id);
+        const insertAt = Math.min(queueIdx + 3, queueRef.current.length);
+        queueRef.current.splice(insertAt, 0, q);
+      }
 
-    if (phaserRef.current?.onQuestionAnswered) {
-      phaserRef.current.onQuestionAnswered(isCorrect, doAdvance);
+      const doEliminate = async () => {
+        setEliminated(prev => [...prev, word]);
+        setSelected(null);
+        setFeedback(null);
+      };
+      if (phaserRef.current?.onQuestionAnswered) {
+        phaserRef.current.onQuestionAnswered(false, doEliminate);
+      } else {
+        doEliminate();
+      }
     }
   };
 
@@ -130,7 +150,7 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
           question={question}
           selected={selected}
           feedback={feedback}
-          revealCorrect={revealCorrect}
+          eliminated={eliminated}
           transition={transition}
           promptPlaying={promptPlaying}
           onAnswer={handleAnswer}
