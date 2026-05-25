@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crow Sprite Generator</title>
+  <style>
+    body { font: 13px monospace; padding: 20px; background: #1e1e1e; color: #eee; }
+    h2 { color: #d4a020; margin-top: 0; }
+    h3 { color: #aaa; font-weight: normal; }
+    .section { margin: 28px 0; }
+    canvas { display: block; }
+    .checker { background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0 / 16px 16px; }
+    .row { display: flex; }
+    .lbl { width: 200px; text-align: center; font-size: 11px; color: #888; padding: 3px 0; }
+    button { margin: 8px 4px 0; padding: 9px 18px; background: #d4a020; color: #000;
+             border: none; font-size: 13px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    button:hover { background: #f0c040; }
+  </style>
+</head>
+<body>
+<h2>🐦 Crow Sprite Sheet Generator</h2>
+
+<div class="section">
+  <h3>Existing 6 frames (copied directly):</h3>
+  <canvas id="cExisting" class="checker"></canvas>
+  <div class="row" id="lExisting"></div>
+</div>
+
+<div class="section">
+  <h3>5 new frames (canvas-generated):</h3>
+  <canvas id="cNew" class="checker"></canvas>
+  <div class="row" id="lNew"></div>
+</div>
+
+<div class="section">
+  <h3>Full sprite sheet — 11 frames:</h3>
+  <canvas id="cFull" class="checker"></canvas>
+  <div class="row" id="lFull"></div>
+  <button onclick="dl('cFull','new_crow_sprite.png')">⬇ Download new_crow_sprite.png</button>
+  <button onclick="dl('cNew','crow_new_frames_only.png')">⬇ Download new frames only</button>
+</div>
+
+<script>
+const FW = 200, FH = 200;
+const DARK  = '#111010';
+const DARK2 = '#1c1818';
+const GOLD  = '#d4a020';
+const AMBER = '#e8a820';
+const EYE_D = '#1a1510';
+
+// ── primitives ────────────────────────────────────────────────────────────────
+
+function circ(ctx, x, y, r, col) {
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+}
+
+function ln(ctx, x1, y1, x2, y2) {
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+}
+
+// ── crow parts ────────────────────────────────────────────────────────────────
+
+function drawBody(ctx, cx, cy) {
+  ctx.fillStyle = DARK;
+  ctx.beginPath();
+  ctx.moveTo(cx+38, cy-48);
+  ctx.bezierCurveTo(cx+64, cy-42, cx+68, cy+14, cx+52, cy+58);
+  ctx.bezierCurveTo(cx+38, cy+74, cx+4,  cy+80, cx-26, cy+56);
+  ctx.bezierCurveTo(cx-54, cy+36, cx-52, cy-18, cx-28, cy-44);
+  ctx.bezierCurveTo(cx-8,  cy-58, cx+18, cy-56, cx+38, cy-48);
+  ctx.closePath(); ctx.fill();
+  // Wing fold — slightly lighter ellipse to suggest folded wing
+  ctx.fillStyle = DARK2;
+  ctx.beginPath();
+  ctx.ellipse(cx+12, cy+10, 27, 35, -0.15, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawHead(ctx, hx, hy, hr=34) { circ(ctx, hx, hy, hr, DARK); }
+
+function drawEye(ctx, hx, hy, opts={}) {
+  const { squint=false } = opts;
+  const ex = hx - 4, ey = hy - 10;
+  if (squint) {
+    ctx.fillStyle = GOLD;
+    ctx.beginPath();
+    ctx.ellipse(ex, ey+4, 15, 7, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = EYE_D;
+    ctx.beginPath();
+    ctx.ellipse(ex+1, ey+5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+  } else {
+    circ(ctx, ex, ey, 16, GOLD);
+    circ(ctx, ex+1, ey+1, 9, EYE_D);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath(); ctx.arc(ex-4, ey-4, 3, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawBeak(ctx, hx, hy, hr, opts={}) {
+  const { open=false, angleOffset=0, flipRight=false } = opts;
+  ctx.save();
+  const bx = flipRight ? hx + hr - 4 : hx - hr + 4;
+  ctx.translate(bx, hy+8);
+  ctx.rotate(angleOffset + (flipRight ? Math.PI : 0));
+  ctx.fillStyle = AMBER;
+  if (!open) {
+    ctx.beginPath();
+    ctx.moveTo(0,-10); ctx.lineTo(-28,2); ctx.lineTo(0,12);
+    ctx.closePath(); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(-26,0); ctx.lineTo(0,2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0,4);  ctx.lineTo(-22,10); ctx.lineTo(0,15); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawLegs(ctx, bx, by, style='stand') {
+  ctx.strokeStyle = AMBER; ctx.lineCap = 'round';
+  const lx = bx-18, rx = bx+8, ty = by+58, gnd = 183;
+  let L, R;
+  if (style === 'walk1') {
+    L={x1:lx,y1:ty,x2:lx-22,y2:gnd}; R={x1:rx,y1:ty,x2:rx+15,y2:gnd};
+  } else if (style === 'walk2') {
+    L={x1:lx,y1:ty,x2:lx+10,y2:gnd}; R={x1:rx,y1:ty,x2:rx+22,y2:gnd};
+  } else if (style === 'tuck') {
+    L={x1:lx,y1:ty,x2:lx-4,y2:ty+18}; R={x1:rx,y1:ty,x2:rx+4,y2:ty+18};
+  } else {
+    L={x1:lx,y1:ty,x2:lx-3,y2:gnd}; R={x1:rx,y1:ty,x2:rx-2,y2:gnd};
+  }
+  ctx.lineWidth=5; ln(ctx,L.x1,L.y1,L.x2,L.y2); ln(ctx,R.x1,R.y1,R.x2,R.y2);
+  ctx.lineWidth=4;
+  const tuck = style === 'tuck';
+  foot(ctx, L.x2, L.y2, tuck ? 0.6 : 1);
+  foot(ctx, R.x2, R.y2, tuck ? 0.6 : 1);
+}
+
+function foot(ctx, x, y, s=1) {
+  ctx.lineWidth = 4*s;
+  ln(ctx, x, y, x - 12*s*0.8, y + 5*s);
+  ln(ctx, x, y, x + 12*s*0.7, y + 4*s);
+  ln(ctx, x, y, x + 12*s*0.5, y - 2*s);
+}
+
+// ── new frame draw functions ──────────────────────────────────────────────────
+
+function drawPeck(ctx) {
+  const cx=118, cy=128;
+  ctx.save();
+  ctx.translate(108, 158); ctx.rotate(0.36); ctx.translate(-108, -158);
+  drawBody(ctx, cx, cy);
+  ctx.restore();
+  const hx=68, hy=152, hr=30;
+  drawHead(ctx, hx, hy, hr);
+  drawBeak(ctx, hx, hy, hr, { angleOffset: 0.45 });
+  drawEye(ctx, hx+4, hy-4);
+  ctx.strokeStyle=AMBER; ctx.lineCap='round';
+  ctx.lineWidth=5;
+  ln(ctx, 100,172, 100,185); ln(ctx, 118,170, 118,185);
+  ctx.lineWidth=4;
+  foot(ctx, 100, 185); foot(ctx, 118, 185);
+}
+
+function drawLookSide(ctx) {
+  const cx=118, cy=125;
+  drawBody(ctx, cx, cy);
+  const hx=115, hy=63, hr=34;
+  drawHead(ctx, hx, hy, hr);
+  drawBeak(ctx, hx, hy, hr, { flipRight: true });
+  // Eye on right side of head
+  circ(ctx, hx+8, hy-8, 16, GOLD);
+  circ(ctx, hx+9, hy-7, 9, EYE_D);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath(); ctx.arc(hx+5, hy-12, 3, 0, Math.PI*2); ctx.fill();
+  drawLegs(ctx, cx, cy, 'stand');
+}
+
+function drawShakeHead(ctx) {
+  const cx=118, cy=125;
+  drawBody(ctx, cx, cy);
+  const hx=82, hy=64, hr=34;
+  ctx.save();
+  ctx.translate(hx, hy); ctx.rotate(-0.38); ctx.translate(-hx, -hy);
+  drawHead(ctx, hx, hy, hr);
+  drawBeak(ctx, hx, hy, hr);
+  drawEye(ctx, hx, hy);
+  ctx.restore();
+  drawLegs(ctx, cx, cy, 'stand');
+}
+
+function drawAirborne(ctx) {
+  const cx=118, cy=118;
+  ctx.save();
+  ctx.translate(108, 112); ctx.rotate(-0.1); ctx.translate(-108, -112);
+  drawBody(ctx, cx, cy);
+  ctx.restore();
+  const hx=76, hy=56, hr=34;
+  drawHead(ctx, hx, hy, hr);
+  drawBeak(ctx, hx, hy, hr);
+  drawEye(ctx, hx, hy);
+  drawLegs(ctx, cx, cy, 'tuck');
+}
+
+function drawWingsSpread(ctx) {
+  const cx=100, cy=120;
+  ctx.fillStyle = DARK;
+  // Left wing
+  ctx.beginPath();
+  ctx.moveTo(cx-14, cy-22);
+  ctx.bezierCurveTo(cx-48, cy-68, cx-100, cy-38, cx-80, cy+8);
+  ctx.bezierCurveTo(cx-64, cy+28, cx-34, cy+8,  cx-14, cy-22);
+  ctx.closePath(); ctx.fill();
+  // Right wing
+  ctx.beginPath();
+  ctx.moveTo(cx+24, cy-22);
+  ctx.bezierCurveTo(cx+62, cy-65, cx+110, cy-35, cx+92, cy+8);
+  ctx.bezierCurveTo(cx+76, cy+26, cx+44,  cy+8,  cx+24, cy-22);
+  ctx.closePath(); ctx.fill();
+  drawBody(ctx, cx, cy);
+  const hx=66, hy=60, hr=34;
+  drawHead(ctx, hx, hy, hr);
+  drawBeak(ctx, hx, hy, hr);
+  drawEye(ctx, hx, hy);
+  drawLegs(ctx, cx, cy, 'tuck');
+}
+
+// ── assembly ──────────────────────────────────────────────────────────────────
+
+const NEW_FRAMES = [
+  { label: '6 peck',       fn: drawPeck },
+  { label: '7 look-side',  fn: drawLookSide },
+  { label: '8 shake-head', fn: drawShakeHead },
+  { label: '9 airborne',   fn: drawAirborne },
+  { label: '10 wings',     fn: drawWingsSpread },
+];
+const EXISTING_LABELS = ['0 idle','1 walk-a','2 walk-b','3 walk-c','4 talk','5 squint'];
+const TOTAL = EXISTING_LABELS.length + NEW_FRAMES.length;
+
+function addLabels(id, arr) {
+  const row = document.getElementById(id);
+  arr.forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'lbl'; d.textContent = t;
+    row.appendChild(d);
+  });
+}
+
+function renderNewFrames(ctx) {
+  NEW_FRAMES.forEach(({ fn }, i) => {
+    ctx.save(); ctx.translate(i * FW, 0); fn(ctx); ctx.restore();
+  });
+}
+
+const img = new Image();
+img.crossOrigin = 'anonymous';
+img.src = '/src/assets/crow_sprite.png';
+img.onload  = () => render(img);
+img.onerror = () => render(null);
+
+function render(src) {
+  // Existing
+  const cE = document.getElementById('cExisting');
+  cE.width = 6*FW; cE.height = FH;
+  const eCtx = cE.getContext('2d');
+  if (src) {
+    eCtx.drawImage(src, 0, 0);
+  } else {
+    eCtx.fillStyle='#444'; eCtx.fillRect(0,0,6*FW,FH);
+    eCtx.fillStyle='#888'; eCtx.font='13px monospace';
+    eCtx.fillText('(needs dev server at localhost:5173)', 10, FH/2);
+  }
+  addLabels('lExisting', EXISTING_LABELS);
+
+  // New frames
+  const cN = document.getElementById('cNew');
+  cN.width = NEW_FRAMES.length * FW; cN.height = FH;
+  renderNewFrames(cN.getContext('2d'));
+  addLabels('lNew', NEW_FRAMES.map(f => f.label));
+
+  // Full sheet
+  const cF = document.getElementById('cFull');
+  cF.width = TOTAL * FW; cF.height = FH;
+  const fCtx = cF.getContext('2d');
+  if (src) { fCtx.drawImage(src, 0, 0); }
+  fCtx.save(); fCtx.translate(6 * FW, 0); renderNewFrames(fCtx); fCtx.restore();
+  addLabels('lFull', [...EXISTING_LABELS, ...NEW_FRAMES.map(f => f.label)]);
+}
+
+function dl(id, name) {
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = document.getElementById(id).toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
