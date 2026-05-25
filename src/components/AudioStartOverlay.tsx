@@ -15,13 +15,8 @@ interface Props {
 export const AudioStartOverlay: React.FC<Props> = ({ onStart }) => (
   <div className="audio-start-overlay" onClick={onStart}>
     <div className="audio-start-card">
-      <div className="audio-start-icon">🔊</div>
+      <div className="audio-start-play-btn">▶</div>
       <p className="audio-start-label">Tap to start</p>
-      <p className="audio-start-hint">
-        No sound after tapping?<br />
-        Your browser tab may be muted —<br />
-        right-click the tab and choose <strong>Unmute site</strong>.
-      </p>
     </div>
   </div>
 );

@@ -9,34 +9,46 @@ export interface CrowConfig {
 
 export class Crow extends Phaser.GameObjects.Sprite {
   private facing: 'left' | 'right';
+  private shadow: Phaser.GameObjects.Ellipse;
 
-  constructor({
-    scene,
-    x,
-    y,
-    initialFacing = 'left',
-  }: CrowConfig) {
+  constructor({ scene, x, y, initialFacing = 'left' }: CrowConfig) {
     super(scene, x, y, 'crow', 0);
-
     this.facing = initialFacing;
-
     scene.add.existing(this);
-
-    // Stable origin — do NOT change this per direction
     this.setOrigin(0.5, 1);
-
-    // Apply initial facing
     this.applyFacing();
+
+    this.shadow = scene.add.ellipse(x, y, 70, 14, 0x000000, 0.22).setDepth(8);
+  }
+
+  /**
+   * Call every frame. Projects a ray from the sun through the crow onto the ground plane,
+   * so the shadow slides away from the sun as the crow rises.
+   */
+  updateShadow(groundY: number, sunX: number, sunY: number) {
+    // Ray: sun → crow, extended until it hits y = groundY
+    const t = (groundY - sunY) / (this.y - sunY);
+    this.shadow.x = sunX + (this.x - sunX) * t;
+    this.shadow.y = groundY;
+
+    const lift = Math.max(0, groundY - this.y);
+    const liftT = Math.min(lift / 28, 1);
+    this.shadow.setScale(1 - liftT * 0.5);
+    this.shadow.setAlpha(this.visible ? 0.25 - liftT * 0.18 : 0);
+  }
+
+  setVisible(value: boolean): this {
+    super.setVisible(value);
+    this.shadow?.setVisible(value);
+    return this;
   }
 
   private applyFacing() {
-    // Assumes sprite art faces left by default
     this.setFlipX(this.facing === 'right');
   }
 
   setFacing(direction: 'left' | 'right') {
     if (this.facing === direction) return;
-
     this.facing = direction;
     this.applyFacing();
   }

@@ -200,6 +200,10 @@ export class MultipleChoiceScene extends Phaser.Scene {
       cloud.x -= this.cloudSpeeds[i] * (delta / 1000);
       if (cloud.x < -130) cloud.x = w + 130;
     });
+    if (this.crow && this.crowController) {
+      const h = this.cameras.main.height;
+      this.crow.updateShadow(this.crowController.groundY, w * 0.92, h * 0.12);
+    }
   }
 
   private buildSign() {

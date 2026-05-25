@@ -26,21 +26,37 @@
   pointer-events: none; /* let clicks pass to the overlay div */
 }
 
-.audio-start-icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
+.audio-start-play-btn {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: #f9a825;
+  color: #fff;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  padding-left: 5px;
+  box-shadow: 0 6px 0 #c67c00, 0 8px 16px rgba(0,0,0,0.25);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  animation: btnBounce 1.8s ease-in-out infinite;
+}
+
+.audio-start-overlay:active .audio-start-play-btn {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #c67c00, 0 4px 8px rgba(0,0,0,0.2);
+}
+
+@keyframes btnBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
 }
 
 .audio-start-label {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 1.2rem;
-}
-
-.audio-start-hint {
-  font-size: 0.8rem;
-  color: #666;
-  line-height: 1.6;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #5d4037;
   margin: 0;
+  letter-spacing: 0.03em;
 }
