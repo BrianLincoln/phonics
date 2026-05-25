@@ -1,6 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 import MenuView from '../views/MenuView';
-// import QuizView from '../views/_dep_QuizView.xx';
 import AudioTest from './AudioTest';
 import { UnitIndexView } from '../views/UnitIndexView';
 import ProgressView from '../views/ProgressView';
@@ -9,25 +8,40 @@ import { EndlessActivity } from './Activities/EndlessActivity';
 import { BlendEndlessActivity } from './Activities/BlendEndlessActivity';
 import { MixedEndlessActivity } from './Activities/MixedEndlessActivity';
 import SuccessDemo from '../views/SuccessDemo';
-// ...existing code...
-// import ProgressView from './ProgressView';
-// import CrowDemoView from './CrowDemoView';
+import { ProfileSelector } from '../views/ProfileSelector';
+import { NewProfileView } from '../views/NewProfileView';
+import { ProfileProvider, useProfile } from '../context/ProfileContext';
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { activeProfile, isLoaded } = useProfile();
+  if (!isLoaded) return null;
+  if (!activeProfile) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
 
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<ProfileSelector />} />
+      <Route path="/new-profile" element={<NewProfileView />} />
+      <Route path="/menu" element={<ProtectedRoute><MenuView /></ProtectedRoute>} />
+      <Route path="/activity/:activityId" element={<ProtectedRoute><ActivityView /></ProtectedRoute>} />
+      <Route path="/endless" element={<ProtectedRoute><EndlessActivity /></ProtectedRoute>} />
+      <Route path="/endless-blend" element={<ProtectedRoute><BlendEndlessActivity /></ProtectedRoute>} />
+      <Route path="/endless-mixed" element={<ProtectedRoute><MixedEndlessActivity /></ProtectedRoute>} />
+      <Route path="/audiotest" element={<AudioTest />} />
+      <Route path="/units" element={<ProtectedRoute><UnitIndexView /></ProtectedRoute>} />
+      <Route path="/progress" element={<ProtectedRoute><ProgressView /></ProtectedRoute>} />
+      <Route path="/success-demo" element={<SuccessDemo />} />
+    </Routes>
+  );
+}
 
 const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<MenuView />} />
-      <Route path="/activity/:activityId" element={<ActivityView />} />
-      <Route path="/endless" element={<EndlessActivity />} />
-      <Route path="/endless-blend" element={<BlendEndlessActivity />} />
-      <Route path="/endless-mixed" element={<MixedEndlessActivity />} />
-      <Route path="/audiotest" element={<AudioTest />} />
-      <Route path="/units" element={<UnitIndexView />} />
-      <Route path="/progress" element={<ProgressView />} />
-      <Route path="/success-demo" element={<SuccessDemo />} />
-    </Routes>
+    <ProfileProvider>
+      <AppRoutes />
+    </ProfileProvider>
   );
 };
 

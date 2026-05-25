@@ -9,17 +9,16 @@ import { NavigateFunction } from 'react-router-dom';
 export function handleQuizCompletion(phaserScene: any, navigate: NavigateFunction, onComplete?: (result?: any) => void) {
   if (!phaserScene || !phaserScene.scene) {
     if (typeof onComplete === 'function') onComplete(true);
-    navigate('/');
+    navigate('/menu');
     return;
   }
   phaserScene.scene.start('SuccessScene', {
     onComplete: () => {
       if (typeof onComplete === 'function') onComplete(true);
-      // Clean up Phaser instance if needed
       if (phaserScene.game && phaserScene.game.destroy) {
         phaserScene.game.destroy(true);
       }
-      navigate('/');
+      navigate('/menu');
     }
   });
 }

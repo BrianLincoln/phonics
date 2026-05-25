@@ -5,9 +5,11 @@ export function getRecentConfidence(unit: PhonicsUnitProgress): number {
   return Math.round((correct / unit.recent.length) * 100);
 }
 // helpers/quizProgress.ts
-// LocalStorage-backed phonics unit progress tracker
+// LocalStorage-backed phonics unit progress tracker (scoped per profile via storageAdapter)
 
-const PHONICS_PROGRESS_KEY = 'phonicsProgress';
+import { getActiveProfileId } from '../store/profiles';
+import { storageAdapter } from '../store/storage';
+
 const RECENT_ATTEMPTS = 10;
 
 export interface PhonicsUnitProgress {
@@ -37,10 +39,11 @@ export function getDefaultUnitProgress(): PhonicsUnitProgress {
 }
 
 export function getPhonicsProgress(): PhonicsProgress {
-  const data = localStorage.getItem(PHONICS_PROGRESS_KEY);
-  if (!data) {
-    return { units: {} };
-  }
+  const profileId = getActiveProfileId();
+  if (!profileId) return { units: {} };
+  // Synchronous callers: read directly from localStorage via the key the adapter uses
+  const data = localStorage.getItem(`phonics_progress_${profileId}`);
+  if (!data) return { units: {} };
   try {
     return JSON.parse(data);
   } catch {
@@ -49,7 +52,10 @@ export function getPhonicsProgress(): PhonicsProgress {
 }
 
 export function setPhonicsProgress(progress: PhonicsProgress) {
-  localStorage.setItem(PHONICS_PROGRESS_KEY, JSON.stringify(progress));
+  const profileId = getActiveProfileId();
+  if (!profileId) return;
+  // Fire-and-forget via adapter so the call site is Supabase-ready when we swap
+  storageAdapter.saveProgress(profileId, progress);
 }
 
 // correct: whether the answer was eventually correct
@@ -79,5 +85,7 @@ export function updatePhonicsUnitProgress(unitId: string, correct: boolean, firs
 }
 
 export function resetPhonicsProgress() {
-  localStorage.removeItem(PHONICS_PROGRESS_KEY);
+  const profileId = getActiveProfileId();
+  if (!profileId) return;
+  localStorage.removeItem(`phonics_progress_${profileId}`);
 }
