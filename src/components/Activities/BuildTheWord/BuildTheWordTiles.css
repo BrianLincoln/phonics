@@ -1,0 +1,88 @@
+.tile-row {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 25px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(1rem, 4vw, 2rem);
+  z-index: 100;
+  padding: 0 clamp(0.5rem, 3vw, 1.5rem);
+}
+
+.letter-tile {
+  appearance: none;
+  border: clamp(2px, 0.4vw, 3px) solid #2c3e50;
+  border-radius: clamp(10px, 2.5vw, 18px);
+  background: #ffffff;
+  color: #2c3e50;
+
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  width: clamp(4rem, 18vw, 8rem);
+  height: clamp(4rem, 18vw, 8rem);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #2c3e50;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.letter-tile:hover:not(:disabled) {
+  background: #f4f7fb;
+}
+
+.letter-tile.tile-active {
+  border-color: #f5a623;
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #c47d00, 0 0 0 3px #f5a623;
+  animation: tile-pulse 1s ease-in-out infinite;
+}
+
+@keyframes tile-pulse {
+  0%, 100% { box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #c47d00, 0 0 0 3px #f5a623; }
+  50%       { box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #c47d00, 0 0 0 7px #f5a623aa; }
+}
+
+.letter-tile.tile-tapped {
+  background: #5fc149;
+  color: #fff;
+  border-color: #2c5aa0;
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #2c5aa0;
+  cursor: default;
+}
+
+.letter-tile.tile-wrong {
+  background: #c22727;
+  color: #fff;
+  border-color: #a00;
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #a00;
+  animation: tile-wrong-flash 0.4s ease both;
+}
+
+@keyframes tile-wrong-flash {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  35%  { transform: translateX(6px); }
+  55%  { transform: translateX(-4px); }
+  75%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+.letter-tile:disabled {
+  cursor: not-allowed;
+}
+
+.letter-tile.prompt-playing {
+  opacity: 0.5;
+}

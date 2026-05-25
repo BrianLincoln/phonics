@@ -2,14 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { AntLeafScene, LeafParadeSceneData } from '../phaser/AntLeafScene';
 import { MultipleChoiceScene, MultipleChoiceSceneData } from '../phaser/MultipleChoiceScene';
+import { BuildTheWordScene, BuildTheWordSceneData } from '../phaser/BuildTheWordScene';
 import { EndlessScene } from '../phaser/EndlessScene';
 import { SuccessScene } from '../phaser/SuccessScene';
 
-type SceneType = 'multiple-choice' | 'leaf-parade' | 'success' | 'endless';
+type SceneType = 'multiple-choice' | 'leaf-parade' | 'success' | 'endless' | 'build-the-word';
 
 interface PhaserGameProps {
   sceneType: SceneType;
-  sceneData?: MultipleChoiceSceneData | LeafParadeSceneData;
+  sceneData?: MultipleChoiceSceneData | LeafParadeSceneData | BuildTheWordSceneData;
   onSceneReady?: (scene: Phaser.Scene) => void;
 }
 
@@ -72,6 +73,10 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
       case 'success':
         sceneClass = SuccessScene;
         sceneKey = 'SuccessScene';
+        break;
+      case 'build-the-word':
+        sceneClass = BuildTheWordScene;
+        sceneKey = 'BuildTheWordScene';
         break;
       default:
         throw new Error(`Unsupported scene type: ${sceneType}`);

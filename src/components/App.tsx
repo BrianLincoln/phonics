@@ -6,6 +6,8 @@ import { UnitIndexView } from '../views/UnitIndexView';
 import ProgressView from '../views/ProgressView';
 import { ActivityView } from '../views/ActivityView';
 import { EndlessActivity } from './Activities/EndlessActivity';
+import { BlendEndlessActivity } from './Activities/BlendEndlessActivity';
+import { MixedEndlessActivity } from './Activities/MixedEndlessActivity';
 import SuccessDemo from '../views/SuccessDemo';
 // ...existing code...
 // import ProgressView from './ProgressView';
@@ -19,6 +21,8 @@ const App: React.FC = () => {
       <Route path="/" element={<MenuView />} />
       <Route path="/activity/:activityId" element={<ActivityView />} />
       <Route path="/endless" element={<EndlessActivity />} />
+      <Route path="/endless-blend" element={<BlendEndlessActivity />} />
+      <Route path="/endless-mixed" element={<MixedEndlessActivity />} />
       <Route path="/audiotest" element={<AudioTest />} />
       <Route path="/units" element={<UnitIndexView />} />
       <Route path="/progress" element={<ProgressView />} />

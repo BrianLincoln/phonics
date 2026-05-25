@@ -1,6 +1,7 @@
 export enum ActivityType {
   MULTIPLE_CHOICE = 'multiple-choice',
   LEAF_PARADE = 'leaf-parade',
+  BUILD_THE_WORD = 'build-the-word',
 }
 
 interface BaseQuestion {
@@ -45,7 +46,26 @@ export interface LeafParadeActivityType {
   numberToComplete: number;
 }
 
-export type Activity = MultipleChoiceActivity | LeafParadeActivityType;
+export type LeafParadeActivity = LeafParadeActivityType;
+
+export interface BuildTheWordItem {
+  word: string;
+  letters: string[];
+  wordAudioFile: string;
+  phonemeFiles: string[];
+}
+
+export interface BuildTheWordActivity {
+  id: string;
+  unit: string;
+  activityType: ActivityType.BUILD_THE_WORD;
+  promptFile: string;
+  words: BuildTheWordItem[];
+  showIntro?: boolean;
+  skills: Skill[];
+}
+
+export type Activity = MultipleChoiceActivity | LeafParadeActivityType | BuildTheWordActivity;
 
 // Skills union type and constants
 export const SKILL_PHONEME_IDENTIFICATION = 'phoneme-identification' as const; // identifying the sound in a word
@@ -57,6 +77,7 @@ export type Skill = typeof SKILL_PHONEME_IDENTIFICATION | typeof SKILL_LETTER_SO
 export const activityTypeToSkills: Record<ActivityType, Skill[]> = {
   [ActivityType.MULTIPLE_CHOICE]: [SKILL_PHONEME_IDENTIFICATION, SKILL_LETTER_SOUND_MAPPING],
   [ActivityType.LEAF_PARADE]: [SKILL_LETTER_SOUND_MAPPING],
+  [ActivityType.BUILD_THE_WORD]: [SKILL_LETTER_SOUND_MAPPING],
 };
 
 export const activities: Activity[] = [
@@ -216,5 +237,139 @@ export const activities: Activity[] = [
     skills: [SKILL_LETTER_SOUND_MAPPING],
     targetLetter: 'c',
     numberToComplete: 2,
+  },
+  // Build the Word exercises
+  {
+    id: 'build-hat',
+    unit: 'h',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'hat',
+        letters: ['h', 'a', 't'],
+        wordAudioFile: '/audio/words/hat.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/h-sound.wav',
+          '/audio/phonics-units/a-sound.wav',
+          '/audio/phonics-units/t-sound.wav',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'build-rat',
+    unit: 'r',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'rat',
+        letters: ['r', 'a', 't'],
+        wordAudioFile: '/audio/words/rat.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/r-sound.wav',
+          '/audio/phonics-units/a-sound.wav',
+          '/audio/phonics-units/t-sound.wav',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'build-bat',
+    unit: 'b',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'bat',
+        letters: ['b', 'a', 't'],
+        wordAudioFile: '/audio/words/bat.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/b-sound.wav',
+          '/audio/phonics-units/a-sound.wav',
+          '/audio/phonics-units/t-sound.wav',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'build-sun',
+    unit: 's',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'sun',
+        letters: ['s', 'u', 'n'],
+        wordAudioFile: '/audio/words/sun.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/s-sound.wav',
+          '/audio/phonics-units/u-sound.wav',
+          '/audio/phonics-units/n-sound.wav',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'build-red',
+    unit: 'r',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'red',
+        letters: ['r', 'e', 'd'],
+        wordAudioFile: '/audio/words/red.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/r-sound.wav',
+          '/audio/phonics-units/e-sound.wav',
+          '/audio/phonics-units/d-sound.wav',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'build-bed',
+    unit: 'b',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'bed',
+        letters: ['b', 'e', 'd'],
+        wordAudioFile: '/audio/words/bed.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/b-sound.wav',
+          '/audio/phonics-units/e-sound.wav',
+          '/audio/phonics-units/d-sound.wav',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'build-bus',
+    unit: 'b',
+    activityType: ActivityType.BUILD_THE_WORD,
+    skills: [SKILL_LETTER_SOUND_MAPPING],
+    promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav',
+    words: [
+      {
+        word: 'bus',
+        letters: ['b', 'u', 's'],
+        wordAudioFile: '/audio/words/bus.wav',
+        phonemeFiles: [
+          '/audio/phonics-units/b-sound.wav',
+          '/audio/phonics-units/u-sound.wav',
+          '/audio/phonics-units/s-sound.wav',
+        ],
+      },
+    ],
   },
 ];

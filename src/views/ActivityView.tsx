@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { activities, Activity, ActivityType, LeafParadeActivity, MultipleChoiceActivity } from '../data/activities';
+import { activities, Activity, ActivityType, LeafParadeActivity, MultipleChoiceActivity, BuildTheWordActivity } from '../data/activities';
 import { LeafParade } from '../components/Activities/LeafParade/LeafParade';
 import { MCQActivity } from '../components/Activities/MultipleChoice/MultipleChoiceActivity';
+import { BuildTheWordExercise } from '../components/Activities/BuildTheWord/BuildTheWordActivity';
 
 
 export const ActivityView: React.FC = () => {
@@ -31,6 +32,15 @@ export const ActivityView: React.FC = () => {
         activity={activity as LeafParadeActivity}
         onComplete={navigateToHomeScreen}
       />;
+
+    case ActivityType.BUILD_THE_WORD:
+      return (
+        <BuildTheWordExercise
+          activity={activity as BuildTheWordActivity}
+          onComplete={navigateToHomeScreen}
+        />
+      );
+
     default:
       return <div>Unsupported activity type 😬</div>;
   }
