@@ -38,11 +38,7 @@ const MenuView: React.FC = () => {
       <div className="menu-buttons">
         <button
           className="menu-btn play"
-          onClick={async () => {
-            await click();
-            const nextActivityId = getNextActivityId();
-            navigate(`/activity/${nextActivityId}`);
-          }}
+          onClick={async () => { await click(); navigate('/map'); }}
         >
           ▶ Play
         </button>
@@ -52,6 +48,17 @@ const MenuView: React.FC = () => {
         <button className="menu-btn" onClick={async () => { await click(); navigate('/units'); }}>Units</button>
         <button className="menu-btn" onClick={async () => { await click(); navigate('/progress'); }}>Progress</button>
         <button className="menu-btn" onClick={async () => { await click(); navigate('/crow-demo'); }}>Crow Demo</button>
+        <hr className="menu-divider" />
+        <button
+          className="menu-btn menu-btn--deprecated"
+          onClick={async () => {
+            await click();
+            const nextActivityId = getNextActivityId();
+            navigate(`/activity/${nextActivityId}`);
+          }}
+        >
+          Play (legacy)
+        </button>
       </div>
     </div>
   );

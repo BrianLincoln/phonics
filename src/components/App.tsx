@@ -11,6 +11,8 @@ import SuccessDemo from '../views/SuccessDemo';
 import { ProfileSelector } from '../views/ProfileSelector';
 import { NewProfileView } from '../views/NewProfileView';
 import { ProfileProvider, useProfile } from '../context/ProfileContext';
+import MapView from '../views/MapView';
+import { LessonView } from '../views/LessonView';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { activeProfile, isLoaded } = useProfile();
@@ -33,6 +35,8 @@ function AppRoutes() {
       <Route path="/units" element={<ProtectedRoute><UnitIndexView /></ProtectedRoute>} />
       <Route path="/progress" element={<ProtectedRoute><ProgressView /></ProtectedRoute>} />
       <Route path="/success-demo" element={<SuccessDemo />} />
+      <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
+      <Route path="/lesson/:nodeId" element={<ProtectedRoute><LessonView /></ProtectedRoute>} />
     </Routes>
   );
 }

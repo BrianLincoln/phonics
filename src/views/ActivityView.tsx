@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { activities, Activity, ActivityType, LeafParadeActivity, MultipleChoiceActivity, BuildTheWordActivity } from '../data/activities';
+import { activities, ActivityType, LeafParadeActivity, LessonActivity, BuildTheWordActivity } from '../data/activities';
 import { LeafParade } from '../components/Activities/LeafParade/LeafParade';
-import { MCQActivity } from '../components/Activities/MultipleChoice/MultipleChoiceActivity';
+import { LessonActivity as LessonActivityComponent } from '../components/Activities/LessonActivity';
 import { BuildTheWordExercise } from '../components/Activities/BuildTheWord/BuildTheWordActivity';
 
 
@@ -19,10 +19,10 @@ export const ActivityView: React.FC = () => {
   }
 
   switch (activity.activityType) {
-    case ActivityType.MULTIPLE_CHOICE:
+    case ActivityType.LESSON:
       return (
-        <MCQActivity
-          activity={activity as MultipleChoiceActivity}
+        <LessonActivityComponent
+          activity={activity as LessonActivity}
           onComplete={navigateToHomeScreen}
         />
       );

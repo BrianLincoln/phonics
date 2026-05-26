@@ -1,5 +1,6 @@
 export enum ActivityType {
-  MULTIPLE_CHOICE = 'multiple-choice',
+  LESSON = 'lesson',              // unified quiz: word-start + letter-sound + blend in one sequence
+  MULTIPLE_CHOICE = 'multiple-choice', // legacy alias — prefer LESSON for new activities
   LEAF_PARADE = 'leaf-parade',
   BUILD_THE_WORD = 'build-the-word',
 }
@@ -24,8 +25,34 @@ interface LetterSoundQuestion extends BaseQuestion {
   hideLetter?: boolean;
 }
 
+// Blend question — letters must be tapped in order to build the word
+export interface BlendQuestion {
+  kind: 'blend';
+  id: string;
+  word: string;
+  letters: string[];        // e.g. ['s','a','t']
+  wordAudioFile: string;    // played at start and on completion
+  phonemeFiles: string[];   // one per letter, played on each tap
+  promptFile: string;       // e.g. "tap the letters to build the word"
+  skills: Skill[];
+}
+
+// All question kinds that can appear in a LessonActivity
+export type LessonQuestion = WordStartQuestion | LetterSoundQuestion | BlendQuestion;
+
+/** Legacy alias — MCQuestion still works for any code using it */
 type MCQuestion = WordStartQuestion | LetterSoundQuestion;
 
+/** Unified lesson: any mix of word-start, letter-sound, and blend questions */
+export interface LessonActivity {
+  id: string;
+  unit: string;
+  activityType: ActivityType.LESSON;
+  showIntro?: boolean;
+  questions: LessonQuestion[];
+}
+
+/** @deprecated Use LessonActivity instead */
 export interface MultipleChoiceActivity {
   id: string;
   unit: string;
@@ -65,7 +92,7 @@ export interface BuildTheWordActivity {
   skills: Skill[];
 }
 
-export type Activity = MultipleChoiceActivity | LeafParadeActivityType | BuildTheWordActivity;
+export type Activity = LessonActivity | MultipleChoiceActivity | LeafParadeActivityType | BuildTheWordActivity;
 
 // Skills union type and constants
 export const SKILL_PHONEME_IDENTIFICATION = 'phoneme-identification' as const; // identifying the sound in a word
@@ -75,6 +102,7 @@ export type Skill = typeof SKILL_PHONEME_IDENTIFICATION | typeof SKILL_LETTER_SO
 
 // Mapping question type 2 skill(s)
 export const activityTypeToSkills: Record<ActivityType, Skill[]> = {
+  [ActivityType.LESSON]: [SKILL_PHONEME_IDENTIFICATION, SKILL_LETTER_SOUND_MAPPING],
   [ActivityType.MULTIPLE_CHOICE]: [SKILL_PHONEME_IDENTIFICATION, SKILL_LETTER_SOUND_MAPPING],
   [ActivityType.LEAF_PARADE]: [SKILL_LETTER_SOUND_MAPPING],
   [ActivityType.BUILD_THE_WORD]: [SKILL_LETTER_SOUND_MAPPING],
@@ -85,7 +113,7 @@ export const activities: Activity[] = [
     id: 'quiz-c',
     unit: 'c',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 'c1', kind: 'word-start', options: ['cat', 'mat', 'sat'], correctAnswer: 'cat', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'c2', kind: 'word-start', options: ['cup', 'mop', 'sun'], correctAnswer: 'cup', phonemeFile: '/audio/phonics-units/c-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -97,52 +125,60 @@ export const activities: Activity[] = [
     id: 'quiz-t',
     unit: 't',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 't1', kind: 'word-start', options: ['top', 'hop', 'mop'], correctAnswer: 'top', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't2', kind: 'word-start', options: ['tap', 'map', 'nap'], correctAnswer: 'tap', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't3', kind: 'word-start', options: ['ten', 'men', 'hen'], correctAnswer: 'ten', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't4', kind: 'word-start', options: ['tin', 'win', 'pin'], correctAnswer: 'tin', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't5', kind: 'word-start', options: ['tag', 'bag', 'rag'], correctAnswer: 'tag', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 't6', kind: 'letter-sound', options: ['t', 'm', 'a'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 't7', kind: 'letter-sound', options: ['a', 't', 's'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 't8', kind: 'letter-sound', options: ['m', 't', 'd'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      // { id: 't2', kind: 'word-start', options: ['tap', 'map', 'nap'], correctAnswer: 'tap', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      // { id: 't3', kind: 'word-start', options: ['ten', 'men', 'hen'], correctAnswer: 'ten', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      // { id: 't4', kind: 'word-start', options: ['tin', 'win', 'pin'], correctAnswer: 'tin', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      // { id: 't5', kind: 'word-start', options: ['tag', 'bag', 'rag'], correctAnswer: 'tag', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      // { id: 't6', kind: 'letter-sound', options: ['t', 'm', 'a'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      // { id: 't7', kind: 'letter-sound', options: ['a', 't', 's'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      // { id: 't8', kind: 'letter-sound', options: ['m', 't', 'd'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'blend', id: 'blend-t-sat', word: 'sat', letters: ['s', 'a', 't'], wordAudioFile: '/audio/words/sat.wav', phonemeFiles: ['/audio/phonics-units/s-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'blend', id: 'blend-t-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
   },
   {
     id: 'quiz-m',
     unit: 'm',
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    showIntro: true,
+    activityType: ActivityType.LESSON,
     questions: [
+
+      { id: 'm6', kind: 'letter-sound', options: ['c', 's', 'm'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: false, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'm7', kind: 'letter-sound', options: ['m', 't', 'a'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: false, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'm8', kind: 'letter-sound', options: ['s', 'm', 'd'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'm8', kind: 'letter-sound', options: ['x', 'r', 'm'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'm1', kind: 'word-start', options: ['cat', 'map', 'sun'], correctAnswer: 'map', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'm2', kind: 'word-start', options: ['mud', 'dog', 'sun'], correctAnswer: 'mud', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'm3', kind: 'word-start', options: ['milk', 'hat', 'pig'], correctAnswer: 'milk', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'm3', kind: 'word-start', options: ['hat', 'milk', 'pig'], correctAnswer: 'milk', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'm4', kind: 'word-start', options: ['man', 'dog', 'sun'], correctAnswer: 'man', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'm5', kind: 'word-start', options: ['mat', 'cat', 'bat'], correctAnswer: 'mat', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'm6', kind: 'letter-sound', options: ['c', 's', 'm'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 'm7', kind: 'letter-sound', options: ['m', 't', 'a'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 'm8', kind: 'letter-sound', options: ['s', 'm', 'd'], correctAnswer: 'm', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'm5', kind: 'word-start', options: ['cat', 'bat', 'mat'], correctAnswer: 'mat', phonemeFile: '/audio/phonics-units/m-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
     ],
   },
   {
     id: 'quiz-a',
     unit: 'a',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
-      { id: 'a1', kind: 'word-start', options: ['ant', 'cat', 'sun'], correctAnswer: 'ant', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'a2', kind: 'word-start', options: ['apple', 'mop', 'top'], correctAnswer: 'apple', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'a3', kind: 'word-start', options: ['add', 'big', 'cup'], correctAnswer: 'add', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'a4', kind: 'letter-sound', options: ['a', 'c', 'm'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 'a5', kind: 'letter-sound', options: ['s', 'a', 't'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'a4', kind: 'letter-sound', options: ['a', 'c', 'm'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: false, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'a5', kind: 'letter-sound', options: ['s', 'a', 't'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: false, skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'a6', kind: 'letter-sound', options: ['f', 'n', 'a'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'a7', kind: 'letter-sound', options: ['a', 's', 't'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'a1', kind: 'word-start', options: ['cat', 'ant', 'sun'], correctAnswer: 'ant', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'a2', kind: 'word-start', options: ['mop', 'top', 'apple'], correctAnswer: 'apple', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'a3', kind: 'word-start', options: ['add', 'big', 'cup'], correctAnswer: 'add', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'a8', kind: 'word-start', options: ['cat', 'art', 'sun'], correctAnswer: 'art', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+
     ],
   },
   {
     id: 'quiz-f',
     unit: 'f',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 'f1', kind: 'word-start', options: ['fan', 'man', 'ran'], correctAnswer: 'fan', phonemeFile: '/audio/phonics-units/f-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'f2', kind: 'word-start', options: ['fish', 'dish', 'wish'], correctAnswer: 'fish', phonemeFile: '/audio/phonics-units/f-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -157,7 +193,7 @@ export const activities: Activity[] = [
     id: 'quiz-l',
     unit: 'l',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 'l1', kind: 'word-start', options: ['lap', 'map', 'tap'], correctAnswer: 'lap', phonemeFile: '/audio/phonics-units/l-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'l2', kind: 'word-start', options: ['log', 'fog', 'dog'], correctAnswer: 'log', phonemeFile: '/audio/phonics-units/l-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -172,7 +208,7 @@ export const activities: Activity[] = [
     id: 'quiz-n',
     unit: 'n',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 'n1', kind: 'word-start', options: ['nap', 'map', 'tap'], correctAnswer: 'nap', phonemeFile: '/audio/phonics-units/n-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'n2', kind: 'word-start', options: ['net', 'set', 'met'], correctAnswer: 'net', phonemeFile: '/audio/phonics-units/n-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -187,7 +223,7 @@ export const activities: Activity[] = [
     id: 'quiz-r',
     unit: 'r',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 'r1', kind: 'word-start', options: ['rat', 'cat', 'mat'], correctAnswer: 'rat', phonemeFile: '/audio/phonics-units/r-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'r2', kind: 'word-start', options: ['run', 'fun', 'sun'], correctAnswer: 'run', phonemeFile: '/audio/phonics-units/r-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -202,7 +238,7 @@ export const activities: Activity[] = [
     id: 'quiz-s',
     unit: 's',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 's1', kind: 'word-start', options: ['sat', 'mat', 'cat'], correctAnswer: 'sat', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 's2', kind: 'word-start', options: ['sun', 'fun', 'run'], correctAnswer: 'sun', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -211,13 +247,15 @@ export const activities: Activity[] = [
       { id: 's5', kind: 'letter-sound', options: ['s', 'c', 'm'], correctAnswer: 's', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 's6', kind: 'letter-sound', options: ['t', 's', 'n'], correctAnswer: 's', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 's7', kind: 'letter-sound', options: ['f', 's', 'a'], correctAnswer: 's', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', hideLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'blend', id: 'blend-sat', word: 'sat', letters: ['s', 'a', 't'], wordAudioFile: '/audio/words/sat.wav', phonemeFiles: ['/audio/phonics-units/s-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'blend', id: 'blend-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
   },
   {
     id: 'quiz-h',
     unit: 'h',
     showIntro: true,
-    activityType: ActivityType.MULTIPLE_CHOICE,
+    activityType: ActivityType.LESSON,
     questions: [
       { id: 'h1', kind: 'word-start', options: ['hat', 'cat', 'mat'], correctAnswer: 'hat', phonemeFile: '/audio/phonics-units/h-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'h2', kind: 'word-start', options: ['hop', 'top', 'mop'], correctAnswer: 'hop', phonemeFile: '/audio/phonics-units/h-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
@@ -238,7 +276,7 @@ export const activities: Activity[] = [
     targetLetter: 'c',
     numberToComplete: 2,
   },
-  // Build the Word exercises
+  // Standalone Build the Word activities (used by blend-endless mode)
   {
     id: 'build-hat',
     unit: 'h',

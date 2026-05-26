@@ -1,0 +1,80 @@
+.lesson-stub-root {
+  min-height: 100vh;
+  background: #f0f4fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.lesson-stub-card {
+  text-align: center;
+  padding: 2rem 1.75rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  max-width: 320px;
+  width: 100%;
+}
+
+.lesson-stub-focus {
+  font-size: 5rem;
+  font-weight: 900;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
+.lesson-stub-sound {
+  font-size: 1.25rem;
+  color: #555;
+  margin: 0 0 0.3rem;
+}
+
+.lesson-stub-types {
+  font-size: 0.8rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 1.25rem;
+}
+
+.lesson-stub-notice {
+  font-size: 0.9rem;
+  color: #888;
+  background: #f8f8f0;
+  border: 1px solid #e8e8d8;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.lesson-stub-btn {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 12px;
+  border: 2px solid #d0d0d0;
+  background: #f4f4f4;
+  font-size: 1.05rem;
+  cursor: pointer;
+  margin-top: 0.65rem;
+  font-family: inherit;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.lesson-stub-btn--complete {
+  background: #4a90e2;
+  border-color: #2c5aa0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+.lesson-stub-btn--complete:hover { background: #3573b7; }
+
+.lesson-stub-btn--back {
+  font-size: 0.9rem;
+  color: #888;
+}
+.lesson-stub-btn--back:hover { background: #e8e8e8; }

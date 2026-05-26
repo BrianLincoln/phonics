@@ -13,17 +13,24 @@ const FEEDBACK_AUDIO = {
   wrong: '/audio/system/incorrect.wav',
 };
 
+const INTRO_PROMPTS = {
+  thisIs:     '/audio/prompts/this-is-the-letter.wav',
+  makesSound: '/audio/prompts/it-makes-the-sound.wav',
+};
+
 interface MCQActivityProps {
   activity: MultipleChoiceActivity;
   onComplete: (result?: any) => void;
+  onBack?: () => void;
+  /** If set, plays "This is the letter / It makes the sound" after the crow carry-in animation */
+  introUnit?: { nameAudio?: string; soundAudio?: string };
 }
 
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }) => {
+export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete, onBack, introUnit }) => {
   const navigate = useNavigate();
 
-  // Queue stored as a ref so we can splice without triggering extra renders
   const queueRef = useRef([...activity.questions!]);
   const requeuedIds = useRef(new Set<string>());
   const [queueIdx, setQueueIdx] = useState(0);
@@ -40,6 +47,15 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
   const hadWrongRef = useRef(false);
   const [transition, setTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const [promptPlaying, setPromptPlaying] = useState(true);
+
+  // When there's an intro, answers are hidden until the first question prompt starts.
+  // A ref mirrors the state so playQuestionPrompt (inside the effect) can read it
+  // without going stale.
+  const [answersReady, setAnswersReady] = useState(() => !introUnit);
+  const answersReadyRef = useRef(!introUnit);
+
+  // Holds the carry-in callback until onSceneReady fires (intro path only)
+  const introCallbackRef = useRef<(() => void) | null>(null);
 
   const advance = (wasCorrect: boolean) => {
     if (!wasCorrect) {
@@ -76,6 +92,9 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
         setFeedback(null);
         setEliminated([]);
         hadWrongRef.current = false;
+        // Reset promptPlaying=true in the same React 18 batch as the index
+        // advance so the new question's buttons never render in an enabled state.
+        setPromptPlaying(true);
         advance(true);
         setTransition('entering');
         await delay(350);
@@ -88,7 +107,6 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
       }
     } else {
       hadWrongRef.current = true;
-      // Re-queue now so it comes back even if they get it right on retry
       const q = queueRef.current[queueIdx];
       const id = q.correctAnswer;
       if (!requeuedIds.current.has(id)) {
@@ -115,8 +133,26 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
     setPromptPlaying(true);
     let alive = true;
 
-    async function playPrompt() {
+    // Plays the actual question prompt audio, then unlocks answers.
+    // If answers are still hidden (intro path), animates them in first.
+    async function playQuestionPrompt() {
       if (!alive) return;
+
+      if (!answersReadyRef.current) {
+        // Brief pause after the intro audio before the first question starts.
+        await delay(700);
+        if (!alive) return;
+
+        // Reveal answers with the enter animation in the same render that
+        // sets promptPlaying=true, so they slide in already dimmed/disabled.
+        answersReadyRef.current = true;
+        setAnswersReady(true);
+        setTransition('entering');
+        // Let the 220 ms enter animation play before marking transition idle.
+        // Audio starts in parallel — intentional, it accompanies the slide-in.
+        setTimeout(() => { if (alive) setTransition('idle'); }, 350);
+      }
+
       await playAudio(question.promptFile, true).catch(() => {});
       if (!alive) return;
       await playAudio(question.phonemeFile, true).catch(() => {});
@@ -124,13 +160,48 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
       setPromptPlaying(false);
     }
 
-    playPrompt();
+    // Routes through the scene's prepareForQuestion so the crow can animate
+    // the card in/out based on hideLetter before the audio prompt starts
+    function prepareAndPlay() {
+      const hideLetter = (question as any).hideLetter as boolean | undefined;
+      if (phaserRef.current?.prepareForQuestion) {
+        phaserRef.current.prepareForQuestion(hideLetter, playQuestionPrompt);
+      } else {
+        playQuestionPrompt();
+      }
+    }
+
+    if (queueIdx === 0 && introUnit) {
+      // Q1 with intro: play "This is the letter / It makes the sound" audio after the
+      // crow carry-in, then let prepareForQuestion handle card visibility before Q1 prompt
+      const withIntro = async () => {
+        if (!alive) return;
+        await playAudio(INTRO_PROMPTS.thisIs, true).catch(() => {});
+        if (!alive) return;
+        if (introUnit.nameAudio)  await playAudio(introUnit.nameAudio,  true).catch(() => {});
+        if (!alive) return;
+        await playAudio(INTRO_PROMPTS.makesSound, true).catch(() => {});
+        if (!alive) return;
+        if (introUnit.soundAudio) await playAudio(introUnit.soundAudio, true).catch(() => {});
+        if (!alive) return;
+        prepareAndPlay();
+      };
+
+      introCallbackRef.current = withIntro;
+
+      if (phaserRef.current) {
+        phaserRef.current.onCarryInComplete = withIntro;
+      }
+    } else {
+      introCallbackRef.current = null;
+      prepareAndPlay();
+    }
 
     return () => {
       alive = false;
       stopAll();
     };
-  }, [queueIdx]);
+  }, [queueIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     return () => {
@@ -142,23 +213,30 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete }
     <div className='activity-root'>
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
+        <button className="activity-back-btn" onClick={() => onBack ? onBack() : navigate('/')}>⬅ Back</button>
       </div>
       <div className="activity-stacked-layout">
         <PhaserGame
           sceneType="multiple-choice"
           sceneData={{ unitName: activity.unit, questionIndex: queueIdx }}
-          onSceneReady={scene => { phaserRef.current = scene; }}
+          onSceneReady={scene => {
+            phaserRef.current = scene;
+            if (introCallbackRef.current) {
+              phaserRef.current.onCarryInComplete = introCallbackRef.current;
+            }
+          }}
         />
-        <MultipleChoice
-          question={question}
-          selected={selected}
-          feedback={feedback}
-          eliminated={eliminated}
-          transition={transition}
-          promptPlaying={promptPlaying}
-          onAnswer={handleAnswer}
-        />
+        {answersReady && (
+          <MultipleChoice
+            question={question}
+            selected={selected}
+            feedback={feedback}
+            eliminated={eliminated}
+            transition={transition}
+            promptPlaying={promptPlaying}
+            onAnswer={handleAnswer}
+          />
+        )}
       </div>
     </div>
   );

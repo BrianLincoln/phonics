@@ -13,13 +13,14 @@ const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, m
 interface BuildTheWordExerciseProps {
   activity: BuildTheWordActivityData;
   onComplete: () => void;
+  onBack?: () => void;
 }
 
 function makeInitialTileStates(count: number): TileState[] {
   return Array.from({ length: count }, (_, i) => (i === 0 ? 'active' : 'untapped'));
 }
 
-export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ activity, onComplete }) => {
+export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ activity, onComplete, onBack }) => {
   const navigate = useNavigate();
   const audioUnlocked = useAudioUnlocked();
   const playAudio = usePlayAudio();
@@ -130,7 +131,7 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
     <div className="activity-root">
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
+        <button className="activity-back-btn" onClick={() => onBack ? onBack() : navigate('/map')}>⬅ Back</button>
       </div>
       <div className="activity-stacked-layout">
         <PhaserGame

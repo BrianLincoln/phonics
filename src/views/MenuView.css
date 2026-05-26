@@ -93,3 +93,15 @@
 .menu-learner__switch:hover {
   color: #2b6cb0;
 }
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid #d8d8d8;
+  margin: 0.25rem 0;
+}
+
+.menu-btn--deprecated {
+  font-size: 1rem;
+  color: #aaa;
+  border-color: #e0e0e0;
+}

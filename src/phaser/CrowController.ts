@@ -96,9 +96,9 @@ export class CrowController {
   // ── Public movement API ──────────────────────────────────────────────────────
 
   walkWordOnFromRight(
-    word: Phaser.GameObjects.Text,
+    card: Phaser.GameObjects.Container,
     targetX: number,
-    textY: number,
+    cardY: number,
     crowY: number,
     onDone: () => void
   ) {
@@ -108,8 +108,8 @@ export class CrowController {
     this.crow.setDepth(9);
     this.crow.setFacing('left');
     this.crow.setPosition(cam.width + 100, crowY);
-    word.setVisible(true);
-    word.setPosition(cam.width + 100 - crowOffset, textY);
+    card.setVisible(true);
+    card.setPosition(cam.width + 100 - crowOffset, cardY);
     this.startWalking();
     this.scene.tweens.add({
       targets: this.crow,
@@ -119,17 +119,74 @@ export class CrowController {
       ease: 'Quad.easeOut',
       onUpdate: () => {
         this.advanceWalkAnimation(16);
-        word.x = this.crow.x - crowOffset;
-        word.y = textY;
+        card.x = this.crow.x - crowOffset;
+        card.y = cardY;
       },
       onComplete: () => {
         this.crow.setX(targetX + crowOffset);
         this.crow.setY(crowY);
-        word.setX(targetX);
-        word.setY(textY);
+        card.setX(targetX);
+        card.setY(cardY);
         this.crow.setIdle();
         this.startIdleBob();
         if (onDone) onDone();
+      },
+    });
+  }
+
+  carryCardInFromLeft(
+    card: Phaser.GameObjects.Container,
+    cardCX: number,
+    cardCY: number,
+    onDone?: () => void
+  ) {
+    const cam = this.scene.cameras.main;
+    // Crow's right edge touches card's left edge:
+    // card half-width (150) + crow half-width at scale 0.5 (50) = 200px offset
+    const crowOffset = 200; // card is 200px to crow's right
+    const dropX = cardCX - crowOffset; // crow x when card reaches center
+
+    // Crow y: sit just below the card
+    const crowY = cardCY + 80;
+
+    this.crow.setVisible(true);
+    this.crow.setDepth(9);
+    this.crow.setFacing('right');
+    this.crow.setPosition(-400, crowY);
+    card.setVisible(true);
+    card.setPosition(-400 + crowOffset, cardCY);
+
+    this.startWalking();
+
+    this.scene.tweens.add({
+      targets: this.crow,
+      x: dropX,
+      duration: 1400,
+      ease: 'Quad.easeOut',
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
+        card.x = this.crow.x + crowOffset;
+      },
+      onComplete: () => {
+        card.x = cardCX;
+
+        // Card is placed — fire callback immediately so audio can start
+        if (onDone) onDone();
+
+        // Crow walks away to idle position (bottom-right), drifting down to groundY
+        this.scene.tweens.add({
+          targets: this.crow,
+          x: cam.width - 100,
+          y: this.groundY,
+          duration: 1800,
+          ease: 'Sine.easeOut',
+          onUpdate: () => { this.advanceWalkAnimation(16); },
+          onComplete: () => {
+            this.crow.setFacing('left');
+            this.crow.setIdle();
+            this.startIdleBob();
+          },
+        });
       },
     });
   }
@@ -294,8 +351,8 @@ export class CrowController {
   }
 
   walkToLeftOfWordAndLook(wordX: number, wordY: number, onDone: () => void) {
-    const targetX = wordX - 100;
-    const targetY = wordY + 80;
+    const targetX = wordX - 200; // crow right edge flush with card left edge
+    const targetY = wordY + 80;  // sit just below card centre, matching carry-in posture
     const dx = targetX - this.crow.x;
     this.crow.setVisible(true);
     this.crow.setDepth(9);
@@ -316,19 +373,19 @@ export class CrowController {
     });
   }
 
-  walkWordOffRight(word: Phaser.GameObjects.Text, onDone: () => void) {
+  walkWordOffRight(card: Phaser.GameObjects.Container, onDone: () => void) {
     this.stopIdleBob();
     this.crow.setFacing('right');
     this.startWalking();
     this.scene.tweens.add({
-      targets: [this.crow, word],
+      targets: [this.crow, card],
       x: '+=600',
       duration: 1200,
       ease: 'Quad.easeIn',
       onUpdate: () => { this.advanceWalkAnimation(16); },
       onComplete: () => {
         this.crow.setVisible(false);
-        word.setVisible(false);
+        card.setVisible(false);
         onDone();
       },
     });

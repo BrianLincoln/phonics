@@ -1,6 +1,7 @@
 // Storage adapter interface — swap LocalStorageAdapter for SupabaseAdapter to migrate
 import type { Profile } from './profiles';
 import type { PhonicsProgress } from '../helpers/quizProgress';
+import type { MapProgress } from './mapProgress';
 
 export interface StorageAdapter {
   getProfiles(): Promise<Profile[]>;
@@ -8,10 +9,13 @@ export interface StorageAdapter {
   deleteProfile(profileId: string): Promise<void>;
   getProgress(profileId: string): Promise<PhonicsProgress>;
   saveProgress(profileId: string, progress: PhonicsProgress): Promise<void>;
+  getMapProgress(profileId: string): Promise<MapProgress>;
+  saveMapProgress(profileId: string, progress: MapProgress): Promise<void>;
 }
 
 const PROFILES_KEY = 'phonics_profiles';
 const progressKey = (id: string) => `phonics_progress_${id}`;
+const mapKey = (id: string) => `phonics_map_${id}`;
 
 export class LocalStorageAdapter implements StorageAdapter {
   async getProfiles(): Promise<Profile[]> {
@@ -39,6 +43,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     const profiles = await this.getProfiles();
     localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles.filter(p => p.id !== profileId)));
     localStorage.removeItem(progressKey(profileId));
+    localStorage.removeItem(mapKey(profileId));
   }
 
   async getProgress(profileId: string): Promise<PhonicsProgress> {
@@ -53,6 +58,20 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async saveProgress(profileId: string, progress: PhonicsProgress): Promise<void> {
     localStorage.setItem(progressKey(profileId), JSON.stringify(progress));
+  }
+
+  async getMapProgress(profileId: string): Promise<MapProgress> {
+    const data = localStorage.getItem(mapKey(profileId));
+    if (!data) return {};
+    try {
+      return JSON.parse(data) as MapProgress;
+    } catch {
+      return {};
+    }
+  }
+
+  async saveMapProgress(profileId: string, progress: MapProgress): Promise<void> {
+    localStorage.setItem(mapKey(profileId), JSON.stringify(progress));
   }
 }
 
