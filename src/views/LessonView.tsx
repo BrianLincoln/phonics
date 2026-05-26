@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { curriculum } from '../data/curriculum';
 import { activities, ActivityType, type Activity, type LessonActivity, type BuildTheWordActivity } from '../data/activities';
@@ -13,12 +13,16 @@ export function LessonView() {
 
   const node = curriculum.find(n => n.id === nodeId);
   const unit = node ? units.find(u => u.id === node.focus) : undefined;
+  const isCheckpoint = node?.type === 'checkpoint';
 
   const nodeActivities = (node?.activityIds ?? [])
     .map(id => activities.find(a => a.id === id))
     .filter((a): a is Activity => !!a);
 
   const [activityIndex, setActivityIndex] = useState(0);
+
+  // Accumulate correct/total for checkpoint nodes
+  const checkpointRef = useRef({ correct: 0, total: 0 });
 
   if (!node) {
     return (
@@ -29,13 +33,30 @@ export function LessonView() {
     );
   }
 
+  function finishNode(scoreOverride?: { correct: number; total: number }) {
+    if (isCheckpoint) {
+      const score = scoreOverride ?? checkpointRef.current;
+      navigate('/map', { state: { completedNodeId: nodeId, checkpointScore: score } });
+    } else {
+      navigate('/map', { state: { completedNodeId: nodeId } });
+    }
+  }
+
   if (nodeActivities.length === 0) {
     return (
       <div className="lesson-stub-root">
         <div className="lesson-stub-card">
           <div className="lesson-stub-focus">{node.label}</div>
-          <p className="lesson-stub-notice">🚧 Exercises coming soon.</p>
-          <button className="lesson-stub-btn lesson-stub-btn--complete" onClick={() => navigate('/map', { state: { completedNodeId: nodeId } })}>
+          {isCheckpoint && (
+            <p className="lesson-stub-notice">🏆 Challenge — exercises coming soon.</p>
+          )}
+          {!isCheckpoint && (
+            <p className="lesson-stub-notice">🚧 Exercises coming soon.</p>
+          )}
+          <button
+            className="lesson-stub-btn lesson-stub-btn--complete"
+            onClick={() => finishNode(isCheckpoint ? { correct: 4, total: 5 } : undefined)}
+          >
             Mark Complete (stub)
           </button>
           <button className="lesson-stub-btn lesson-stub-btn--back" onClick={() => navigate('/map')}>
@@ -46,17 +67,23 @@ export function LessonView() {
     );
   }
 
-  function handleComplete() {
+  function handleComplete(wasCorrect?: boolean) {
+    if (isCheckpoint) {
+      checkpointRef.current = {
+        correct: checkpointRef.current.correct + (wasCorrect ? 1 : 0),
+        total:   checkpointRef.current.total + 1,
+      };
+    }
+
     if (activityIndex < nodeActivities.length - 1) {
       setActivityIndex(activityIndex + 1);
     } else {
-      navigate('/map', { state: { completedNodeId: nodeId } });
+      finishNode();
     }
   }
 
   const current = nodeActivities[activityIndex];
 
-  // Unified lesson activity (word-start + letter-sound + blend in one sequence)
   if (current.activityType === ActivityType.LESSON) {
     const introUnit = (current.showIntro && activityIndex === 0 && unit)
       ? { nameAudio: unit.nameAudio, soundAudio: unit.soundAudio, likeInWords: unit.likeInWords }
@@ -72,7 +99,6 @@ export function LessonView() {
     );
   }
 
-  // Standalone build-the-word (used when a node explicitly chains a BTW activity)
   if (current.activityType === ActivityType.BUILD_THE_WORD) {
     return (
       <BuildTheWordExercise

@@ -288,14 +288,6 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
         if (!alive) return;
         await playAudio(question.wordAudioFile, true).catch(() => {});
       } else if (question.kind === 'scrambled-blend') {
-        // Show the word in correct order and play it so student has a target
-        await playAudio(question.wordAudioFile, true).catch(() => {});
-        if (!alive) return;
-
-        // Brief pause so the word sinks in before the crow causes chaos
-        await delay(400);
-        if (!alive) return;
-
         const shuffled = shuffleIndices(question.letters.length);
         const scene = phaserRef.current;
         const btns = tileRowRef.current
@@ -470,7 +462,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       <div className="activity-stacked-layout">
         <PhaserGame
           sceneType="multiple-choice"
-          sceneData={{ unitName: activity.unit, questionIndex: queueIdx }}
+          sceneData={{ unitName: activity.unit, questionIndex: queueIdx, showFirstCard: !!(activity.questions[0] as any)?.showLetter }}
           onSceneReady={scene => {
             phaserRef.current = scene;
             if (introCallbackRef.current) {

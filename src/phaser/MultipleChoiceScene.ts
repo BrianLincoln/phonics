@@ -4,6 +4,8 @@ import { BaseGameScene } from './BaseGameScene';
 export interface MultipleChoiceSceneData {
   unitName: string;
   questionIndex: number;
+  /** When false, the card stays invisible during the initial carry-in (first question hides letter). Default true. */
+  showFirstCard?: boolean;
 }
 
 export class MultipleChoiceScene extends BaseGameScene {
@@ -13,6 +15,7 @@ export class MultipleChoiceScene extends BaseGameScene {
   letterCard?: Phaser.GameObjects.Container;
   letterText?: Phaser.GameObjects.Text;
   onCarryInComplete?: () => void;
+  private cardIsOnScreen = false; // true once carry-in completes, false after take-away
 
   private reEnterTimeout?: ReturnType<typeof setTimeout>;
 
@@ -71,12 +74,17 @@ export class MultipleChoiceScene extends BaseGameScene {
   private buildCrow() {
     const cam = this.cameras.main;
     this.setupCrow(-100);
-    this.crowController!.carryCardInFromLeft(
-      this.letterCard!,
-      cam.centerX,
-      cam.centerY + 10,
-      () => { this.onCarryInComplete?.(); },
-    );
+    const showCard = this.sceneData.showFirstCard !== false;
+    if (showCard) {
+      this.crowController!.carryCardInFromLeft(
+        this.letterCard!,
+        cam.centerX,
+        cam.centerY + 10,
+        () => { this.cardIsOnScreen = true; this.onCarryInComplete?.(); },
+      );
+    } else {
+      this.crowController!.walkInFromLeft(() => { this.onCarryInComplete?.(); });
+    }
   }
 
   // ── Public API called by React ────────────────────────────────────────────
@@ -87,13 +95,14 @@ export class MultipleChoiceScene extends BaseGameScene {
    * then calls onReady (which plays the audio prompt and unlocks answers).
    */
   prepareForQuestion(showLetter: boolean | undefined, onReady: () => void) {
-    const cardVisible = this.letterCard?.visible ?? false;
-
-    if (!showLetter && cardVisible) {
-      // Card is showing but this question wants it hidden — crow takes it
-      this.crowTakeLetter(onReady);
-    } else if (showLetter && !cardVisible) {
-      // Card is hidden but this question explicitly wants it shown — crow brings it back
+    if (!showLetter) {
+      // Hide instantly — no animation needed; calling crowTakeLetter risks timing issues
+      // if the carry-in just completed and the crow hasn't settled yet.
+      this.letterCard?.setVisible(false);
+      this.cardIsOnScreen = false;
+      onReady();
+    } else if (!this.cardIsOnScreen) {
+      // Card is hidden but this question wants it shown — crow brings it back
       this.crowBringCardIn(onReady);
     } else {
       onReady();
@@ -119,6 +128,7 @@ export class MultipleChoiceScene extends BaseGameScene {
 
     this.crowController.walkToLeftOfWordAndLook(this.letterCard.x, this.letterCard.y, () => {
       this.crowController!.walkWordOffRight(this.letterCard!, () => {
+        this.cardIsOnScreen = false;
         onDone?.();
         // Crow re-enters after a short pause (for hop/shake reactions on later questions)
         this.reEnterTimeout = setTimeout(() => {
@@ -138,7 +148,7 @@ export class MultipleChoiceScene extends BaseGameScene {
       this.letterCard,
       cam.centerX,
       cam.centerY + 10,
-      onReady,
+      () => { this.cardIsOnScreen = true; onReady(); },
     );
   }
 

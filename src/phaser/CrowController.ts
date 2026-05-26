@@ -235,6 +235,10 @@ export class CrowController {
   }
 
   public playIntroWalkIn() {
+    this.walkInFromLeft();
+  }
+
+  public walkInFromLeft(onDone?: () => void) {
     const cam = this.scene.cameras.main;
     this.crow.setVisible(true);
     this.crow.setDepth(9);
@@ -252,6 +256,7 @@ export class CrowController {
         this.crow.setFacing('left');
         this.crow.setIdle();
         this.startIdleBob();
+        onDone?.();
       },
     });
   }

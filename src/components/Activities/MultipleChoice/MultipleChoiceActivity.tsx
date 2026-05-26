@@ -169,26 +169,28 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete, 
       }
     }
 
-    if (queueIdx === 0 && introUnit) {
-      // Q1 with intro: play "This is the letter / It makes the sound" audio after the
-      // crow carry-in, then let prepareForQuestion handle card visibility before Q1 prompt
-      const withIntro = async () => {
-        if (!alive) return;
-        await playAudio(INTRO_PROMPTS.thisIs, true).catch(() => {});
-        if (!alive) return;
-        if (introUnit.nameAudio)  await playAudio(introUnit.nameAudio,  true).catch(() => {});
-        if (!alive) return;
-        await playAudio(INTRO_PROMPTS.makesSound, true).catch(() => {});
-        if (!alive) return;
-        if (introUnit.soundAudio) await playAudio(introUnit.soundAudio, true).catch(() => {});
-        if (!alive) return;
-        prepareAndPlay();
-      };
+    if (queueIdx === 0) {
+      // Q1: always wait for the crow carry-in to finish before calling prepareForQuestion,
+      // so the card is visible and crowTakeLetter fires correctly for showLetter=false.
+      const afterCarryIn = introUnit
+        ? async () => {
+            if (!alive) return;
+            await playAudio(INTRO_PROMPTS.thisIs, true).catch(() => {});
+            if (!alive) return;
+            if (introUnit.nameAudio)  await playAudio(introUnit.nameAudio,  true).catch(() => {});
+            if (!alive) return;
+            await playAudio(INTRO_PROMPTS.makesSound, true).catch(() => {});
+            if (!alive) return;
+            if (introUnit.soundAudio) await playAudio(introUnit.soundAudio, true).catch(() => {});
+            if (!alive) return;
+            prepareAndPlay();
+          }
+        : () => { if (alive) prepareAndPlay(); };
 
-      introCallbackRef.current = withIntro;
+      introCallbackRef.current = afterCarryIn;
 
       if (phaserRef.current) {
-        phaserRef.current.onCarryInComplete = withIntro;
+        phaserRef.current.onCarryInComplete = afterCarryIn;
       }
     } else {
       introCallbackRef.current = null;
