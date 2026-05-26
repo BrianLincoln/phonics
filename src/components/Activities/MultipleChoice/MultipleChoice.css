@@ -74,7 +74,7 @@
     background-color 0.15s ease;
 }
 
-.quiz-answer:hover:not(:disabled) {
+.quiz-answer:hover:not(:disabled):not(.correct):not(.wrong) {
   background: #f4f7fb;
   outline: none;
 }

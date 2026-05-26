@@ -47,9 +47,9 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ question, selected, fee
               '--fan-x': fanX,
               '--enter-delay': `${idx * 25}ms`,
             } as React.CSSProperties}
-            className={`quiz-answer${isEliminated ? ' eliminated' : ''}${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}${promptPlaying ? ' prompt-playing' : ''}`}
+            className={`quiz-answer${isEliminated ? ' eliminated' : ''}${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}${animClass}${promptPlaying ? ' prompt-playing' : ''}${selected && !isCorrect && !isWrong ? ' answer-locked' : ''}`}
             onClick={() => onAnswer(option)}
-            disabled={!!selected || !!promptPlaying || isEliminated}
+            disabled={!!promptPlaying || isEliminated}
           >
             {option}
           </button>

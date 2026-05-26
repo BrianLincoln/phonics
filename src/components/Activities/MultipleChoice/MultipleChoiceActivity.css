@@ -29,6 +29,10 @@
   height: 100dvh;
 }
 
+.quiz-answer.answer-locked {
+  pointer-events: none;
+}
+
 .activity-root .phaser-container {
   position: fixed;
   inset: 0;

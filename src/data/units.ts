@@ -3,17 +3,19 @@ export type Unit = {
   name: string;
   nameAudio?: string;
   soundAudio?: string;
+  /** Paths to word audio files for the "Like in X and Y and Z" intro sequence */
+  likeInWords?: string[];
 };
 
 export const units: Unit[] = [
   // Single consonants
-  { id: 'm', name: 'Mm', nameAudio: '/audio/phonics-units/m-name.wav', soundAudio: '/audio/phonics-units/m-sound.wav' },
-  { id: 's', name: 'Ss', nameAudio: '/audio/phonics-units/s-name.wav', soundAudio: '/audio/phonics-units/s-sound.wav' },
+  { id: 'm', name: 'Mm', nameAudio: '/audio/phonics-units/m-name.wav', soundAudio: '/audio/phonics-units/m-sound.wav', likeInWords: ['/audio/words/monkey.wav', '/audio/words/milk.wav', '/audio/words/map.wav'] },
+  { id: 's', name: 'Ss', nameAudio: '/audio/phonics-units/s-name.wav', soundAudio: '/audio/phonics-units/s-sound.wav', likeInWords: ['/audio/words/snake.wav', '/audio/words/sun.wav', '/audio/words/sat.wav'] },
   { id: 'f', name: 'Ff', nameAudio: '/audio/phonics-units/f-name.wav', soundAudio: '/audio/phonics-units/f-sound.wav' },
   { id: 'n', name: 'Nn', nameAudio: '/audio/phonics-units/n-name.wav', soundAudio: '/audio/phonics-units/n-sound.wav' },
   { id: 'l', name: 'Ll', nameAudio: '/audio/phonics-units/l-name.wav', soundAudio: '/audio/phonics-units/l-sound.wav' },
   { id: 'r', name: 'Rr', nameAudio: '/audio/phonics-units/r-name.wav', soundAudio: '/audio/phonics-units/r-sound.wav' },
-  { id: 't', name: 'Tt', nameAudio: '/audio/phonics-units/t-name.wav', soundAudio: '/audio/phonics-units/t-sound.wav' },
+  { id: 't', name: 'Tt', nameAudio: '/audio/phonics-units/t-name.wav', soundAudio: '/audio/phonics-units/t-sound.wav', likeInWords: ['/audio/words/turtle.wav', '/audio/words/top.wav', '/audio/words/ten.wav'] },
   { id: 'p', name: 'Pp', nameAudio: '/audio/phonics-units/p-name.wav', soundAudio: '/audio/phonics-units/p-sound.wav' },
   { id: 'b', name: 'Bb', nameAudio: '/audio/phonics-units/b-name.wav', soundAudio: '/audio/phonics-units/b-sound.wav' },
   { id: 'd', name: 'Dd', nameAudio: '/audio/phonics-units/d-name.wav', soundAudio: '/audio/phonics-units/d-sound.wav' },
@@ -29,7 +31,7 @@ export const units: Unit[] = [
   { id: 'x', name: 'Xx', nameAudio: '/audio/phonics-units/x-name.wav', soundAudio: '/audio/phonics-units/x-sound.wav' },
   { id: 'q', name: 'Qq', nameAudio: '/audio/phonics-units/q-name.wav', soundAudio: '/audio/phonics-units/q-sound.wav' },
   // Short vowels
-  { id: 'a', name: 'Aa', nameAudio: '/audio/phonics-units/a-name.wav', soundAudio: '/audio/phonics-units/a-sound.wav' },
+  { id: 'a', name: 'Aa', nameAudio: '/audio/phonics-units/a-name.wav', soundAudio: '/audio/phonics-units/a-sound.wav', likeInWords: ['/audio/words/ant.wav', '/audio/words/apple.wav', '/audio/words/alligator.wav'] },
   { id: 'i', name: 'Ii', nameAudio: '/audio/phonics-units/i-name.wav', soundAudio: '/audio/phonics-units/i-sound.wav' },
   { id: 'o', name: 'Oo', nameAudio: '/audio/phonics-units/o-name.wav', soundAudio: '/audio/phonics-units/o-sound.wav' },
   { id: 'u', name: 'Uu', nameAudio: '/audio/phonics-units/u-name.wav', soundAudio: '/audio/phonics-units/u-sound.wav' },

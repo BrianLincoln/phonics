@@ -160,12 +160,10 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete, 
       setPromptPlaying(false);
     }
 
-    // Routes through the scene's prepareForQuestion so the crow can animate
-    // the card in/out based on hideLetter before the audio prompt starts
     function prepareAndPlay() {
-      const hideLetter = (question as any).hideLetter as boolean | undefined;
+      const showLetter = !!(question as any).showLetter;
       if (phaserRef.current?.prepareForQuestion) {
-        phaserRef.current.prepareForQuestion(hideLetter, playQuestionPrompt);
+        phaserRef.current.prepareForQuestion(showLetter, playQuestionPrompt);
       } else {
         playQuestionPrompt();
       }

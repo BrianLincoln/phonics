@@ -63,7 +63,7 @@ export class CrowController {
 
   // ── Squish helper ────────────────────────────────────────────────────────────
 
-  private squishOnLand(cb: () => void) {
+  squishOnLand(cb: () => void) {
     this.scene.tweens.add({
       targets: this.crow,
       scaleX: 0.57,
@@ -374,15 +374,23 @@ export class CrowController {
   }
 
   walkWordOffRight(card: Phaser.GameObjects.Container, onDone: () => void) {
+    const cam = this.scene.cameras.main;
+    // crow offset from card: crow is 200px to the left of card centre (matching carry-in)
+    const crowOffset = 200;
+    // Walk crow until it is fully past the right edge; card drags behind at +crowOffset
+    const targetCrowX = cam.width + crowOffset + 80;
     this.stopIdleBob();
     this.crow.setFacing('right');
     this.startWalking();
     this.scene.tweens.add({
-      targets: [this.crow, card],
-      x: '+=600',
+      targets: this.crow,
+      x: targetCrowX,
       duration: 1200,
       ease: 'Quad.easeIn',
-      onUpdate: () => { this.advanceWalkAnimation(16); },
+      onUpdate: () => {
+        this.advanceWalkAnimation(16);
+        card.x = this.crow.x + crowOffset;
+      },
       onComplete: () => {
         this.crow.setVisible(false);
         card.setVisible(false);
@@ -405,6 +413,87 @@ export class CrowController {
       onComplete: () => {
         this.crow.setVisible(false);
         if (onDone) onDone();
+      },
+    });
+  }
+
+  // Walk quickly to a position (no tile carried), then call onDone.
+  quickWalkTo(x: number, y: number, speed: number, onDone?: () => void) {
+    this.stopIdleBob();
+    this.scene.tweens.killTweensOf(this.crow);
+    const dx = x - this.crow.x;
+    const distance = Math.abs(dx);
+    if (distance < 5) { onDone?.(); return; }
+    const duration = (distance / speed) * 1000;
+    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.startWalking();
+    this.scene.tweens.add({
+      targets: this.crow,
+      x, y,
+      duration,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => { this.advanceWalkAnimation(16); },
+      onComplete: () => { this.crow.setIdle(); onDone?.(); },
+    });
+  }
+
+  // Walk to (x, y) over exactly `duration` ms, synced with a CSS animation on a tile.
+  walkInDuration(x: number, y: number, duration: number, onDone?: () => void) {
+    this.stopIdleBob();
+    this.scene.tweens.killTweensOf(this.crow);
+    const dx = x - this.crow.x;
+    if (Math.abs(dx) < 2) { this.squishOnLand(() => onDone?.()); return; }
+    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.startWalking();
+    this.scene.tweens.add({
+      targets: this.crow,
+      x, y,
+      duration,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => { this.advanceWalkAnimation(16); },
+      onComplete: () => { this.crow.setIdle(); this.squishOnLand(() => onDone?.()); },
+    });
+  }
+
+  playMischiefFlap(onDone?: () => void) {
+    this.stopIdleBob();
+    this.scene.tweens.killTweensOf(this.crow);
+
+    const cam = this.scene.cameras.main;
+    const idleX = cam.width - 100;
+    // Snap to idle position if crow is off-screen or far from idle
+    if (!this.crow.visible || Math.abs(this.crow.x - idleX) > cam.width * 0.25) {
+      this.crow.setPosition(idleX, this.groundY);
+    }
+    this.crow.setVisible(true);
+    this.crow.setFacing('left');
+    this.crow.setDepth(9);
+
+    // Rapidly cycle walk frames to simulate frantic wing flapping
+    const flapSeq: Array<1 | 2 | 3> = [1, 2, 3, 2, 1, 2, 3, 2, 1, 2];
+    let flapIdx = 0;
+    const frameTimer = this.scene.time.addEvent({
+      delay: 65,
+      repeat: flapSeq.length - 1,
+      callback: () => {
+        this.crow.setFrame(flapSeq[flapIdx % flapSeq.length]);
+        flapIdx++;
+      },
+    });
+
+    // Rapid excited bouncing — 4 quick yoyo hops = ~640ms total
+    this.scene.tweens.add({
+      targets: this.crow,
+      y: '-=20',
+      duration: 80,
+      yoyo: true,
+      repeat: 3,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        frameTimer.remove();
+        this.crow.setIdle();
+        this.startIdleBob();
+        onDone?.();
       },
     });
   }

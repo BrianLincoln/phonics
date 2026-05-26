@@ -59,7 +59,7 @@ export function LessonView() {
   // Unified lesson activity (word-start + letter-sound + blend in one sequence)
   if (current.activityType === ActivityType.LESSON) {
     const introUnit = (current.showIntro && activityIndex === 0 && unit)
-      ? { nameAudio: unit.nameAudio, soundAudio: unit.soundAudio }
+      ? { nameAudio: unit.nameAudio, soundAudio: unit.soundAudio, likeInWords: unit.likeInWords }
       : undefined;
 
     return (

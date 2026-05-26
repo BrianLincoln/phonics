@@ -46,7 +46,7 @@ export interface EndlessQuestion {
   correctAnswer: string;
   phonemeFile: string;
   promptFile: string;
-  hideLetter?: boolean;
+  showLetter?: boolean;
   skills: Skill[];
 }
 
@@ -85,7 +85,6 @@ export function generateQuestion(): { question: EndlessQuestion; unit: string } 
         correctAnswer: unit,
         phonemeFile,
         promptFile: '/audio/prompts/which-letter-makes-the-sound.wav',
-        hideLetter: true,
         skills: [SKILL_LETTER_SOUND_MAPPING],
       },
     };

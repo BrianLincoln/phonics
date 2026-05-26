@@ -26,6 +26,15 @@ export class Crow extends Phaser.GameObjects.Sprite {
    * so the shadow slides away from the sun as the crow rises.
    */
   updateShadow(groundY: number, sunX: number, sunY: number) {
+    // When crow is at or below the ground plane, shadow sits directly under it
+    if (this.y >= groundY) {
+      this.shadow.x = this.x;
+      this.shadow.y = this.y;
+      this.shadow.setScale(1);
+      this.shadow.setAlpha(this.visible ? 0.22 : 0);
+      return;
+    }
+
     // Ray: sun → crow, extended until it hits y = groundY
     const t = (groundY - sunY) / (this.y - sunY);
     this.shadow.x = sunX + (this.x - sunX) * t;

@@ -83,20 +83,19 @@ export class MultipleChoiceScene extends BaseGameScene {
 
   /**
    * Called at the start of each question.
-   * Animates the card in or out based on hideLetter vs current visibility,
+   * Animates the card in or out based on showLetter vs current visibility,
    * then calls onReady (which plays the audio prompt and unlocks answers).
    */
-  prepareForQuestion(hideLetter: boolean | undefined, onReady: () => void) {
+  prepareForQuestion(showLetter: boolean | undefined, onReady: () => void) {
     const cardVisible = this.letterCard?.visible ?? false;
 
-    if (hideLetter === true && cardVisible) {
+    if (!showLetter && cardVisible) {
       // Card is showing but this question wants it hidden — crow takes it
       this.crowTakeLetter(onReady);
-    } else if (hideLetter === false && !cardVisible) {
+    } else if (showLetter && !cardVisible) {
       // Card is hidden but this question explicitly wants it shown — crow brings it back
       this.crowBringCardIn(onReady);
     } else {
-      // Already in the right state, or hideLetter is undefined (no preference)
       onReady();
     }
   }
@@ -141,6 +140,34 @@ export class MultipleChoiceScene extends BaseGameScene {
       cam.centerY + 10,
       onReady,
     );
+  }
+
+  // Place the crow at (x, y) instantly, facing the given direction.
+  placeCrow(x: number, y: number, facing: 'left' | 'right' = 'left') {
+    if (!this.crow || !this.crowController) return;
+    this.tweens.killTweensOf(this.crow);
+    this.crowController.stopIdleBob();
+    this.crow.setPosition(x, y);
+    this.crow.setVisible(true);
+    this.crow.setDepth(9);
+    this.crow.setFacing(facing);
+  }
+
+  // Walk crow to (x, y) over exactly `duration` ms — for syncing with CSS tile animations.
+  driveCrow(x: number, y: number, duration: number, onDone?: () => void) {
+    this.crowController?.walkInDuration(x, y, duration, onDone);
+  }
+
+  // Walk crow to x quickly between steps (speed-based reposition, no squish).
+  reposCrow(x: number, y: number, onDone?: () => void) {
+    this.crowController?.quickWalkTo(x, y, 900, onDone);
+  }
+
+  // Walk crow back to its idle position.
+  returnCrowToIdle(onDone?: () => void) {
+    if (!this.crowController) { onDone?.(); return; }
+    const cam = this.cameras.main;
+    this.crowController.hopTo(cam.width - 100, this.crowController.groundY, onDone);
   }
 
   crowReturnWordAfterQuiz(onDone?: () => void) {
