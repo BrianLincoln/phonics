@@ -3,6 +3,7 @@ import {
   type Profile,
   getProfiles,
   createProfile,
+  updateProfile as updateProfileInStore,
   deleteProfile as deleteProfileFromStore,
   getActiveProfileId,
   setActiveProfileId,
@@ -15,6 +16,7 @@ interface ProfileContextValue {
   selectProfile: (profile: Profile) => void;
   switchLearner: () => void;
   addProfile: (name: string, emoji: string, color: string) => Promise<Profile>;
+  updateProfile: (profileId: string, updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor'>>) => Promise<Profile>;
   removeProfile: (profileId: string) => Promise<void>;
   isLoaded: boolean;
 }
@@ -54,6 +56,16 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     return profile;
   }
 
+  async function updateProfile(
+    profileId: string,
+    updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor'>>
+  ): Promise<Profile> {
+    const updated = await updateProfileInStore(profileId, updates);
+    setProfiles(prev => prev.map(p => p.id === profileId ? updated : p));
+    if (activeProfile?.id === profileId) setActiveProfile(updated);
+    return updated;
+  }
+
   async function removeProfile(profileId: string): Promise<void> {
     await deleteProfileFromStore(profileId);
     setProfiles(prev => prev.filter(p => p.id !== profileId));
@@ -63,7 +75,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ProfileContext.Provider value={{ profiles, activeProfile, selectProfile, switchLearner, addProfile, removeProfile, isLoaded }}>
+    <ProfileContext.Provider value={{ profiles, activeProfile, selectProfile, switchLearner, addProfile, updateProfile, removeProfile, isLoaded }}>
       {children}
     </ProfileContext.Provider>
   );

@@ -8,9 +8,18 @@ export interface Profile {
   createdAt: string;
 }
 
-export const AVATAR_EMOJIS = ['🦊', '🐸', '🦋', '🐙', '🦁', '🐨', '🦄', '🐢', '🦖', '🐳', '🦜', '🐝'];
+export const AVATAR_EMOJIS = [
+  // Animals
+  '🦊', '🐸', '🦋', '🐙', '🦁', '🐨',
+  '🦄', '🐢', '🦖', '🐳', '🦜', '🐝',
+  // More animals
+  '🐼', '🐧', '🦝', '🐺', '🦔', '🦩',
+  // Fun / fantasy
+  '🤖', '🐉', '👾', '🧸', '🐠', '🦦',
+];
 
 export const AVATAR_COLORS = [
+  // Pastels
   { label: 'Coral',    value: '#FFAB91' },
   { label: 'Sky',      value: '#81D4FA' },
   { label: 'Mint',     value: '#A5D6A7' },
@@ -19,6 +28,15 @@ export const AVATAR_COLORS = [
   { label: 'Aqua',     value: '#80DEEA' },
   { label: 'Pink',     value: '#F48FB1' },
   { label: 'Lime',     value: '#C5E1A5' },
+  // Vibrant (order matches soft row: red, blue, green, purple, yellow, cyan, pink, teal)
+  { label: 'Flame',    value: '#FF3D00' },
+  { label: 'Electric', value: '#2979FF' },
+  { label: 'Emerald',  value: '#00C853' },
+  { label: 'Violet',   value: '#AA00FF' },
+  { label: 'Sunflower',value: '#FFD600' },
+  { label: 'Ocean',    value: '#00B0FF' },
+  { label: 'Hot Pink', value: '#F50057' },
+  { label: 'Jade',     value: '#00BFA5' },
 ];
 
 // Session management — sessionStorage clears when the tab/browser closes
@@ -54,6 +72,18 @@ export async function createProfile(name: string, avatarEmoji: string, avatarCol
   };
   await storageAdapter.saveProfile(profile);
   return profile;
+}
+
+export async function updateProfile(
+  profileId: string,
+  updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor'>>
+): Promise<Profile> {
+  const profiles = await storageAdapter.getProfiles();
+  const existing = profiles.find(p => p.id === profileId);
+  if (!existing) throw new Error(`Profile ${profileId} not found`);
+  const updated: Profile = { ...existing, ...updates };
+  await storageAdapter.saveProfile(updated);
+  return updated;
 }
 
 export async function deleteProfile(profileId: string): Promise<void> {

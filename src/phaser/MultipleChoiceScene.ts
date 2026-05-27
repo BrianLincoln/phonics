@@ -16,6 +16,7 @@ export class MultipleChoiceScene extends BaseGameScene {
   letterText?: Phaser.GameObjects.Text;
   onCarryInComplete?: () => void;
   private cardIsOnScreen = false; // true once carry-in completes, false after take-away
+  get isCardOnScreen() { return this.cardIsOnScreen; }
 
   private reEnterTimeout?: ReturnType<typeof setTimeout>;
 
@@ -120,7 +121,7 @@ export class MultipleChoiceScene extends BaseGameScene {
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
-  private crowTakeLetter(onDone?: () => void) {
+  crowTakeLetter(onDone?: () => void) {
     if (!this.crow || !this.letterCard || !this.crowController) {
       onDone?.();
       return;

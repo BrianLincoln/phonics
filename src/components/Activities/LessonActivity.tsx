@@ -3,10 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { PhaserGame } from '../../components/PhaserGame';
 import {
   LessonActivity as LessonActivityData,
-  LessonQuestion,
+  LessonStep,
   BlendQuestion,
   ScrambledBlendQuestion,
+  LetterIntroStep,
+  BlendIntroStep,
+  HideLetterStep,
+  BlendLessonPass,
 } from '../../data/activities';
+import { units } from '../../data/units';
+import { BlendIntroDisplay } from './BlendIntroDisplay';
 import MultipleChoice from './MultipleChoice/MultipleChoice';
 import { BuildTheWordTiles, TileState } from './BuildTheWord/BuildTheWordTiles';
 import './MultipleChoice/MultipleChoiceActivity.css';
@@ -23,7 +29,13 @@ const INTRO_PROMPTS = {
   thisIs: '/audio/prompts/this-is-the-letter.wav',
   makesSound: '/audio/prompts/it-makes-the-sound.wav',
   likeIn: '/audio/prompts/like-in.wav',
-  and: '/audio/prompts/and.wav',
+  and: ['/audio/prompts/and.wav', '/audio/prompts/and2.wav', '/audio/prompts/and3.wav'],
+};
+
+const BLEND_LESSON_PROMPTS: Record<BlendLessonPass, string> = {
+  model:       '/audio/prompts/listen.wav',
+  choral:      '/audio/prompts/now-you-say-it-with-me.wav',
+  independent: '/audio/prompts/your-turn-read-it.wav',
 };
 
 const SCRAMBLE_PROMPTS = {
@@ -37,7 +49,6 @@ interface LessonActivityProps {
   activity: LessonActivityData;
   onComplete: (result?: any) => void;
   onBack?: () => void;
-  introUnit?: { nameAudio?: string; soundAudio?: string; likeInWords?: string[] };
 }
 
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -63,20 +74,23 @@ function shuffleIndices(n: number): number[] {
 
 type BlendLike = BlendQuestion | ScrambledBlendQuestion;
 
-function isBlendLike(q: LessonQuestion): q is BlendLike {
+function isBlendLike(q: LessonStep): q is BlendLike {
   return q.kind === 'blend' || q.kind === 'scrambled-blend';
+}
+
+function isIntroStep(q: LessonStep): q is LetterIntroStep | BlendIntroStep | HideLetterStep {
+  return q.kind === 'letter-intro' || q.kind === 'blend-intro' || q.kind === 'hide-letter';
 }
 
 export const LessonActivity: React.FC<LessonActivityProps> = ({
   activity,
   onComplete,
   onBack,
-  introUnit,
 }) => {
   const navigate = useNavigate();
 
   // ── Question queue ────────────────────────────────────────────────────────
-  const queueRef = useRef([...activity.questions]);
+  const queueRef = useRef([...activity.steps]);
   const requeuedIds = useRef(new Set<string>());
   const [queueIdx, setQueueIdx] = useState(0);
   const question = queueRef.current[queueIdx];
@@ -105,15 +119,22 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   // ── Shared UI state ───────────────────────────────────────────────────────
   const [transition, setTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const [promptPlaying, setPromptPlaying] = useState(true);
-  const [answersReady, setAnswersReady] = useState(() => !introUnit);
-  const answersReadyRef = useRef(!introUnit);
+  const [answersReady, setAnswersReady] = useState(() => !isIntroStep(activity.steps[0]));
+  const answersReadyRef = useRef(!isIntroStep(activity.steps[0]));
 
+  // ── Blend-intro display state ─────────────────────────────────────────────
+  // Word index is state (drives re-render when word changes); letters are derived
+  // from the question directly so they're available on the first render with no timing race.
+  const [blendIntroWordIndex, setBlendIntroWordIndex] = useState(0);
+  const [blendIntroHighlight, setBlendIntroHighlight] = useState<number | null>(null);
+  const [blendIntroSweeping, setBlendIntroSweeping] = useState(false);
+  const [blendIntroTransition, setBlendIntroTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const introCallbackRef = useRef<(() => void) | null>(null);
 
   // ── Advance ───────────────────────────────────────────────────────────────
   const advance = (wasCorrect: boolean) => {
-    // Blend questions never re-queue on wrong (they advance linearly)
-    if (!wasCorrect && !isBlendLike(question)) {
+    // Blend and intro steps never re-queue
+    if (!wasCorrect && !isBlendLike(question) && !isIntroStep(question)) {
       const q = queueRef.current[queueIdx];
       if (!requeuedIds.current.has(q.id)) {
         requeuedIds.current.add(q.id);
@@ -193,7 +214,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     }
   };
 
-  // ── Blend tap handler (covers both blend and scrambled-blend) ─────────────
+  // ── Blend tap handler (covers blend and scrambled-blend) ─
   const handleLetterTap = async (displayIndex: number) => {
     if (promptPlaying || !isBlendLike(question)) return;
     if (tileStates[displayIndex] === 'tapped') return;
@@ -264,6 +285,11 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       setTileStates(Array(question.letters.length).fill('untapped') as TileState[]);
       setDisplayLetters([...question.letters]);
       setShuffledIndices(question.letters.map((_, i) => i));
+    } else if (question.kind === 'blend-intro') {
+      setBlendIntroWordIndex(0);
+      setBlendIntroHighlight(null);
+      setBlendIntroSweeping(false);
+      setBlendIntroTransition('idle');
     }
 
     let alive = true;
@@ -272,11 +298,6 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       if (!alive) return;
 
       if (!answersReadyRef.current) {
-        // Short pause only on the very first question when there is an intro sequence
-        if (queueIdx === 0 && introUnit) {
-          await delay(700);
-          if (!alive) return;
-        }
         answersReadyRef.current = true;
         setAnswersReady(true);
         if (question.kind === 'scrambled-blend') {
@@ -438,39 +459,110 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       }
     }
 
-    if (queueIdx === 0 && introUnit) {
-      const withIntro = async () => {
+    if (question.kind === 'letter-intro') {
+      const unit = units.find(u => u.id === activity.unit);
+      const withLetterIntro = async () => {
         if (!alive) return;
         await playAudio(INTRO_PROMPTS.thisIs, true).catch(() => {});
         if (!alive) return;
-        if (introUnit.nameAudio) await playAudio(introUnit.nameAudio, true).catch(() => {});
+        if (unit?.nameAudio) await playAudio(unit.nameAudio, true).catch(() => {});
         if (!alive) return;
         await playAudio(INTRO_PROMPTS.makesSound, true).catch(() => {});
         if (!alive) return;
-        if (introUnit.soundAudio) await playAudio(introUnit.soundAudio, true).catch(() => {});
+        if (unit?.soundAudio) await playAudio(unit.soundAudio, true).catch(() => {});
         if (!alive) return;
-        if (introUnit.likeInWords?.length) await delay(700);
+        if (unit?.likeInWords?.length) await delay(700);
         if (!alive) return;
-        if (introUnit.likeInWords?.length) {
+        if (unit?.likeInWords?.length) {
           await playAudio(INTRO_PROMPTS.likeIn, true).catch(() => {});
           if (!alive) return;
-          for (let i = 0; i < introUnit.likeInWords.length; i++) {
-            await playAudio(introUnit.likeInWords[i], true).catch(() => {});
+          for (let i = 0; i < unit.likeInWords.length; i++) {
+            await playAudio(unit.likeInWords[i], true).catch(() => {});
             if (!alive) return;
-            if (i < introUnit.likeInWords.length - 1) {
-              await playAudio(INTRO_PROMPTS.and, true).catch(() => {});
+            if (i < unit.likeInWords.length - 1) {
+              const andFile = INTRO_PROMPTS.and[Math.min(i, INTRO_PROMPTS.and.length - 1)];
+              await playAudio(andFile, true).catch(() => {});
               if (!alive) return;
             }
           }
         }
-        prepareAndPlay();
+        if (alive) advance(true);
       };
-      introCallbackRef.current = withIntro;
-      // Start intro audio immediately — crow carry-in plays concurrently.
-      // If the scene is already mounted, fire now; otherwise onSceneReady will fire it.
+      // Start audio immediately, let carry-in animation play in background
+      withLetterIntro();
+      introCallbackRef.current = null;
+    } else if (question.kind === 'hide-letter') {
+      // Non-interactive: crow steals the card, then auto-advance.
+      const scene = phaserRef.current;
+      if (scene?.crowTakeLetter) {
+        scene.crowTakeLetter(() => { if (alive) advance(true); });
+      } else {
+        advance(true);
+      }
+    } else if (question.kind === 'blend-intro') {
+      const withBlendIntro = async () => {
+        // One rAF so React commits the initial render (tiles visible) before audio starts
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        if (!alive) return;
+
+        for (let wi = 0; wi < question.words.length; wi++) {
+          const wordDef = question.words[wi];
+          if (!alive) return;
+          if (wi > 0) {
+            // Slide old word out, swap, slide new word in
+            setBlendIntroHighlight(null);
+            setBlendIntroSweeping(false);
+            setBlendIntroTransition('exiting');
+            await delay(280);
+            if (!alive) return;
+            setBlendIntroWordIndex(wi);
+            setBlendIntroTransition('entering');
+            await delay(350);
+            if (!alive) return;
+            setBlendIntroTransition('idle');
+            await delay(1650); // 280 + 350 + 1650 ≈ 2 s total between words
+            if (!alive) return;
+          }
+
+          for (const pass of wordDef.passes) {
+            if (!alive) return;
+
+            // Prompt audio
+            await playAudio(BLEND_LESSON_PROMPTS[pass], true).catch(() => {});
+            if (!alive) return;
+
+            // Step through letters with increased pause between phonemes
+            // (independent pass is silent, model/choral have audio)
+            const silent = pass === 'independent';
+            for (let i = 0; i < wordDef.letters.length; i++) {
+              if (!alive) return;
+              setBlendIntroHighlight(i);
+              if (silent) {
+                await delay(700);
+              } else {
+                await playAudio(wordDef.phonemeFiles[i], true).catch(() => {});
+                if (!alive) return;
+                await delay(300);  // Increased from 80ms
+              }
+            }
+
+            // Sweep all letters → say the whole word
+            setBlendIntroHighlight(null);
+            setBlendIntroSweeping(true);
+            await playAudio(wordDef.wordAudioFile, true).catch(() => {});
+            if (!alive) return;
+            setBlendIntroSweeping(false);
+            setBlendIntroHighlight(null);
+
+            await delay(2000);
+          }
+        }
+        if (alive) advance(true);
+      };
+      introCallbackRef.current = withBlendIntro;
       if (phaserRef.current) {
         introCallbackRef.current = null;
-        withIntro();
+        withBlendIntro();
       }
     } else {
       introCallbackRef.current = null;
@@ -488,8 +580,9 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const showTiles = answersReady && isBlendLike(question);
-  const showMCQ = answersReady && !isBlendLike(question);
+  const showBlendIntro = question.kind === 'blend-intro';
+  const showTiles = answersReady && isBlendLike(question) && !isIntroStep(question);
+  const showMCQ = answersReady && !isBlendLike(question) && !isIntroStep(question);
 
   return (
     <div className="activity-root">
@@ -502,7 +595,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       <div className="activity-stacked-layout">
         <PhaserGame
           sceneType="multiple-choice"
-          sceneData={{ unitName: activity.unit, questionIndex: queueIdx, showFirstCard: !!(activity.questions[0] as any)?.showLetter }}
+          sceneData={{ unitName: activity.unit, questionIndex: queueIdx, showFirstCard: !!(activity.steps.find(s => !isIntroStep(s)) as any)?.showLetter }}
           onSceneReady={scene => {
             phaserRef.current = scene;
             if (introCallbackRef.current) {
@@ -512,6 +605,14 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
             }
           }}
         />
+        {showBlendIntro && (
+          <BlendIntroDisplay
+            letters={(question as BlendIntroStep).words[blendIntroWordIndex]?.letters ?? []}
+            highlightedIndex={blendIntroHighlight}
+            sweeping={blendIntroSweeping}
+            transition={blendIntroTransition}
+          />
+        )}
         {showTiles && (
           <BuildTheWordTiles
             ref={tileRowRef}

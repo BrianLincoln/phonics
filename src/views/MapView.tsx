@@ -13,6 +13,7 @@ import {
 } from '../store/mapProgress';
 import { storageAdapter } from '../store/storage';
 import { useProfile } from '../context/ProfileContext';
+import { ProfileAvatar } from '../components/ProfileAvatar';
 import './MapView.css';
 
 // ── Layout constants ──────────────────────────────────────────────────────
@@ -294,12 +295,12 @@ export default function MapView() {
           ← Menu
         </button>
         <span className="map-header__title">{activeProfile?.name}'s Path</span>
-        <div
-          className="map-header__avatar-dot"
-          style={{ background: activeProfile?.avatarColor }}
-        >
-          {activeProfile?.avatarEmoji}
-        </div>
+        {activeProfile && (
+          <ProfileAvatar
+            profile={activeProfile}
+            variant="dark"
+          />
+        )}
       </header>
 
       {checkpointFeedback && (

@@ -291,23 +291,32 @@ export const activities: Activity[] = [
       // { id: 't8', kind: 'letter-sound', options: ['m', 't', 'd'], correctAnswer: 't', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       // { id: 't1', kind: 'word-start', options: ['top', 'hop', 'mop'], correctAnswer: 'top', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       // { id: 't2', kind: 'word-start', options: ['tap', 'map', 'nap'], correctAnswer: 'tap', phonemeFile: '/audio/phonics-units/t-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      // Learn and practice 'top'
       {
-        kind: 'blend-intro', id: 'blend-intro-t',
+        kind: 'blend-intro', id: 'blend-intro-t-top',
         words: [
           {
             word: 'top', letters: ['t', 'o', 'p'],
             wordAudioFile: '/audio/words/top.wav',
             phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/p-sound.wav'],
-            passes: ['model', 'choral', 'independent'],
+            passes: ['model', 'choral'],
           },
+        ],
+      },
+      { kind: 'blend', id: 'blend-t-top', word: 'top', letters: ['t', 'o', 'p'], wordAudioFile: '/audio/words/top.wav', phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/p-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      // Learn and practice 'tip'
+      {
+        kind: 'blend-intro', id: 'blend-intro-t-tip',
+        words: [
           {
             word: 'tip', letters: ['t', 'i', 'p'],
             wordAudioFile: '/audio/words/tip.wav',
             phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/p-sound.wav'],
-            passes: ['model', 'independent'],
+            passes: ['model', 'choral'],
           },
         ],
       },
+      { kind: 'blend', id: 'blend-t-tip', word: 'tip', letters: ['t', 'i', 'p'], wordAudioFile: '/audio/words/tip.wav', phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/p-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'blend', id: 'blend-t-sat', word: 'sat', letters: ['s', 'a', 't'], wordAudioFile: '/audio/words/sat.wav', phonemeFiles: ['/audio/phonics-units/s-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'blend', id: 'blend-t-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'scrambled-blend', id: 'scrambled-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
@@ -437,6 +446,55 @@ export const activities: Activity[] = [
       { kind: 'blend', id: 'cp4-blend-run', word: 'run', letters: ['r', 'u', 'n'], wordAudioFile: '/audio/words/run.wav', phonemeFiles: ['/audio/phonics-units/r-sound.wav', '/audio/phonics-units/u-sound.wav', '/audio/phonics-units/n-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'scrambled-blend', id: 'cp4-scrambled-fun', word: 'fun', letters: ['f', 'u', 'n'], wordAudioFile: '/audio/words/fun.wav', phonemeFiles: ['/audio/phonics-units/f-sound.wav', '/audio/phonics-units/u-sound.wav', '/audio/phonics-units/n-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'scrambled-blend', id: 'cp4-scrambled-rub', word: 'rub', letters: ['r', 'u', 'b'], wordAudioFile: '/audio/words/rub.wav', phonemeFiles: ['/audio/phonics-units/r-sound.wav', '/audio/phonics-units/u-sound.wav', '/audio/phonics-units/b-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+    ],
+  },
+  // ── Zone 5 ───────────────────────────────────────────────────────────────
+  {
+    id: 'quiz-d',
+    unit: 'd',
+    activityType: ActivityType.LESSON,
+    steps: [
+      { kind: 'letter-intro', id: 'intro-d' },
+      { id: 'd1', kind: 'letter-sound', options: ['d', 'b', 't'], correctAnswer: 'd', phonemeFile: '/audio/phonics-units/d-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', showLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'hide-letter', id: 'hide-letter-d' },
+      { id: 'd2', kind: 'letter-sound', options: ['p', 'd', 'n'], correctAnswer: 'd', phonemeFile: '/audio/phonics-units/d-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'd3', kind: 'letter-sound', options: ['d', 'm', 's'], correctAnswer: 'd', phonemeFile: '/audio/phonics-units/d-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'd4', kind: 'word-start', options: ['dog', 'cat', 'mat'], correctAnswer: 'dog', phonemeFile: '/audio/phonics-units/d-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'd5', kind: 'word-start', options: ['dig', 'map', 'sat'], correctAnswer: 'dig', phonemeFile: '/audio/phonics-units/d-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { kind: 'blend', id: 'blend-d-dig', word: 'dig', letters: ['d', 'i', 'g'], wordAudioFile: '/audio/words/dig.wav', phonemeFiles: ['/audio/phonics-units/d-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/g-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'scrambled-d-dim', word: 'dim', letters: ['d', 'i', 'm'], wordAudioFile: '/audio/words/dim.wav', phonemeFiles: ['/audio/phonics-units/d-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/m-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'scrambled-d-dot', word: 'dot', letters: ['d', 'o', 't'], wordAudioFile: '/audio/words/dot.wav', phonemeFiles: ['/audio/phonics-units/d-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+    ],
+  },
+  {
+    id: 'quiz-g',
+    unit: 'g',
+    activityType: ActivityType.LESSON,
+    steps: [
+      { kind: 'letter-intro', id: 'intro-g' },
+      { id: 'g1', kind: 'letter-sound', options: ['g', 'b', 'd'], correctAnswer: 'g', phonemeFile: '/audio/phonics-units/g-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', showLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'hide-letter', id: 'hide-letter-g' },
+      { id: 'g2', kind: 'letter-sound', options: ['p', 'g', 't'], correctAnswer: 'g', phonemeFile: '/audio/phonics-units/g-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'g3', kind: 'letter-sound', options: ['g', 'm', 'f'], correctAnswer: 'g', phonemeFile: '/audio/phonics-units/g-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'g4', kind: 'word-start', options: ['go', 'cat', 'map'], correctAnswer: 'go', phonemeFile: '/audio/phonics-units/g-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'g5', kind: 'word-start', options: ['gap', 'mat', 'sun'], correctAnswer: 'gap', phonemeFile: '/audio/phonics-units/g-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { kind: 'blend', id: 'blend-g-got', word: 'got', letters: ['g', 'o', 't'], wordAudioFile: '/audio/words/got.wav', phonemeFiles: ['/audio/phonics-units/g-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'scrambled-g-gum', word: 'gum', letters: ['g', 'u', 'm'], wordAudioFile: '/audio/words/gum.wav', phonemeFiles: ['/audio/phonics-units/g-sound.wav', '/audio/phonics-units/u-sound.wav', '/audio/phonics-units/m-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'scrambled-g-gas', word: 'gas', letters: ['g', 'a', 's'], wordAudioFile: '/audio/words/gas.wav', phonemeFiles: ['/audio/phonics-units/g-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/s-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+    ],
+  },
+  {
+    id: 'quiz-cp5',
+    unit: 'd',
+    activityType: ActivityType.LESSON,
+    steps: [
+      { id: 'cp5-ls-d', kind: 'letter-sound', options: ['d', 'b', 't'], correctAnswer: 'd', phonemeFile: '/audio/phonics-units/d-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'cp5-ls-l', kind: 'letter-sound', options: ['l', 'r', 'n'], correctAnswer: 'l', phonemeFile: '/audio/phonics-units/l-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'cp5-ls-g', kind: 'letter-sound', options: ['g', 'b', 'd'], correctAnswer: 'g', phonemeFile: '/audio/phonics-units/g-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { id: 'cp5-ls-h', kind: 'letter-sound', options: ['h', 'm', 's'], correctAnswer: 'h', phonemeFile: '/audio/phonics-units/h-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'blend', id: 'cp5-blend-dig', word: 'dig', letters: ['d', 'i', 'g'], wordAudioFile: '/audio/words/dig.wav', phonemeFiles: ['/audio/phonics-units/d-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/g-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'cp5-scrambled-log', word: 'log', letters: ['l', 'o', 'g'], wordAudioFile: '/audio/words/log.wav', phonemeFiles: ['/audio/phonics-units/l-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/g-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'cp5-scrambled-him', word: 'him', letters: ['h', 'i', 'm'], wordAudioFile: '/audio/words/him.wav', phonemeFiles: ['/audio/phonics-units/h-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/m-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
   },
   {

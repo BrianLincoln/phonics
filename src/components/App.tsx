@@ -10,6 +10,7 @@ import { MixedEndlessActivity } from './Activities/MixedEndlessActivity';
 import SuccessDemo from '../views/SuccessDemo';
 import { ProfileSelector } from '../views/ProfileSelector';
 import { NewProfileView } from '../views/NewProfileView';
+import { EditProfileView } from '../views/EditProfileView';
 import { ProfileProvider, useProfile } from '../context/ProfileContext';
 import MapView from '../views/MapView';
 import { LessonView } from '../views/LessonView';
@@ -26,6 +27,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<ProfileSelector />} />
       <Route path="/new-profile" element={<NewProfileView />} />
+      <Route path="/edit-profile/:profileId" element={<EditProfileView />} />
       <Route path="/menu" element={<ProtectedRoute><MenuView /></ProtectedRoute>} />
       <Route path="/activity/:activityId" element={<ProtectedRoute><ActivityView /></ProtectedRoute>} />
       <Route path="/endless" element={<ProtectedRoute><EndlessActivity /></ProtectedRoute>} />

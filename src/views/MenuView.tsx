@@ -4,6 +4,7 @@ import { getNextActivityId } from '../utils/getNextActivityId';
 import { usePlayAudio } from '../utils/audioUtils';
 import { CLICK_SOUND } from '../utils/clickSound';
 import { useProfile } from '../context/ProfileContext';
+import { ProfileAvatar } from '../components/ProfileAvatar';
 import './MenuView.css';
 
 const MenuView: React.FC = () => {
@@ -21,12 +22,7 @@ const MenuView: React.FC = () => {
   return (
     <div className="menu-root">
       <div className="menu-learner">
-        <div
-          className="menu-learner__avatar"
-          style={{ backgroundColor: activeProfile?.avatarColor }}
-        >
-          {activeProfile?.avatarEmoji}
-        </div>
+        {activeProfile && <ProfileAvatar profile={activeProfile} />}
         <span className="menu-learner__name">{activeProfile?.name}</span>
         <button className="menu-learner__switch" onClick={handleSwitch}>
           Switch

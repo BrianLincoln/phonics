@@ -88,11 +88,11 @@ export const curriculum: CurriculumNode[] = [
   { id: 'node-cp4', order: 16, label: '★',  type: 'checkpoint', focus: 'ruf',      exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-cp4'] },
 
   // ── Section 5 — Purple ────────────────────────────────────────────────────
-  { id: 'node-d',   order: 17, label: 'Dd', type: 'grapheme',   focus: 'd',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: [] },
+  { id: 'node-d',   order: 17, label: 'Dd', type: 'grapheme',   focus: 'd',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-d'] },
   { id: 'node-l',   order: 18, label: 'Ll', type: 'grapheme',   focus: 'l',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-l'] },
-  { id: 'node-g',   order: 19, label: 'Gg', type: 'grapheme',   focus: 'g',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: [] },
+  { id: 'node-g',   order: 19, label: 'Gg', type: 'grapheme',   focus: 'g',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-g'] },
   { id: 'node-h',   order: 20, label: 'Hh', type: 'grapheme',   focus: 'h',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-h'] },
-  { id: 'node-cp5', order: 21, label: '★',  type: 'checkpoint', focus: 'dlgh',     exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: [] },
+  { id: 'node-cp5', order: 21, label: '★',  type: 'checkpoint', focus: 'dlgh',     exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-cp5'] },
 
   // ── Section 6 — Pink ──────────────────────────────────────────────────────
   { id: 'node-e',   order: 22, label: 'Ee', type: 'grapheme',   focus: 'e',        exerciseTypes: ['letter-sound', 'word-start'],              activityIds: [] },

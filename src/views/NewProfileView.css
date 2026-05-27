@@ -105,10 +105,20 @@
   background: #ebf8ff;
 }
 
+.new-profile__color-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #cbd5e0;
+  margin: 0 0 0.35rem;
+}
+
 .new-profile__color-grid {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
+  margin-bottom: 0.5rem;
 }
 
 .new-profile__color-btn {
@@ -166,4 +176,106 @@
 
 .new-profile__back:hover {
   color: #718096;
+}
+
+/* ── Delete zone ─────────────────────────────────────── */
+.edit-profile__delete-zone {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.edit-profile__delete-btn {
+  background: none;
+  border: none;
+  color: #cbd5e0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.15s;
+}
+
+.edit-profile__delete-btn:hover {
+  color: #fc8181;
+}
+
+.edit-profile__confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.edit-profile__confirm-text {
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.edit-profile__delete-input {
+  padding: 0.4rem 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.1em;
+  width: 120px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.edit-profile__delete-input::placeholder {
+  color: #cbd5e0;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.edit-profile__delete-input:focus {
+  border-color: #fc8181;
+}
+
+.edit-profile__confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.edit-profile__confirm-yes {
+  padding: 0.4rem 1.1rem;
+  background: #fed7d7;
+  color: #c53030;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.edit-profile__confirm-yes:hover:not(:disabled) {
+  background: #feb2b2;
+}
+
+.edit-profile__confirm-yes:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.edit-profile__confirm-no {
+  padding: 0.4rem 1.1rem;
+  background: #edf2f7;
+  color: #718096;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.edit-profile__confirm-no:hover {
+  background: #e2e8f0;
 }

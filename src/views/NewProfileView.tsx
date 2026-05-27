@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AVATAR_EMOJIS, AVATAR_COLORS } from '../store/profiles';
+
+const PASTEL_COLORS  = AVATAR_COLORS.slice(0, 8);
+const VIBRANT_COLORS = AVATAR_COLORS.slice(8);
 import { useProfile } from '../context/ProfileContext';
 import './NewProfileView.css';
 
@@ -12,8 +15,8 @@ export function NewProfileView() {
 
   const [step, setStep] = useState<Step>('name');
   const [name, setName] = useState('');
-  const [selectedEmoji, setSelectedEmoji] = useState(AVATAR_EMOJIS[0]);
-  const [selectedColor, setSelectedColor] = useState(AVATAR_COLORS[0].value);
+  const [selectedEmoji, setSelectedEmoji] = useState(() => AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)]);
+  const [selectedColor, setSelectedColor] = useState(() => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)].value);
 
   function handleNameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,7 +91,19 @@ export function NewProfileView() {
           <section className="new-profile__section">
             <h2 className="new-profile__section-label">Color</h2>
             <div className="new-profile__color-grid">
-              {AVATAR_COLORS.map(color => (
+              {PASTEL_COLORS.map(color => (
+                <button
+                  key={color.value}
+                  type="button"
+                  className={`new-profile__color-btn${selectedColor === color.value ? ' new-profile__color-btn--selected' : ''}`}
+                  style={{ backgroundColor: color.value }}
+                  aria-label={color.label}
+                  onClick={() => setSelectedColor(color.value)}
+                />
+              ))}
+            </div>
+            <div className="new-profile__color-grid">
+              {VIBRANT_COLORS.map(color => (
                 <button
                   key={color.value}
                   type="button"

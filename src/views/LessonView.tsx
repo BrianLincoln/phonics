@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { curriculum } from '../data/curriculum';
 import { activities, ActivityType, type Activity, type LessonActivity, type BuildTheWordActivity } from '../data/activities';
-import { units } from '../data/units';
 import { LessonActivity as LessonActivityComponent } from '../components/Activities/LessonActivity';
 import { BuildTheWordExercise } from '../components/Activities/BuildTheWord/BuildTheWordActivity';
 import './LessonStubView.css';
@@ -12,7 +11,6 @@ export function LessonView() {
   const navigate   = useNavigate();
 
   const node = curriculum.find(n => n.id === nodeId);
-  const unit = node ? units.find(u => u.id === node.focus) : undefined;
   const isCheckpoint = node?.type === 'checkpoint';
 
   const nodeActivities = (node?.activityIds ?? [])
@@ -85,14 +83,9 @@ export function LessonView() {
   const current = nodeActivities[activityIndex];
 
   if (current.activityType === ActivityType.LESSON) {
-    const introUnit = (current.showIntro && activityIndex === 0 && unit)
-      ? { nameAudio: unit.nameAudio, soundAudio: unit.soundAudio, likeInWords: unit.likeInWords }
-      : undefined;
-
     return (
       <LessonActivityComponent
         activity={current as LessonActivity}
-        introUnit={introUnit}
         onComplete={handleComplete}
         onBack={() => navigate('/map')}
       />

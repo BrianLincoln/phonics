@@ -45,31 +45,7 @@ Activities live ✅. All audio present ✅
 ---
 
 ## Zone 5 — Purple (d, l, g, h)
-quiz-l live ✅, quiz-h live ✅. quiz-d, quiz-g, cp5 staged.
-
-### Phonics Units
-- [ ] `audio/phonics-units/g-name.wav` — "jee"
-- [ ] `audio/phonics-units/g-sound.wav` — /g/ as in "go"
-
-### Words needed (for quiz-d and quiz-g)
-- [ ] `audio/words/dig.wav` — "dig"
-- [ ] `audio/words/dim.wav` — "dim"
-- [ ] `audio/words/dip.wav` — "dip"
-- [ ] `audio/words/dot.wav` — "dot"
-- [ ] `audio/words/dug.wav` — "dug"
-- [ ] `audio/words/got.wav` — "got"
-- [ ] `audio/words/gum.wav` — "gum"
-- [ ] `audio/words/gap.wav` — "gap"
-- [ ] `audio/words/gas.wav` — "gas"
-- [ ] `audio/words/log.wav` — "log"
-- [ ] `audio/words/lip.wav` — "lip"
-- [ ] `audio/words/him.wav` — "him"
-- [ ] `audio/words/hen.wav` — "hen"
-
-### Activity staging
-- `quiz-d` → add to `node-d` when d words done
-- `quiz-g` → add to `node-g` when g-name/sound + g words done
-- `quiz-cp5` → add to `node-cp5` when all zone 5 audio done
+Activities live ✅. All audio present ✅
 
 ---
 

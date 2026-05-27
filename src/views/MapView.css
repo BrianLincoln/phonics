@@ -38,16 +38,6 @@
   letter-spacing: 0.02em;
 }
 
-.map-header__avatar-dot {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  border: 2px solid rgba(255,255,255,0.3);
-}
 
 /* ── Checkpoint toast ────────────────────────────────── */
 .map-checkpoint-toast {
@@ -156,8 +146,8 @@
 
 /* Flat colors for all checkpoint states */
 .map-node--checkpoint.map-node--locked {
-  background: #2e2106;
-  border-color: #5a4010;
+  background: #58564e;
+  border-color: #313131;
 }
 
 .map-node--checkpoint.map-node--available {

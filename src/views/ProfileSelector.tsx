@@ -21,19 +21,27 @@ export function ProfileSelector() {
 
       <div className="profile-selector__grid">
         {profiles.map(profile => (
-          <button
-            key={profile.id}
-            className="profile-card"
-            onClick={() => handleSelect(profile)}
-          >
-            <div
-              className="profile-card__avatar"
-              style={{ backgroundColor: profile.avatarColor }}
+          <div key={profile.id} className="profile-card-wrapper">
+            <button
+              className="profile-card"
+              onClick={() => handleSelect(profile)}
             >
-              {profile.avatarEmoji}
-            </div>
-            <span className="profile-card__name">{profile.name}</span>
-          </button>
+              <div
+                className="profile-card__avatar"
+                style={{ backgroundColor: profile.avatarColor }}
+              >
+                {profile.avatarEmoji}
+              </div>
+              <span className="profile-card__name">{profile.name}</span>
+            </button>
+            <button
+              className="profile-card__edit"
+              aria-label={`Edit ${profile.name}`}
+              onClick={() => navigate(`/edit-profile/${profile.id}`)}
+            >
+              ✏️
+            </button>
+          </div>
         ))}
 
         <button
