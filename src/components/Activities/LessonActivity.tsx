@@ -253,17 +253,21 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
       if (isLastLetter) {
         await delay(50);
-        const audioFile = isIndependentPass ? wordDef.wordAudioFile : q.wordAudioFile;
-        await playAudio(audioFile, true).catch(() => {});
-        await delay(200);
 
-        // If in independent pass, resolve the completion callback instead of advancing the whole question
-        if (isIndependentPass && independentPassCompleteRef.current) {
-          const cb = independentPassCompleteRef.current;
-          independentPassCompleteRef.current = null;
-          cb();
-        } else {
+        // For blend exercises (not independent pass), play word audio here
+        // For independent pass, the blend-intro handler will play it after showing the sweep
+        if (!isIndependentPass) {
+          const audioFile = q.wordAudioFile;
+          await playAudio(audioFile, true).catch(() => {});
+          await delay(200);
           doAdvanceQuestion(true);
+        } else {
+          // Independent pass: just resolve so the blend-intro handler can continue
+          if (independentPassCompleteRef.current) {
+            const cb = independentPassCompleteRef.current;
+            independentPassCompleteRef.current = null;
+            cb();
+          }
         }
       } else {
         setNextTapIndex(nextTapIndex + 1);
@@ -569,12 +573,16 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
               });
               if (!alive) return;
 
-              // Show sweep animation after user completes tapping (keep display visible)
+              // Show sweep animation and play word audio after user completes tapping
               setBlendIntroIsIndependentPass(false);  // Hide tiles, show display
               setBlendIntroHighlight(null);
               setBlendIntroSweeping(true);
-              // Word audio was already played by handleLetterTap, so just show the sweep animation
-              await delay(800);  // Show sweep animation
+
+              // Play the word audio while showing sweep animation
+              await playAudio(wordDef.wordAudioFile, true).catch(() => {});
+              if (!alive) return;
+
+              await delay(500);  // Show sweep animation
               if (!alive) return;
               setBlendIntroSweeping(false);
               setBlendIntroHighlight(null);
