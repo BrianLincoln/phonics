@@ -569,10 +569,17 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
               });
               if (!alive) return;
 
-              setBlendIntroIsIndependentPass(false);
+              // Show sweep animation after user completes tapping (keep display visible)
+              setBlendIntroIsIndependentPass(false);  // Hide tiles, show display
+              setBlendIntroHighlight(null);
+              setBlendIntroSweeping(true);
+              // Word audio was already played by handleLetterTap, so just show the sweep animation
+              await delay(800);  // Show sweep animation
+              if (!alive) return;
+              setBlendIntroSweeping(false);
               setBlendIntroHighlight(null);
               setPromptPlaying(true);
-              // Note: word audio was already played by handleLetterTap on final correct tap
+
               await delay(2000);
             } else {
               // Model/Choral passes: teacher-paced with visual highlighting and audio
