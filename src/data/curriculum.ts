@@ -83,9 +83,9 @@ export const curriculum: CurriculumNode[] = [
 
   // ── Section 4 — Orange ────────────────────────────────────────────────────
   { id: 'node-r',   order: 13, label: 'Rr', type: 'grapheme',   focus: 'r',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-r'] },
-  { id: 'node-u',   order: 14, label: 'Uu', type: 'grapheme',   focus: 'u',        exerciseTypes: ['letter-sound', 'word-start'],              activityIds: [] },
+  { id: 'node-u',   order: 14, label: 'Uu', type: 'grapheme',   focus: 'u',        exerciseTypes: ['letter-sound', 'word-start'],              activityIds: ['quiz-u'] },
   { id: 'node-f',   order: 15, label: 'Ff', type: 'grapheme',   focus: 'f',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-f'] },
-  { id: 'node-cp4', order: 16, label: '★',  type: 'checkpoint', focus: 'ruf',      exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: [] },
+  { id: 'node-cp4', order: 16, label: '★',  type: 'checkpoint', focus: 'ruf',      exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: ['quiz-cp4'] },
 
   // ── Section 5 — Purple ────────────────────────────────────────────────────
   { id: 'node-d',   order: 17, label: 'Dd', type: 'grapheme',   focus: 'd',        exerciseTypes: ['letter-sound', 'word-start', 'cvc-blend'], activityIds: [] },

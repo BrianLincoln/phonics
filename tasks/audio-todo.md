@@ -25,12 +25,7 @@ All paths are relative to `public/`. Save as `.wav` (`.mp3` optional duplicate).
 ---
 
 ## Zone 1 — Blue (m, a, s, t)
-Activities live ✅. Missing blend word files:
-
-### Words needed
-- [ ] `audio/words/fan.wav` — "fan" _(distractor, nice to have)_
-
-> All blend words for zone 1 (sat, mat) already recorded ✅
+Activities live ✅. All audio present ✅
 
 ---
 
@@ -40,39 +35,12 @@ Activities live ✅. All audio present ✅
 ---
 
 ## Zone 3 — Yellow (b, o, c)
-Activities live ✅. Missing:
-
-### Phonics Units
-- [ ] `audio/phonics-units/o-name.wav` — "oh"
-- [ ] `audio/phonics-units/o-sound.wav` — /ɒ/ as in "hot"
-
-### Words needed
-- [ ] `audio/words/bit.wav` — "bit"
-- [ ] `audio/words/cot.wav` — "cot"
-- [ ] `audio/words/cab.wav` — "cab"
-- [ ] `audio/words/cob.wav` — "cob"
+Activities live ✅. All audio present ✅
 
 ---
 
 ## Zone 4 — Orange (r, u, f)
-quiz-r live ✅, quiz-f live ✅. quiz-u and cp4 staged (need audio).
-
-### Phonics Units
-- [ ] `audio/phonics-units/u-name.wav` — "you" _(u-sound.wav exists ✅)_
-
-### Words needed (for quiz-u and cp4 activities)
-- [ ] `audio/words/up.wav` — "up"
-- [ ] `audio/words/us.wav` — "us"
-- [ ] `audio/words/run.wav` — "run"
-- [ ] `audio/words/rub.wav` — "rub"
-- [ ] `audio/words/fun.wav` — "fun"
-- [ ] `audio/words/cut.wav` — "cut"
-- [ ] `audio/words/bud.wav` — "bud"
-- [ ] `audio/words/pun.wav` — "pun"
-
-### Activity staging
-- `quiz-u` → add to `node-u` when u-name.wav + words above are done
-- `quiz-cp4` → add to `node-cp4` when all zone 4 audio is done
+Activities live ✅. All audio present ✅
 
 ---
 
