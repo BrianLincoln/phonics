@@ -126,6 +126,8 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
   // ── Intro state ───────────────────────────────────────────────────────────
   const introCallbackRef = useRef<(() => void) | null>(null);
+  const letterIntroStartedRef = useRef(false);
+  const prevQueueIdxRef = useRef(queueIdx);
 
   // ── Advance ───────────────────────────────────────────────────────────────
   const advance = (wasCorrect: boolean) => {
@@ -269,6 +271,12 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   // ── Per-question setup effect ─────────────────────────────────────────────
   useEffect(() => {
     aliveRef.current = true;
+    // Reset letterIntroStartedRef only when queueIdx actually changes
+    // (not on the same question due to Strict Mode)
+    if (queueIdx !== prevQueueIdxRef.current) {
+      prevQueueIdxRef.current = queueIdx;
+      letterIntroStartedRef.current = false;
+    }
     // Don't stopAll() for letter-intro/hide-letter since they're non-interactive
     // and we'll call stopAll() at the beginning of the next question if needed
     if (!isIntroStep(question)) {
@@ -456,6 +464,12 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     }
 
     if (question.kind === 'letter-intro') {
+      // Guard against React Strict Mode running effects twice
+      if (letterIntroStartedRef.current) {
+        return;
+      }
+      letterIntroStartedRef.current = true;
+
       console.log('[LessonActivity] Starting letter-intro:', question.id);
       const unit = units.find(u => u.id === activity.unit);
       console.log('[LessonActivity] Unit found:', unit?.id);
