@@ -122,6 +122,11 @@
               top  0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ── Node wrapper (contains button + optional banner) ── */
+.map-node-wrapper {
+  position: contents;
+}
+
 /* ── Node base ───────────────────────────────────────── */
 .map-node {
   position: absolute;
@@ -143,9 +148,28 @@
   transform: scale(0.92);
 }
 
-/* Checkpoint nodes use a rounded-square shape */
+/* Checkpoint nodes — bigger badge shape */
 .map-node--checkpoint {
-  border-radius: 14px;
+  border-radius: 18px;
+  z-index: 6;
+}
+
+/* Flat colors for all checkpoint states */
+.map-node--checkpoint.map-node--locked {
+  background: #2e2106;
+  border-color: #5a4010;
+}
+
+.map-node--checkpoint.map-node--available {
+  background: #e8a800;
+  border-color: #ffe080;
+  animation: pulse-ring-gold 2s ease-out infinite;
+  box-shadow: 0 0 0 0 rgba(240, 180, 20, 0.7), 0 4px 20px rgba(240, 160, 10, 0.5);
+}
+
+.map-node--checkpoint.map-node--complete {
+  background: #27ae60;
+  border-color: #5aee96;
 }
 
 /* ── Locked ──────────────────────────────────────────── */
@@ -170,6 +194,7 @@
   animation: pulse-ring 2s ease-out infinite;
 }
 
+/* kept for backwards compat — gold pulse already applied via .map-node--checkpoint.map-node--available */
 .map-node--checkpoint-available {
   animation: pulse-ring-gold 2s ease-out infinite;
 }
@@ -178,6 +203,43 @@
 .map-node--pop {
   animation: node-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
              pulse-ring 2s ease-out 0.5s infinite;
+}
+
+.map-node--checkpoint.map-node--pop {
+  animation: node-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+             pulse-ring-gold 2s ease-out 0.5s infinite;
+}
+
+/* Floating "SECTION REVIEW" label below checkpoint nodes */
+.map-checkpoint-banner {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.map-checkpoint-banner--available {
+  background: rgba(240, 180, 20, 0.18);
+  color: #f9ca24;
+  border: 1px solid rgba(240, 180, 20, 0.35);
+}
+
+.map-checkpoint-banner--complete {
+  background: rgba(39, 174, 96, 0.18);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.35);
+}
+
+.map-checkpoint-banner--locked {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ── Complete ────────────────────────────────────────── */
@@ -198,6 +260,30 @@
   font-size: 1.5rem;
   line-height: 1;
   color: #fff;
+}
+
+.map-node__trophy {
+  font-size: 2.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+}
+
+.map-node__trophy--dim {
+  opacity: 0.25;
+}
+
+.map-node__quiz-tag {
+  font-size: 0.48rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.map-node__quiz-tag--dim {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .map-node__check {

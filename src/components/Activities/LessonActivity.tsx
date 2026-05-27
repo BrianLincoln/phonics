@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { PhaserGame } from '../../components/PhaserGame';
 import {
@@ -158,7 +157,8 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     setSelected(word);
 
     // Play the option's own audio first (letter sound or word), then feedback
-    if (question.kind === 'letter-sound') {
+    // For letter-sound: only play the sound on wrong answers (correct is redundant — it was just played as the prompt)
+    if (question.kind === 'letter-sound' && !isCorrect) {
       await playAudio(`/audio/phonics-units/${word}-sound.wav`, true).catch(() => {});
     } else if (question.kind === 'word-start') {
       await playAudio(`/audio/words/${word}.wav`, true).catch(() => {});
@@ -279,8 +279,30 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
         }
         answersReadyRef.current = true;
         setAnswersReady(true);
-        setTransition('entering');
-        setTimeout(() => { if (alive) setTransition('idle'); }, 350);
+        if (question.kind === 'scrambled-blend') {
+          // Skip the slide-in animation — the scramble sequence IS the reveal.
+          // Tiles appear instantly so the crow can push them without fighting the
+          // tileEnter CSS animation (which also animates `transform`).
+          setTransition('idle');
+          // Two rAFs: first commits React state, second ensures layout is complete
+          // so getBoundingClientRect() returns real tile positions.
+          await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          if (!alive) return;
+          // Brief pause so the student sees the word in correct order first.
+          await delay(500);
+          if (!alive) return;
+        } else {
+          setTransition('entering');
+          setTimeout(() => { if (alive) setTransition('idle'); }, 350);
+          // Wait one rAF so React commits the render.
+          await new Promise<void>(resolve => requestAnimationFrame(resolve));
+          if (!alive) return;
+        }
+      } else if (question.kind === 'scrambled-blend') {
+        // Tiles were already visible (prior question). Wait for any exit/enter
+        // transition to settle, then pause so student can see the word.
+        await delay(500);
+        if (!alive) return;
       }
 
       if (question.kind === 'blend') {
@@ -297,13 +319,33 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
         let ohNoPromise: Promise<void> = Promise.resolve();
 
         if (btns.length >= 3 && scene?.placeCrow) {
-          const rects  = btns.map(b => b.getBoundingClientRect());
-          const leftX  = rects[0].left + rects[0].width  / 2;
-          const centerX = rects[1].left + rects[1].width / 2;
-          const rightX = rects[2].left + rects[2].width  / 2;
-          const spacing = centerX - leftX;         // pixels between tile centres
-          const gap     = rects[0].width / 2 + 48; // crow centre to tile centre
-          const crowY   = rects[0].bottom;          // crow feet at bottom of tiles
+          const rects = btns.map(b => b.getBoundingClientRect());
+
+          // X coordinates: CSS px === Phaser px in RESIZE mode (no canvas scaling).
+          const leftX   = rects[0].left + rects[0].width  / 2;
+          const centerX = rects[1].left + rects[1].width  / 2;
+          const rightX  = rects[2].left + rects[2].width  / 2;
+          const spacing = centerX - leftX;
+
+          // Y: clamp to the Phaser camera height — the canvas may have been initialised
+          // at a different window.innerHeight than the current CSS viewport
+          // (browser chrome show/hide), so rects[0].bottom could exceed camH.
+          const camH  = scene.cameras.main.height;
+          const crowY = Math.min(rects[0].bottom, camH - 10);
+
+          // Crow is 200px frame × 0.5 scale = 100px display, origin(0.5, 1).
+          // gap = distance from crow centre to tile centre while "pushing".
+          // Clamped so the crow's full 100px-wide body stays on screen.
+          const CROW_HALF_W = 50;
+          const desiredGap  = rects[0].width / 2 + CROW_HALF_W;
+          const gap = Math.max(
+            0,
+            Math.min(
+              desiredGap,
+              leftX  - CROW_HALF_W - 5,                     // crow left  edge ≥ 5 px
+              window.innerWidth - rightX - CROW_HALF_W - 5, // crow right edge ≥ 5 px
+            ),
+          );
 
           // Per-button translateX offsets (all start at 0).
           const offsets = [0, 0, 0];
@@ -321,37 +363,37 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           const repoCrow  = (x: number) =>
             new Promise<void>(r => scene.reposCrow(x, crowY, r));
 
-          const D = 90; // carry duration ms
+          const D = 250; // carry duration ms
 
-          // Crow starts right of the right tile, facing left
-          scene.placeCrow(rightX + gap, crowY, 'left');
+          // ── GATHER: left tile first, then right tile ───────────────────────
+          // Crow is always to the side it's pushing FROM, facing the tile.
+          // Moving a tile rightward → crow is LEFT of tile, faces RIGHT.
+          // Moving a tile leftward  → crow is RIGHT of tile, faces LEFT.
 
-          // Step 1 — carry right tile left to centre
+          // Step 1 — push left tile rightward to centre
+          scene.placeCrow(leftX - gap, crowY, 'right');
+          await Promise.all([moveTile(0, +spacing, D), driveCrow(centerX - gap, D)]);
+
+          // Step 2 — reposition to right of right tile, then push it leftward to centre
+          await repoCrow(rightX + gap);
           await Promise.all([moveTile(2, -spacing, D), driveCrow(centerX + gap, D)]);
+          // Crow is now at centerX + gap, facing left (walkInDuration auto-sets facing).
 
-          // Reposition crow to left of left tile
-          await repoCrow(leftX - gap);
-
-          // Step 2 — carry left tile right to centre
-          await Promise.all([moveTile(0, spacing, D), driveCrow(centerX - gap, D)]);
-
-          // All tiles are now stacked — start the full prompt sequence while the scatter happens
+          // All tiles are now stacked at centre — play audio while we scatter
           ohNoPromise = playAudio(SCRAMBLE_PROMPTS.combined, true).then(() => {}, () => {});
 
-          // Reposition crow to right of centre pile
-          await repoCrow(centerX + gap);
-
-          // Step 3 — carry the dest-left tile from centre to left
-          const leftFinalOffset  = -shuffled[0] * spacing;
+          // ── SCATTER ────────────────────────────────────────────────────────
+          // Step 3 — push dest-left tile from centre leftward to left position
+          // Crow stays at centerX + gap (right of pile), drives left to leftX + gap
+          const leftFinalOffset = -shuffled[0] * spacing;
           await Promise.all([
             moveTile(shuffled[0], leftFinalOffset, D),
             driveCrow(leftX + gap, D),
           ]);
 
-          // Reposition crow to left of centre pile
+          // Step 4 — push dest-right tile from centre rightward to right position
+          // Reposition crow to left of centre pile, then drive right to rightX - gap
           await repoCrow(centerX - gap);
-
-          // Step 4 — carry the dest-right tile from centre to right
           const rightFinalOffset = (2 - shuffled[2]) * spacing;
           await Promise.all([
             moveTile(shuffled[2], rightFinalOffset, D),
@@ -359,11 +401,9 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           ]);
           await delay(20);
 
-          // Commit React state + reset WAAPI transforms atomically before next paint
-          flushSync(() => {
-            setShuffledIndices(shuffled);
-            setDisplayLetters(shuffled.map(i => (question as ScrambledBlendQuestion).letters[i]));
-          });
+          // Commit React state + reset WAAPI transforms before next paint
+          setShuffledIndices(shuffled);
+          setDisplayLetters(shuffled.map(i => (question as ScrambledBlendQuestion).letters[i]));
           btns.forEach(b => { b.getAnimations().forEach(a => a.cancel()); b.style.transform = ''; });
 
           // Crow hops back to idle
