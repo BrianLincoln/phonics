@@ -553,7 +553,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
             if (!alive) return;
 
             if (pass === 'independent') {
-              // Interactive independent pass: user taps letters
+              // Interactive independent pass: exactly like a blend exercise (user taps letters)
               setPromptPlaying(false);  // Allow taps now that prompt is done
               setBlendIntroIsIndependentPass(true);
               setNextTapIndex(0);
@@ -573,21 +573,12 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
               });
               if (!alive) return;
 
-              // Show sweep animation and play word audio after user completes tapping
-              setBlendIntroIsIndependentPass(false);  // Hide tiles, show display
-              setBlendIntroHighlight(null);
-              setBlendIntroSweeping(true);
-
-              // Play the word audio while showing sweep animation
+              // User finished tapping - play word audio to confirm
               await playAudio(wordDef.wordAudioFile, true).catch(() => {});
               if (!alive) return;
 
-              await delay(500);  // Show sweep animation
-              if (!alive) return;
-              setBlendIntroSweeping(false);
-              setBlendIntroHighlight(null);
+              setBlendIntroIsIndependentPass(false);
               setPromptPlaying(true);
-
               await delay(2000);
             } else {
               // Model/Choral passes: teacher-paced with visual highlighting and audio
@@ -661,7 +652,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
             }
           }}
         />
-        {showBlendIntro && (
+        {showBlendIntro && !blendIntroIsIndependentPass && (
           <BlendIntroDisplay
             letters={(question as BlendIntroStep).words[blendIntroWordIndex]?.letters ?? []}
             highlightedIndex={blendIntroHighlight}
