@@ -13,6 +13,7 @@ import {
 } from '../../data/activities';
 import { units } from '../../data/units';
 import { BlendIntroDisplay } from './BlendIntroDisplay';
+import { BlendIntroExercise } from './BlendIntroExercise';
 import MultipleChoice from './MultipleChoice/MultipleChoice';
 import { BuildTheWordTiles, TileState } from './BuildTheWord/BuildTheWordTiles';
 import './MultipleChoice/MultipleChoiceActivity.css';
@@ -92,6 +93,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   // ── Question queue ────────────────────────────────────────────────────────
   const queueRef = useRef([...activity.steps]);
   const requeuedIds = useRef(new Set<string>());
+  const aliveRef = useRef(true);
   const [queueIdx, setQueueIdx] = useState(0);
   const question = queueRef.current[queueIdx];
 
@@ -122,16 +124,8 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   const [answersReady, setAnswersReady] = useState(() => !isIntroStep(activity.steps[0]));
   const answersReadyRef = useRef(!isIntroStep(activity.steps[0]));
 
-  // ── Blend-intro display state ─────────────────────────────────────────────
-  // Word index is state (drives re-render when word changes); letters are derived
-  // from the question directly so they're available on the first render with no timing race.
-  const [blendIntroWordIndex, setBlendIntroWordIndex] = useState(0);
-  const [blendIntroHighlight, setBlendIntroHighlight] = useState<number | null>(null);
-  const [blendIntroSweeping, setBlendIntroSweeping] = useState(false);
-  const [blendIntroTransition, setBlendIntroTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
-  const [blendIntroIsIndependentPass, setBlendIntroIsIndependentPass] = useState(false);
+  // ── Intro state ───────────────────────────────────────────────────────────
   const introCallbackRef = useRef<(() => void) | null>(null);
-  const independentPassCompleteRef = useRef<(() => void) | null>(null);
 
   // ── Advance ───────────────────────────────────────────────────────────────
   const advance = (wasCorrect: boolean) => {
@@ -216,17 +210,13 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     }
   };
 
-  // ── Blend tap handler (covers blend, scrambled-blend, and blend-intro independent) ─
+  // ── Blend tap handler (covers blend and scrambled-blend) ─────────────────
   const handleLetterTap = async (displayIndex: number) => {
-    // Allow taps for: blend questions, scrambled-blend questions, or blend-intro independent pass
-    const isIndependentPass = question.kind === 'blend-intro' && blendIntroIsIndependentPass;
-    if (promptPlaying || (!isBlendLike(question) && !isIndependentPass)) return;
+    if (promptPlaying || !isBlendLike(question)) return;
     if (tileStates[displayIndex] === 'tapped') return;
 
     const q = question as BlendLike;
     const isScrambled = q.kind === 'scrambled-blend';
-    const wordDef = isIndependentPass ? (question as any).words[blendIntroWordIndex] : null;
-    const letterCount = isIndependentPass ? wordDef.letters.length : q.letters.length;
 
     // For ordered blend: displayIndex === originalIndex.
     // For scrambled: map display position back to original word position.
@@ -234,12 +224,12 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     const isCorrectTap = originalIndex === nextTapIndex;
 
     if (isCorrectTap) {
-      const isLastLetter = nextTapIndex === letterCount - 1;
+      const isLastLetter = nextTapIndex === q.letters.length - 1;
 
       if (isLastLetter) {
-        await playAudio(isIndependentPass ? wordDef.phonemeFiles[nextTapIndex] : q.phonemeFiles[nextTapIndex], true).catch(() => {});
+        await playAudio(q.phonemeFiles[nextTapIndex], true).catch(() => {});
       } else {
-        playAudio(isIndependentPass ? wordDef.phonemeFiles[nextTapIndex] : q.phonemeFiles[nextTapIndex]).catch(() => {});
+        playAudio(q.phonemeFiles[nextTapIndex]).catch(() => {});
       }
 
       const newStates = [...tileStates];
@@ -253,22 +243,10 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
       if (isLastLetter) {
         await delay(50);
-
-        // For blend exercises (not independent pass), play word audio here
-        // For independent pass, the blend-intro handler will play it after showing the sweep
-        if (!isIndependentPass) {
-          const audioFile = q.wordAudioFile;
-          await playAudio(audioFile, true).catch(() => {});
-          await delay(200);
-          doAdvanceQuestion(true);
-        } else {
-          // Independent pass: just resolve so the blend-intro handler can continue
-          if (independentPassCompleteRef.current) {
-            const cb = independentPassCompleteRef.current;
-            independentPassCompleteRef.current = null;
-            cb();
-          }
-        }
+        const audioFile = q.wordAudioFile;
+        await playAudio(audioFile, true).catch(() => {});
+        await delay(200);
+        doAdvanceQuestion(true);
       } else {
         setNextTapIndex(nextTapIndex + 1);
       }
@@ -290,7 +268,12 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
   // ── Per-question setup effect ─────────────────────────────────────────────
   useEffect(() => {
-    stopAll();
+    aliveRef.current = true;
+    // Don't stopAll() for letter-intro/hide-letter since they're non-interactive
+    // and we'll call stopAll() at the beginning of the next question if needed
+    if (!isIntroStep(question)) {
+      stopAll();
+    }
     setPromptPlaying(true);
 
     if (question.kind === 'blend') {
@@ -304,17 +287,11 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       setTileStates(Array(question.letters.length).fill('untapped') as TileState[]);
       setDisplayLetters([...question.letters]);
       setShuffledIndices(question.letters.map((_, i) => i));
-    } else if (question.kind === 'blend-intro') {
-      setBlendIntroWordIndex(0);
-      setBlendIntroHighlight(null);
-      setBlendIntroSweeping(false);
-      setBlendIntroTransition('idle');
     }
-
-    let alive = true;
+    // blend-intro is handled by BlendIntroExercise component
 
     async function playQuestionPrompt() {
-      if (!alive) return;
+      if (!aliveRef.current) return;
 
       if (!answersReadyRef.current) {
         answersReadyRef.current = true;
@@ -327,27 +304,27 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           // Two rAFs: first commits React state, second ensures layout is complete
           // so getBoundingClientRect() returns real tile positions.
           await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-          if (!alive) return;
+          if (!aliveRef.current) return;
           // Brief pause so the student sees the word in correct order first.
           await delay(500);
-          if (!alive) return;
+          if (!aliveRef.current) return;
         } else {
           setTransition('entering');
-          setTimeout(() => { if (alive) setTransition('idle'); }, 350);
+          setTimeout(() => { if (aliveRef.current) setTransition('idle'); }, 350);
           // Wait one rAF so React commits the render.
           await new Promise<void>(resolve => requestAnimationFrame(resolve));
-          if (!alive) return;
+          if (!aliveRef.current) return;
         }
       } else if (question.kind === 'scrambled-blend') {
         // Tiles were already visible (prior question). Wait for any exit/enter
         // transition to settle, then pause so student can see the word.
         await delay(500);
-        if (!alive) return;
+        if (!aliveRef.current) return;
       }
 
       if (question.kind === 'blend') {
         await playAudio(question.promptFile, true).catch(() => {});
-        if (!alive) return;
+        if (!aliveRef.current) return;
         await playAudio(question.wordAudioFile, true).catch(() => {});
       } else if (question.kind === 'scrambled-blend') {
         const shuffled = shuffleIndices(question.letters.length);
@@ -447,25 +424,25 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           btns.forEach(b => { b.getAnimations().forEach(a => a.cancel()); b.style.transform = ''; });
 
           // Crow hops back to idle
-          if (alive) await new Promise<void>(r => scene.returnCrowToIdle(r));
+          if (aliveRef.current) await new Promise<void>(r => scene.returnCrowToIdle(r));
         } else {
           // Fallback — no animation
           setShuffledIndices(shuffled);
           setDisplayLetters(shuffled.map(i => (question as ScrambledBlendQuestion).letters[i]));
         }
-        if (!alive) return;
+        if (!aliveRef.current) return;
 
         // Wait for the full prompt sequence to finish (started during the scatter)
         await ohNoPromise;
-        if (!alive) return;
+        if (!aliveRef.current) return;
         await playAudio(question.wordAudioFile, true).catch(() => {});
-        if (!alive) return;
+        if (!aliveRef.current) return;
       } else {
         await playAudio((question as any).promptFile, true).catch(() => {});
-        if (!alive) return;
+        if (!aliveRef.current) return;
         await playAudio((question as any).phonemeFile, true).catch(() => {});
       }
-      if (!alive) return;
+      if (!aliveRef.current) return;
       setPromptPlaying(false);
     }
 
@@ -479,147 +456,85 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     }
 
     if (question.kind === 'letter-intro') {
+      console.log('[LessonActivity] Starting letter-intro:', question.id);
       const unit = units.find(u => u.id === activity.unit);
+      console.log('[LessonActivity] Unit found:', unit?.id);
       const withLetterIntro = async () => {
-        if (!alive) return;
-        await playAudio(INTRO_PROMPTS.thisIs, true).catch(() => {});
-        if (!alive) return;
-        if (unit?.nameAudio) await playAudio(unit.nameAudio, true).catch(() => {});
-        if (!alive) return;
-        await playAudio(INTRO_PROMPTS.makesSound, true).catch(() => {});
-        if (!alive) return;
-        if (unit?.soundAudio) await playAudio(unit.soundAudio, true).catch(() => {});
-        if (!alive) return;
+        console.log('[LessonActivity] withLetterIntro started');
+        if (!aliveRef.current) {
+          console.log('[LessonActivity] Component unmounted, aborting');
+          return;
+        }
+        await playAudio(INTRO_PROMPTS.thisIs, true).catch((err) => {
+          console.error('[LessonActivity] Failed to play thisIs:', err);
+        });
+        if (!aliveRef.current) return;
+        if (unit?.nameAudio) await playAudio(unit.nameAudio, true).catch((err) => {
+          console.error('[LessonActivity] Failed to play nameAudio:', err);
+        });
+        if (!aliveRef.current) return;
+        await playAudio(INTRO_PROMPTS.makesSound, true).catch((err) => {
+          console.error('[LessonActivity] Failed to play makesSound:', err);
+        });
+        if (!aliveRef.current) return;
+        if (unit?.soundAudio) await playAudio(unit.soundAudio, true).catch((err) => {
+          console.error('[LessonActivity] Failed to play soundAudio:', err);
+        });
+        if (!aliveRef.current) return;
         if (unit?.likeInWords?.length) await delay(700);
-        if (!alive) return;
+        if (!aliveRef.current) return;
         if (unit?.likeInWords?.length) {
-          await playAudio(INTRO_PROMPTS.likeIn, true).catch(() => {});
-          if (!alive) return;
+          await playAudio(INTRO_PROMPTS.likeIn, true).catch((err) => {
+            console.error('[LessonActivity] Failed to play likeIn:', err);
+          });
+          if (!aliveRef.current) return;
           for (let i = 0; i < unit.likeInWords.length; i++) {
-            await playAudio(unit.likeInWords[i], true).catch(() => {});
-            if (!alive) return;
+            await playAudio(unit.likeInWords[i], true).catch((err) => {
+              console.error('[LessonActivity] Failed to play likeInWord:', err);
+            });
+            if (!aliveRef.current) return;
             if (i < unit.likeInWords.length - 1) {
               const andFile = INTRO_PROMPTS.and[Math.min(i, INTRO_PROMPTS.and.length - 1)];
-              await playAudio(andFile, true).catch(() => {});
-              if (!alive) return;
+              await playAudio(andFile, true).catch((err) => {
+                console.error('[LessonActivity] Failed to play and:', err);
+              });
+              if (!aliveRef.current) return;
             }
           }
         }
-        if (alive) advance(true);
+        console.log('[LessonActivity] Letter intro audio complete, advancing...');
+        if (aliveRef.current) {
+          console.log('[LessonActivity] Calling advance(true) for letter-intro');
+          advance(true);
+        } else {
+          console.log('[LessonActivity] Component unmounted before advance, skipping');
+        }
       };
       // Start audio immediately, let carry-in animation play in background
+      console.log('[LessonActivity] Calling withLetterIntro()');
       withLetterIntro();
       introCallbackRef.current = null;
     } else if (question.kind === 'hide-letter') {
       // Non-interactive: crow steals the card, then auto-advance.
       const scene = phaserRef.current;
       if (scene?.crowTakeLetter) {
-        scene.crowTakeLetter(() => { if (alive) advance(true); });
+        scene.crowTakeLetter(() => { if (aliveRef.current) advance(true); });
       } else {
         advance(true);
       }
     } else if (question.kind === 'blend-intro') {
-      const withBlendIntro = async () => {
-        // One rAF so React commits the initial render (tiles visible) before audio starts
-        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-        if (!alive) return;
-
-        for (let wi = 0; wi < question.words.length; wi++) {
-          const wordDef = question.words[wi];
-          if (!alive) return;
-          if (wi > 0) {
-            // Slide old word out, swap, slide new word in
-            setBlendIntroHighlight(null);
-            setBlendIntroSweeping(false);
-            setBlendIntroTransition('exiting');
-            await delay(280);
-            if (!alive) return;
-            setBlendIntroWordIndex(wi);
-            setBlendIntroTransition('entering');
-            await delay(350);
-            if (!alive) return;
-            setBlendIntroTransition('idle');
-            await delay(1650); // 280 + 350 + 1650 ≈ 2 s total between words
-            if (!alive) return;
-          }
-
-          for (const pass of wordDef.passes) {
-            if (!alive) return;
-
-            // Prompt audio
-            // For independent pass, use the blend prompt instead of "your turn read it"
-            const promptFile = pass === 'independent' ? '/audio/prompts/tap-the-letters-to-build-the-word.wav' : BLEND_LESSON_PROMPTS[pass];
-            await playAudio(promptFile, true).catch(() => {});
-            if (!alive) return;
-
-            if (pass === 'independent') {
-              // Interactive independent pass: exactly like a blend exercise (user taps letters)
-              setPromptPlaying(false);  // Allow taps now that prompt is done
-              setBlendIntroIsIndependentPass(true);
-              setNextTapIndex(0);
-              setTileStates(makeInitialTileStates(wordDef.letters.length));
-              setDisplayLetters([...wordDef.letters]);
-              setShuffledIndices(wordDef.letters.map((_, i) => i));
-
-              // Two rAFs to ensure React commits state AND layout is complete
-              await new Promise<void>(resolve => {
-                requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-              });
-              if (!alive) return;
-
-              // Wait for user to complete tapping all letters
-              await new Promise<void>(resolve => {
-                independentPassCompleteRef.current = resolve;
-              });
-              if (!alive) return;
-
-              // User finished tapping - play word audio to confirm
-              await playAudio(wordDef.wordAudioFile, true).catch(err => {
-                console.error('Failed to play word audio:', wordDef.wordAudioFile, err);
-              });
-              if (!alive) return;
-
-              setBlendIntroIsIndependentPass(false);
-              setPromptPlaying(true);
-              await delay(2000);
-            } else {
-              // Model/Choral passes: teacher-paced with visual highlighting and audio
-              // Step through letters with increased pause between phonemes
-              for (let i = 0; i < wordDef.letters.length; i++) {
-                if (!alive) return;
-                setBlendIntroHighlight(i);
-                await playAudio(wordDef.phonemeFiles[i], true).catch(() => {});
-                if (!alive) return;
-                await delay(300);  // Increased from 80ms
-              }
-
-              // Sweep all letters → say the whole word
-              setBlendIntroHighlight(null);
-              setBlendIntroSweeping(true);
-              await playAudio(wordDef.wordAudioFile, true).catch(() => {});
-              if (!alive) return;
-              setBlendIntroSweeping(false);
-              setBlendIntroHighlight(null);
-
-              await delay(2000);
-            }
-          }
-        }
-        if (alive) advance(true);
-      };
-      introCallbackRef.current = withBlendIntro;
-      if (phaserRef.current) {
-        introCallbackRef.current = null;
-        withBlendIntro();
-      }
+      // BlendIntroExercise component handles orchestration
+      introCallbackRef.current = null;
     } else {
       introCallbackRef.current = null;
       prepareAndPlay();
     }
 
     return () => {
-      alive = false;
-      stopAll();
+      aliveRef.current = false;
+      // Note: Don't call stopAll() here in the cleanup. The next effect will call
+      // stopAll() at the beginning to stop audio from the previous question.
+      // Calling it here would interrupt async audio that's currently playing.
     };
   }, [queueIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -628,9 +543,8 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const showBlendIntro = question.kind === 'blend-intro' && !blendIntroIsIndependentPass;
-  const showBlendIntroTiles = question.kind === 'blend-intro' && blendIntroIsIndependentPass;
-  const showTiles = (answersReady && isBlendLike(question) && !isIntroStep(question)) || showBlendIntroTiles;
+  const showBlendIntro = question.kind === 'blend-intro';
+  const showTiles = answersReady && isBlendLike(question) && !isIntroStep(question);
   const showMCQ = answersReady && !isBlendLike(question) && !isIntroStep(question);
 
   return (
@@ -654,12 +568,11 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
             }
           }}
         />
-        {showBlendIntro && !blendIntroIsIndependentPass && (
-          <BlendIntroDisplay
-            letters={(question as BlendIntroStep).words[blendIntroWordIndex]?.letters ?? []}
-            highlightedIndex={blendIntroHighlight}
-            sweeping={blendIntroSweeping}
-            transition={blendIntroTransition}
+        {showBlendIntro && (
+          <BlendIntroExercise
+            question={question as BlendIntroStep}
+            onComplete={() => advance(true)}
+            onBack={onBack}
           />
         )}
         {showTiles && (
