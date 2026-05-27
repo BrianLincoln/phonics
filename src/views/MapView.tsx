@@ -18,6 +18,7 @@ import './MapView.css';
 // ── Layout constants ──────────────────────────────────────────────────────
 const CONTAINER_W = 360;
 const NODE_R = 30;
+const CHECKPOINT_R = 56;
 const AVATAR_SIZE = 40;
 
 const NODE_POSITIONS: { x: number; y: number }[] = [
@@ -78,14 +79,39 @@ const NODE_POSITIONS: { x: number; y: number }[] = [
 
 // Colors for each section's path track.
 const SECTION_COLORS: Record<string, { shadow: string; fill: string; dash: string }> = {
-  blue:   { shadow: '#051428', fill: '#1a5fa8', dash: '#5a9fe8' },
-  green:  { shadow: '#031510', fill: '#177a42', dash: '#2ecc71' },
-  yellow: { shadow: '#181000', fill: '#9a7008', dash: '#e8b800' },
-  orange: { shadow: '#180800', fill: '#a04010', dash: '#e87020' },
-  purple: { shadow: '#0c0020', fill: '#5a1888', dash: '#a060d0' },
-  pink:   { shadow: '#180010', fill: '#901848', dash: '#e04888' },
-  gray:   { shadow: '#0a0f18', fill: '#324a60', dash: '#6898b8' },
-  teal:   { shadow: '#001810', fill: '#0a7060', dash: '#1ab8a0' },
+  // Zones 1–8
+  blue:    { shadow: '#051428', fill: '#1a5fa8', dash: '#5a9fe8' },
+  green:   { shadow: '#031510', fill: '#177a42', dash: '#2ecc71' },
+  yellow:  { shadow: '#181000', fill: '#9a7008', dash: '#e8b800' },
+  orange:  { shadow: '#180800', fill: '#a04010', dash: '#e87020' },
+  purple:  { shadow: '#0c0020', fill: '#5a1888', dash: '#a060d0' },
+  pink:    { shadow: '#180010', fill: '#901848', dash: '#e04888' },
+  gray:    { shadow: '#0a0f18', fill: '#324a60', dash: '#6898b8' },
+  teal:    { shadow: '#001810', fill: '#0a7060', dash: '#1ab8a0' },
+  // Zones 9–13 (blends)
+  red:     { shadow: '#1a0000', fill: '#b01020', dash: '#e84050' },
+  crimson: { shadow: '#1a0008', fill: '#9a1030', dash: '#d84060' },
+  amber:   { shadow: '#181200', fill: '#9a6000', dash: '#e8a000' },
+  gold:    { shadow: '#181400', fill: '#8a7000', dash: '#d8c000' },
+  lime:    { shadow: '#081800', fill: '#387a00', dash: '#70d800' },
+  // Zones 14–19 (long vowels & vowel teams)
+  emerald: { shadow: '#001808', fill: '#0a7838', dash: '#20c868' },
+  cyan:    { shadow: '#001818', fill: '#0a7878', dash: '#20c8c8' },
+  sky:     { shadow: '#001020', fill: '#1060a0', dash: '#40b0f0' },
+  indigo:  { shadow: '#080028', fill: '#3028a0', dash: '#7068e0' },
+  violet:  { shadow: '#100020', fill: '#6010a0', dash: '#b050e8' },
+  rose:    { shadow: '#180010', fill: '#a01060', dash: '#e050a0' },
+  // Zones 20–22 (r-controlled & advanced consonants)
+  maroon:  { shadow: '#180000', fill: '#800010', dash: '#c02030' },
+  brown:   { shadow: '#100800', fill: '#704010', dash: '#b07030' },
+  olive:   { shadow: '#0c1000', fill: '#506010', dash: '#90a020' },
+  // Zones 23–24 (syllables)
+  navy:    { shadow: '#000818', fill: '#102060', dash: '#3060b0' },
+  forest:  { shadow: '#001000', fill: '#105820', dash: '#209040' },
+  // Zones 25–27 (suffixes & prefixes)
+  slate:   { shadow: '#080c10', fill: '#304050', dash: '#6080a0' },
+  coral:   { shadow: '#180800', fill: '#a03820', dash: '#e07050' },
+  magenta: { shadow: '#180018', fill: '#901890', dash: '#d848d8' },
 };
 
 function nodeCX(idx: number) { return NODE_POSITIONS[idx]?.x ?? 180; }
@@ -131,10 +157,11 @@ function getSectionPathIndices(sectionIdx: number): number[] {
   return [prevCheckpointIdx, ...ownIndices];
 }
 
-function avatarStyle(idx: number) {
+function avatarStyle(idx: number, isCheckpoint = false) {
+  const r = isCheckpoint ? CHECKPOINT_R : NODE_R;
   return {
     left: nodeCX(idx) - AVATAR_SIZE / 2,
-    top:  nodeCY(idx) - NODE_R - AVATAR_SIZE - 6,
+    top:  nodeCY(idx) - r - AVATAR_SIZE - 6,
   };
 }
 
@@ -313,7 +340,7 @@ export default function MapView() {
             <div
               className="map-avatar"
               style={{
-                ...avatarStyle(avatarIdx),
+                ...avatarStyle(avatarIdx, curriculum[avatarIdx]?.type === 'checkpoint'),
                 background: activeProfile?.avatarColor ?? '#4a90e2',
               }}
             >
@@ -328,57 +355,54 @@ export default function MapView() {
             const status = mapProgress?.[node.id]?.status ?? 'locked';
             const isCheckpoint = node.type === 'checkpoint';
             const isJustUnlocked = node.id === justUnlockedId;
-            const sectionColor = sections.find(s => s.nodeIds.includes(node.id))?.color ?? 'blue';
-            const colors = SECTION_COLORS[sectionColor] ?? SECTION_COLORS.blue;
+            const r = isCheckpoint ? CHECKPOINT_R : NODE_R;
 
             return (
-              <button
-                key={node.id}
-                className={[
-                  'map-node',
-                  isCheckpoint ? 'map-node--checkpoint' : '',
-                  `map-node--${status}`,
-                  isCheckpoint && status === 'available' ? 'map-node--checkpoint-available' : '',
-                  isJustUnlocked ? 'map-node--pop' : '',
-                ].filter(Boolean).join(' ')}
-                style={{
-                  left:   nodeCX(idx) - NODE_R,
-                  top:    nodeCY(idx) - NODE_R,
-                  width:  NODE_R * 2,
-                  height: NODE_R * 2,
-                  ...(isCheckpoint && status === 'available'
-                    ? { background: colors.fill, borderColor: colors.dash }
-                    : {}),
-                  ...(isCheckpoint && status === 'complete'
-                    ? { background: '#27ae60', borderColor: '#2ecc71' }
-                    : {}),
-                }}
-                disabled={status === 'locked'}
-                onClick={() => navigate(`/lesson/${node.id}`)}
-                aria-label={`${isCheckpoint ? 'Challenge' : node.label} — ${status}`}
-              >
-                {status === 'locked' && (
-                  <span className="map-node__letter map-node__letter--dim">{node.label}</span>
-                )}
-                {status === 'available' && !isCheckpoint && (
-                  <span className="map-node__letter">{node.label}</span>
-                )}
-                {status === 'available' && isCheckpoint && (
-                  <span className="map-node__star">★</span>
-                )}
-                {status === 'complete' && !isCheckpoint && (
-                  <>
+              <div key={node.id} className="map-node-wrapper">
+                <button
+                  className={[
+                    'map-node',
+                    isCheckpoint ? 'map-node--checkpoint' : '',
+                    `map-node--${status}`,
+                    isCheckpoint && status === 'available' ? 'map-node--checkpoint-available' : '',
+                    isJustUnlocked ? 'map-node--pop' : '',
+                  ].filter(Boolean).join(' ')}
+                  style={{
+                    left:   nodeCX(idx) - r,
+                    top:    nodeCY(idx) - r,
+                    width:  r * 2,
+                    height: r * 2,
+                  }}
+                  disabled={status === 'locked'}
+                  onClick={() => navigate(`/lesson/${node.id}`)}
+                  aria-label={`${isCheckpoint ? 'Section Quiz' : node.label} — ${status}`}
+                >
+                  {!isCheckpoint && status === 'locked' && (
+                    <span className="map-node__letter map-node__letter--dim">{node.label}</span>
+                  )}
+                  {!isCheckpoint && status === 'available' && (
                     <span className="map-node__letter">{node.label}</span>
-                    <span className="map-node__check">✓</span>
-                  </>
-                )}
-                {status === 'complete' && isCheckpoint && (
-                  <>
-                    <span className="map-node__star">★</span>
-                    <span className="map-node__check">✓</span>
-                  </>
-                )}
-              </button>
+                  )}
+                  {!isCheckpoint && status === 'complete' && (
+                    <>
+                      <span className="map-node__letter">{node.label}</span>
+                      <span className="map-node__check">✓</span>
+                    </>
+                  )}
+                  {isCheckpoint && status === 'complete' && (
+                    <>
+                      <span className="map-node__trophy">🏆</span>
+                      <span className="map-node__check">✓</span>
+                    </>
+                  )}
+                  {isCheckpoint && status === 'available' && (
+                    <span className="map-node__trophy">🏆</span>
+                  )}
+                  {isCheckpoint && status === 'locked' && (
+                    <span className="map-node__trophy map-node__trophy--dim">🏆</span>
+                  )}
+                </button>
+              </div>
             );
           })}
         </div>
