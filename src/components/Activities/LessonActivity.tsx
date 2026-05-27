@@ -543,20 +543,23 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
             if (!alive) return;
 
             // Prompt audio
-            await playAudio(BLEND_LESSON_PROMPTS[pass], true).catch(() => {});
+            // For independent pass, use the blend prompt instead of "your turn read it"
+            const promptFile = pass === 'independent' ? '/audio/prompts/tap-the-letters-to-build-the-word.wav' : BLEND_LESSON_PROMPTS[pass];
+            await playAudio(promptFile, true).catch(() => {});
             if (!alive) return;
 
             if (pass === 'independent') {
               // Interactive independent pass: user taps letters
+              setPromptPlaying(false);  // Allow taps now that prompt is done
               setBlendIntroIsIndependentPass(true);
               setNextTapIndex(0);
               setTileStates(makeInitialTileStates(wordDef.letters.length));
               setDisplayLetters([...wordDef.letters]);
               setShuffledIndices(wordDef.letters.map((_, i) => i));
 
-              // One rAF so React commits the initial render before waiting
+              // Two rAFs to ensure React commits state AND layout is complete
               await new Promise<void>(resolve => {
-                requestAnimationFrame(() => resolve());
+                requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
               });
               if (!alive) return;
 
@@ -568,6 +571,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
               setBlendIntroIsIndependentPass(false);
               setBlendIntroHighlight(null);
+              setPromptPlaying(true);
               // Note: word audio was already played by handleLetterTap on final correct tap
               await delay(2000);
             } else {
