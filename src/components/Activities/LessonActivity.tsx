@@ -129,7 +129,9 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   const [blendIntroHighlight, setBlendIntroHighlight] = useState<number | null>(null);
   const [blendIntroSweeping, setBlendIntroSweeping] = useState(false);
   const [blendIntroTransition, setBlendIntroTransition] = useState<'idle' | 'exiting' | 'entering'>('idle');
+  const [blendIntroIsIndependentPass, setBlendIntroIsIndependentPass] = useState(false);
   const introCallbackRef = useRef<(() => void) | null>(null);
+  const independentPassCompleteRef = useRef<(() => void) | null>(null);
 
   // ── Advance ───────────────────────────────────────────────────────────────
   const advance = (wasCorrect: boolean) => {
@@ -214,13 +216,17 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     }
   };
 
-  // ── Blend tap handler (covers blend and scrambled-blend) ─
+  // ── Blend tap handler (covers blend, scrambled-blend, and blend-intro independent) ─
   const handleLetterTap = async (displayIndex: number) => {
-    if (promptPlaying || !isBlendLike(question)) return;
+    // Allow taps for: blend questions, scrambled-blend questions, or blend-intro independent pass
+    const isIndependentPass = question.kind === 'blend-intro' && blendIntroIsIndependentPass;
+    if (promptPlaying || (!isBlendLike(question) && !isIndependentPass)) return;
     if (tileStates[displayIndex] === 'tapped') return;
 
     const q = question as BlendLike;
     const isScrambled = q.kind === 'scrambled-blend';
+    const wordDef = isIndependentPass ? (question as any).words[blendIntroWordIndex] : null;
+    const letterCount = isIndependentPass ? wordDef.letters.length : q.letters.length;
 
     // For ordered blend: displayIndex === originalIndex.
     // For scrambled: map display position back to original word position.
@@ -228,12 +234,12 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     const isCorrectTap = originalIndex === nextTapIndex;
 
     if (isCorrectTap) {
-      const isLastLetter = nextTapIndex === q.letters.length - 1;
+      const isLastLetter = nextTapIndex === letterCount - 1;
 
       if (isLastLetter) {
-        await playAudio(q.phonemeFiles[nextTapIndex], true).catch(() => {});
+        await playAudio(isIndependentPass ? wordDef.phonemeFiles[nextTapIndex] : q.phonemeFiles[nextTapIndex], true).catch(() => {});
       } else {
-        playAudio(q.phonemeFiles[nextTapIndex]).catch(() => {});
+        playAudio(isIndependentPass ? wordDef.phonemeFiles[nextTapIndex] : q.phonemeFiles[nextTapIndex]).catch(() => {});
       }
 
       const newStates = [...tileStates];
@@ -247,9 +253,18 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
       if (isLastLetter) {
         await delay(50);
-        await playAudio(q.wordAudioFile, true).catch(() => {});
+        const audioFile = isIndependentPass ? wordDef.wordAudioFile : q.wordAudioFile;
+        await playAudio(audioFile, true).catch(() => {});
         await delay(200);
-        doAdvanceQuestion(true);
+
+        // If in independent pass, resolve the completion callback instead of advancing the whole question
+        if (isIndependentPass && independentPassCompleteRef.current) {
+          const cb = independentPassCompleteRef.current;
+          independentPassCompleteRef.current = null;
+          cb();
+        } else {
+          doAdvanceQuestion(true);
+        }
       } else {
         setNextTapIndex(nextTapIndex + 1);
       }
@@ -531,30 +546,51 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
             await playAudio(BLEND_LESSON_PROMPTS[pass], true).catch(() => {});
             if (!alive) return;
 
-            // Step through letters with increased pause between phonemes
-            // (independent pass is silent, model/choral have audio)
-            const silent = pass === 'independent';
-            for (let i = 0; i < wordDef.letters.length; i++) {
+            if (pass === 'independent') {
+              // Interactive independent pass: user taps letters
+              setBlendIntroIsIndependentPass(true);
+              setNextTapIndex(0);
+              setTileStates(makeInitialTileStates(wordDef.letters.length));
+              setDisplayLetters([...wordDef.letters]);
+              setShuffledIndices(wordDef.letters.map((_, i) => i));
+
+              // One rAF so React commits the initial render before waiting
+              await new Promise<void>(resolve => {
+                requestAnimationFrame(() => resolve());
+              });
               if (!alive) return;
-              setBlendIntroHighlight(i);
-              if (silent) {
-                await delay(700);
-              } else {
+
+              // Wait for user to complete tapping all letters
+              await new Promise<void>(resolve => {
+                independentPassCompleteRef.current = resolve;
+              });
+              if (!alive) return;
+
+              setBlendIntroIsIndependentPass(false);
+              setBlendIntroHighlight(null);
+              // Note: word audio was already played by handleLetterTap on final correct tap
+              await delay(2000);
+            } else {
+              // Model/Choral passes: teacher-paced with visual highlighting and audio
+              // Step through letters with increased pause between phonemes
+              for (let i = 0; i < wordDef.letters.length; i++) {
+                if (!alive) return;
+                setBlendIntroHighlight(i);
                 await playAudio(wordDef.phonemeFiles[i], true).catch(() => {});
                 if (!alive) return;
                 await delay(300);  // Increased from 80ms
               }
+
+              // Sweep all letters → say the whole word
+              setBlendIntroHighlight(null);
+              setBlendIntroSweeping(true);
+              await playAudio(wordDef.wordAudioFile, true).catch(() => {});
+              if (!alive) return;
+              setBlendIntroSweeping(false);
+              setBlendIntroHighlight(null);
+
+              await delay(2000);
             }
-
-            // Sweep all letters → say the whole word
-            setBlendIntroHighlight(null);
-            setBlendIntroSweeping(true);
-            await playAudio(wordDef.wordAudioFile, true).catch(() => {});
-            if (!alive) return;
-            setBlendIntroSweeping(false);
-            setBlendIntroHighlight(null);
-
-            await delay(2000);
           }
         }
         if (alive) advance(true);
@@ -580,8 +616,9 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const showBlendIntro = question.kind === 'blend-intro';
-  const showTiles = answersReady && isBlendLike(question) && !isIntroStep(question);
+  const showBlendIntro = question.kind === 'blend-intro' && !blendIntroIsIndependentPass;
+  const showBlendIntroTiles = question.kind === 'blend-intro' && blendIntroIsIndependentPass;
+  const showTiles = (answersReady && isBlendLike(question) && !isIntroStep(question)) || showBlendIntroTiles;
   const showMCQ = answersReady && !isBlendLike(question) && !isIntroStep(question);
 
   return (

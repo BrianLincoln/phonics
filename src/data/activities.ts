@@ -299,11 +299,10 @@ export const activities: Activity[] = [
             word: 'top', letters: ['t', 'o', 'p'],
             wordAudioFile: '/audio/words/top.wav',
             phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/p-sound.wav'],
-            passes: ['model', 'choral'],
+            passes: ['model', 'choral', 'independent'],
           },
         ],
       },
-      { kind: 'blend', id: 'blend-t-top', word: 'top', letters: ['t', 'o', 'p'], wordAudioFile: '/audio/words/top.wav', phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/p-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       // Learn and practice 'tip'
       {
         kind: 'blend-intro', id: 'blend-intro-t-tip',
@@ -312,11 +311,10 @@ export const activities: Activity[] = [
             word: 'tip', letters: ['t', 'i', 'p'],
             wordAudioFile: '/audio/words/tip.wav',
             phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/p-sound.wav'],
-            passes: ['model', 'choral'],
+            passes: ['model', 'choral', 'independent'],
           },
         ],
       },
-      { kind: 'blend', id: 'blend-t-tip', word: 'tip', letters: ['t', 'i', 'p'], wordAudioFile: '/audio/words/tip.wav', phonemeFiles: ['/audio/phonics-units/t-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/p-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'blend', id: 'blend-t-sat', word: 'sat', letters: ['s', 'a', 't'], wordAudioFile: '/audio/words/sat.wav', phonemeFiles: ['/audio/phonics-units/s-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'blend', id: 'blend-t-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'scrambled-blend', id: 'scrambled-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
@@ -348,10 +346,19 @@ export const activities: Activity[] = [
       { id: 'a5', kind: 'letter-sound', options: ['s', 'a', 't'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', showLetter: true, skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'hide-letter', id: 'hide-letter-a' },
       { id: 'a6', kind: 'letter-sound', options: ['f', 'n', 'a'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
-      { id: 'a7', kind: 'letter-sound', options: ['a', 's', 't'], correctAnswer: 'a', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'a1', kind: 'word-start', options: ['cat', 'ant', 'sun'], correctAnswer: 'ant', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'a2', kind: 'word-start', options: ['mop', 'top', 'apple'], correctAnswer: 'apple', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'a3', kind: 'word-start', options: ['add', 'big', 'cup'], correctAnswer: 'add', phonemeFile: '/audio/phonics-units/a-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      {
+        kind: 'blend-intro', id: 'blend-intro-m-am',
+        words: [
+          {
+            word: 'am', letters: ['a', 'm'],
+            wordAudioFile: '/audio/words/am.wav',
+            phonemeFiles: ['/audio/phonics-units/a-sound.wav', '/audio/phonics-units/m-sound.wav'],
+            passes: ['model', 'choral'],
+          },
+        ],
+      },
     ],
   },
   {
@@ -508,6 +515,17 @@ export const activities: Activity[] = [
       { id: 's7', kind: 'letter-sound', options: ['f', 's', 'a'], correctAnswer: 's', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 's1', kind: 'word-start', options: ['sat', 'mat', 'cat'], correctAnswer: 'sat', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 's2', kind: 'word-start', options: ['sun', 'cat', 'map'], correctAnswer: 'sun', phonemeFile: '/audio/phonics-units/s-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      {
+        kind: 'blend-intro', id: 'blend-intro-s-sat',
+        words: [
+          {
+            word: 'sat', letters: ['s', 'a', 't'],
+            wordAudioFile: '/audio/words/sat.wav',
+            phonemeFiles: ['/audio/phonics-units/s-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'],
+            passes: ['model', 'choral'],
+          },
+        ],
+      },
       { kind: 'blend', id: 'blend-sat', word: 'sat', letters: ['s', 'a', 't'], wordAudioFile: '/audio/words/sat.wav', phonemeFiles: ['/audio/phonics-units/s-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { kind: 'blend', id: 'blend-mat', word: 'mat', letters: ['m', 'a', 't'], wordAudioFile: '/audio/words/mat.wav', phonemeFiles: ['/audio/phonics-units/m-sound.wav', '/audio/phonics-units/a-sound.wav', '/audio/phonics-units/t-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
