@@ -574,7 +574,9 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
               if (!alive) return;
 
               // User finished tapping - play word audio to confirm
-              await playAudio(wordDef.wordAudioFile, true).catch(() => {});
+              await playAudio(wordDef.wordAudioFile, true).catch(err => {
+                console.error('Failed to play word audio:', wordDef.wordAudioFile, err);
+              });
               if (!alive) return;
 
               setBlendIntroIsIndependentPass(false);
