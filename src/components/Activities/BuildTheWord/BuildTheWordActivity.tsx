@@ -27,6 +27,13 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
   const stopAll = useStopAllAudio();
   const phaserRef = useRef<any>(null);
 
+  console.log('[BuildTheWordExercise] Initialized with activity:', {
+    id: activity.id,
+    unit: activity.unit,
+    wordCount: activity.words.length,
+    words: activity.words.map(w => ({ word: w.word, letters: w.letters.join('') }))
+  });
+
   const [wordIndex, setWordIndex] = useState(0);
   const [nextTapIndex, setNextTapIndex] = useState(0);
   const [tileStates, setTileStates] = useState<TileState[]>(() =>
@@ -35,6 +42,7 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
   const [promptPlaying, setPromptPlaying] = useState(true);
 
   const item = activity.words[wordIndex];
+  console.log('[BuildTheWordExercise] Current word:', { wordIndex, word: item.word, letters: item.letters.join('') });
 
   // Play intro sequence whenever wordIndex changes
   useEffect(() => {
@@ -60,27 +68,41 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
 
   const advanceWord = useCallback(async () => {
     const nextWord = wordIndex + 1;
+    console.log('[BuildTheWordExercise] advanceWord:', { currentWordIndex: wordIndex, nextWordIndex: nextWord, totalWords: activity.words.length });
+
     if (nextWord < activity.words.length) {
+      console.log('[BuildTheWordExercise] Advancing to word:', activity.words[nextWord].word);
       setWordIndex(nextWord);
       setNextTapIndex(0);
       setTileStates(makeInitialTileStates(activity.words[nextWord].letters.length));
     } else {
+      console.log('[BuildTheWordExercise] All words complete, calling onComplete()');
       onComplete();
     }
   }, [wordIndex, activity.words, onComplete]);
 
   const handleLetterTap = useCallback(async (index: number) => {
-    if (promptPlaying || tileStates[index] === 'tapped') return;
+    console.log('[BuildTheWordExercise] handleLetterTap:', { index, wordIndex, word: item.word, nextTapIndex, promptPlaying });
+
+    if (promptPlaying || tileStates[index] === 'tapped') {
+      console.log('[BuildTheWordExercise] handleLetterTap SKIPPED:', { promptPlaying, alreadyTapped: tileStates[index] === 'tapped' });
+      return;
+    }
 
     if (index === nextTapIndex) {
       // Correct tap
       const isLastLetter = index === item.letters.length - 1;
+      console.log('[BuildTheWordExercise] Correct tap:', { index, isLastLetter, totalLetters: item.letters.length });
 
       // Await the phoneme on the last tap so the word doesn't play over it
       if (isLastLetter) {
-        await playAudio(item.phonemeFiles[index], true).catch(() => {});
+        await playAudio(item.phonemeFiles[index], true).catch((err) => {
+          console.error('[BuildTheWordExercise] Failed to play phoneme:', err);
+        });
       } else {
-        playAudio(item.phonemeFiles[index]).catch(() => {});
+        playAudio(item.phonemeFiles[index]).catch((err) => {
+          console.error('[BuildTheWordExercise] Failed to play phoneme:', err);
+        });
       }
 
       const newStates = [...tileStates];
@@ -94,8 +116,12 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
 
       if (isLastLetter) {
         // Word complete
+        console.log('[BuildTheWordExercise] Last letter tapped - playing word audio:', item.wordAudioFile);
         await delay(200);
-        await playAudio(item.wordAudioFile, true).catch(() => {});
+        await playAudio(item.wordAudioFile, true).catch((err) => {
+          console.error('[BuildTheWordExercise] Failed to play word audio:', item.wordAudioFile, err);
+        });
+        console.log('[BuildTheWordExercise] Word audio finished, advancing...');
         await delay(800);
         advanceWord();
       } else {
@@ -103,6 +129,7 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
       }
     } else {
       // Wrong tap — play the phoneme they tapped so they can hear it
+      console.log('[BuildTheWordExercise] Wrong tap:', { index, expected: nextTapIndex });
       playAudio(item.phonemeFiles[index]).catch(() => {});
 
       const newStates = [...tileStates];
