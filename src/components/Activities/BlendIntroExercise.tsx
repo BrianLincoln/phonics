@@ -40,7 +40,9 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
   // Cleanup on unmount or when dependencies change
   useEffect(() => {
     return () => {
+      console.log('[BlendIntroExercise] Cleanup running - stopping everything');
       aliveRef.current = false;
+      sequenceStartedRef.current = false;  // Allow effect to run again on remount (Strict Mode)
       stopAll();
     };
   }, [stopAll]);
