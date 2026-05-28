@@ -37,18 +37,6 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
   const aliveRef = useRef(true);
   const sequenceStartedRef = useRef(false);
 
-  // Reset state when question changes (new blend-intro word to teach)
-  useEffect(() => {
-    console.log('[BlendIntroExercise] Question changed, resetting state for:', question.id);
-    setWordIndex(0);
-    setShowIndependentPass(false);
-    setHighlight(null);
-    setSweeping(false);
-    setTransition('idle');
-    sequenceStartedRef.current = false;
-    aliveRef.current = true;
-  }, [question.id]);
-
   // Cleanup on unmount only — empty deps so cleanup doesn't run on every render
   useEffect(() => {
     return () => {
@@ -59,15 +47,20 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
     };
   }, []);
 
-  // Main orchestration effect - only runs once
+  // Main orchestration effect - reset state AND run sequence (combined to avoid race condition)
   useEffect(() => {
-    console.log('[BlendIntroExercise] useEffect running:', { showIndependentPass, sequenceStarted: sequenceStartedRef.current });
+    console.log('[BlendIntroExercise] Question changed, resetting and starting sequence for:', question.id);
 
-    if (showIndependentPass || sequenceStartedRef.current) {
-      console.log('[BlendIntroExercise] useEffect EARLY RETURN:', { showIndependentPass, sequenceStarted: sequenceStartedRef.current });
-      return;
-    }
+    // Reset state synchronously BEFORE checking guards (avoids race condition with setShowIndependentPass)
+    setWordIndex(0);
+    setShowIndependentPass(false);
+    setHighlight(null);
+    setSweeping(false);
+    setTransition('idle');
+    sequenceStartedRef.current = false;
+    aliveRef.current = true;
 
+    // Now safe to start sequence
     console.log('[BlendIntroExercise] Starting sequence orchestration');
     sequenceStartedRef.current = true;
     aliveRef.current = true;
