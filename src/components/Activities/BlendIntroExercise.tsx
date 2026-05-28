@@ -37,6 +37,18 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
   const aliveRef = useRef(true);
   const sequenceStartedRef = useRef(false);
 
+  // Reset state when question changes (new blend-intro word to teach)
+  useEffect(() => {
+    console.log('[BlendIntroExercise] Question changed, resetting state for:', question.id);
+    setWordIndex(0);
+    setShowIndependentPass(false);
+    setHighlight(null);
+    setSweeping(false);
+    setTransition('idle');
+    sequenceStartedRef.current = false;
+    aliveRef.current = true;
+  }, [question.id]);
+
   // Cleanup on unmount only — empty deps so cleanup doesn't run on every render
   useEffect(() => {
     return () => {
