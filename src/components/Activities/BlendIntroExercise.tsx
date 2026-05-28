@@ -37,15 +37,15 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
   const aliveRef = useRef(true);
   const sequenceStartedRef = useRef(false);
 
-  // Cleanup on unmount or when dependencies change
+  // Cleanup on unmount only — empty deps so cleanup doesn't run on every render
   useEffect(() => {
     return () => {
-      console.log('[BlendIntroExercise] Cleanup running - stopping everything');
+      console.log('[BlendIntroExercise] Cleanup on unmount - stopping everything');
       aliveRef.current = false;
       sequenceStartedRef.current = false;  // Allow effect to run again on remount (Strict Mode)
       stopAll();
     };
-  }, [stopAll]);
+  }, []);
 
   // Main orchestration effect - only runs once
   useEffect(() => {
