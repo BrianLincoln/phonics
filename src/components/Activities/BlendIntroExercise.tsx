@@ -47,26 +47,38 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
 
   // Main orchestration effect - only runs once
   useEffect(() => {
+    console.log('[BlendIntroExercise] useEffect running:', { showIndependentPass, sequenceStarted: sequenceStartedRef.current });
+
     if (showIndependentPass || sequenceStartedRef.current) {
+      console.log('[BlendIntroExercise] useEffect EARLY RETURN:', { showIndependentPass, sequenceStarted: sequenceStartedRef.current });
       return;
     }
 
+    console.log('[BlendIntroExercise] Starting sequence orchestration');
     sequenceStartedRef.current = true;
     aliveRef.current = true;
 
     const runSequence = async () => {
       const alive = () => aliveRef.current;
+      console.log('[BlendIntroExercise] runSequence() starting');
 
       // Wait one rAF so React commits the initial render
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       if (!alive()) return;
 
+      console.log('[BlendIntroExercise] Starting word loop:', { wordCount: question.words.length });
+
       for (let wi = 0; wi < question.words.length; wi++) {
         const wordDef = question.words[wi];
-        if (!alive()) return;
+        console.log('[BlendIntroExercise] Processing word:', { wi, word: wordDef.word, passes: wordDef.passes });
+        if (!alive()) {
+          console.log('[BlendIntroExercise] STOPPED (not alive) at word', wi);
+          return;
+        }
 
         if (wi > 0) {
           // Slide old word out, swap, slide new word in
+          console.log('[BlendIntroExercise] Transitioning between words');
           setHighlight(null);
           setSweeping(false);
           setTransition('exiting');
@@ -84,10 +96,15 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
         // Process each pass (model, choral, independent)
         for (let pi = 0; pi < wordDef.passes.length; pi++) {
           const pass = wordDef.passes[pi];
-          if (!alive()) return;
+          console.log('[BlendIntroExercise] Processing pass:', { wi, pi, pass });
+          if (!alive()) {
+            console.log('[BlendIntroExercise] STOPPED (not alive) at pass', pi);
+            return;
+          }
 
           if (pass === 'independent') {
             // Switch to BuildTheWordExercise component
+            console.log('[BlendIntroExercise] Setting showIndependentPass = true');
             setShowIndependentPass(true);
             return;
           }
@@ -129,12 +146,18 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
 
       // All words and passes done
       if (alive()) {
+        console.log('[BlendIntroExercise] Sequence complete, calling onComplete()');
         sequenceStartedRef.current = false;
         onComplete();
+      } else {
+        console.log('[BlendIntroExercise] Sequence interrupted (not alive) at end');
       }
     };
 
-    runSequence();
+    console.log('[BlendIntroExercise] Calling runSequence()');
+    runSequence().catch(err => {
+      console.error('[BlendIntroExercise] runSequence error:', err);
+    });
   }, [question, showIndependentPass]);
 
   // ── Render ────────────────────────────────────────────────────────────────
