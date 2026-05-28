@@ -25,6 +25,7 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
 }) => {
   const playAudio = usePlayAudio();
   const stopAll = useStopAllAudio();
+  console.log('[BlendIntroExercise] Rendering with question:', { id: question.id, wordCount: question.words.length, words: question.words.map(w => ({ word: w.word, passes: w.passes })) });
 
   // Track which word and pass we're on
   const [wordIndex, setWordIndex] = useState(0);

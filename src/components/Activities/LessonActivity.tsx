@@ -89,9 +89,22 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   onBack,
 }) => {
   const navigate = useNavigate();
+  console.log('[LessonActivity] INIT - Received activity:', {
+    id: activity.id,
+    unit: (activity as any).unit,
+    activityType: (activity as any).activityType,
+    stepsLength: activity.steps?.length || 'UNDEFINED',
+    stepKinds: activity.steps?.map((s: any) => s.kind) || 'NO STEPS',
+    stepIds: activity.steps?.map((s: any) => s.id) || 'NO STEPS',
+  });
 
   // ── Question queue ────────────────────────────────────────────────────────
-  const queueRef = useRef([...activity.steps]);
+  const queueRef = useRef([...(activity.steps || [])]);
+  console.log('[LessonActivity] INIT - queueRef.current:', {
+    length: queueRef.current.length,
+    items: queueRef.current.map((s: any) => ({ kind: s.kind, id: s.id }))
+  });
+
   const requeuedIds = useRef(new Set<string>());
   const aliveRef = useRef(true);
   const [queueIdx, setQueueIdx] = useState(0);
@@ -131,19 +144,31 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
 
   // ── Advance ───────────────────────────────────────────────────────────────
   const advance = (wasCorrect: boolean) => {
+    console.log('[LessonActivity] advance() called:', { wasCorrect, queueIdx, currentQuestion: question?.kind });
+
     // Blend and intro steps never re-queue
     if (!wasCorrect && !isBlendLike(question) && !isIntroStep(question)) {
       const q = queueRef.current[queueIdx];
       if (!requeuedIds.current.has(q.id)) {
+        console.log('[LessonActivity] Re-queueing question:', q.id);
         requeuedIds.current.add(q.id);
         const insertAt = Math.min(queueIdx + 3, queueRef.current.length);
         queueRef.current.splice(insertAt, 0, q);
       }
     }
     const nextIdx = queueIdx + 1;
+    console.log('[LessonActivity] advance() DECIDING:', {
+      queueIdx,
+      nextIdx,
+      totalSteps: queueRef.current.length,
+      hasNextQuestion: nextIdx < queueRef.current.length,
+      allQuestionIds: queueRef.current.map((q: any) => q.id)
+    });
     if (nextIdx < queueRef.current.length) {
+      console.log('[LessonActivity] Advancing to next question:', queueRef.current[nextIdx]?.kind, queueRef.current[nextIdx]?.id);
       setQueueIdx(nextIdx);
     } else {
+      console.log('[LessonActivity] Activity complete - no more questions');
       onComplete(wasCorrect);
     }
   };
@@ -311,7 +336,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           setTransition('idle');
           // Two rAFs: first commits React state, second ensures layout is complete
           // so getBoundingClientRect() returns real tile positions.
-          await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
           if (!aliveRef.current) return;
           // Brief pause so the student sees the word in correct order first.
           await delay(500);
@@ -320,7 +345,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           setTransition('entering');
           setTimeout(() => { if (aliveRef.current) setTransition('idle'); }, 350);
           // Wait one rAF so React commits the render.
-          await new Promise<void>(resolve => requestAnimationFrame(resolve));
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
           if (!aliveRef.current) return;
         }
       } else if (question.kind === 'scrambled-blend') {
