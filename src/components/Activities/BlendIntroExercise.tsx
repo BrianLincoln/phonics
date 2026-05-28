@@ -172,7 +172,7 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
     runSequence().catch(err => {
       console.error('[BlendIntroExercise] runSequence error:', err);
     });
-  }, [question]);
+  }, [question.id]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
