@@ -389,6 +389,9 @@ export const activities: Activity[] = [
       { id: 'l5', kind: 'letter-sound', options: ['l', 'r', 'n'], correctAnswer: 'l', phonemeFile: '/audio/phonics-units/l-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'l6', kind: 'letter-sound', options: ['m', 'l', 'f'], correctAnswer: 'l', phonemeFile: '/audio/phonics-units/l-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'l7', kind: 'letter-sound', options: ['s', 'l', 't'], correctAnswer: 'l', phonemeFile: '/audio/phonics-units/l-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'blend', id: 'blend-l-lip', word: 'lip', letters: ['l', 'i', 'p'], wordAudioFile: '/audio/words/lip.wav', phonemeFiles: ['/audio/phonics-units/l-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/p-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'scrambled-l-log', word: 'log', letters: ['l', 'o', 'g'], wordAudioFile: '/audio/words/log.wav', phonemeFiles: ['/audio/phonics-units/l-sound.wav', '/audio/phonics-units/o-sound.wav', '/audio/phonics-units/g-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
+      { kind: 'scrambled-blend', id: 'scrambled-l-pig', word: 'pig', letters: ['p', 'i', 'g'], wordAudioFile: '/audio/words/pig.wav', phonemeFiles: ['/audio/phonics-units/p-sound.wav', '/audio/phonics-units/i-sound.wav', '/audio/phonics-units/g-sound.wav'], promptFile: '/audio/prompts/tap-the-letters-to-build-the-word.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
     ],
   },
   {

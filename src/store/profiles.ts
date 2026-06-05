@@ -1,10 +1,20 @@
 import { storageAdapter } from './storage';
 
+export type CompanionAnimalId = 'crow' | 'cat' | 'frog' | 'penguin';
+
+export const COMPANION_ANIMALS: ReadonlyArray<{ id: CompanionAnimalId; label: string }> = [
+  { id: 'crow',    label: 'Crow'    },
+  { id: 'cat',     label: 'Cat'     },
+  { id: 'frog',    label: 'Frog'    },
+  { id: 'penguin', label: 'Penguin' },
+];
+
 export interface Profile {
   id: string;
   name: string;
   avatarEmoji: string;
   avatarColor: string;
+  companionAnimal?: CompanionAnimalId;
   createdAt: string;
 }
 
@@ -62,12 +72,18 @@ export async function getProfiles(): Promise<Profile[]> {
   return storageAdapter.getProfiles();
 }
 
-export async function createProfile(name: string, avatarEmoji: string, avatarColor: string): Promise<Profile> {
+export async function createProfile(
+  name: string,
+  avatarEmoji: string,
+  avatarColor: string,
+  companionAnimal: CompanionAnimalId = 'crow'
+): Promise<Profile> {
   const profile: Profile = {
     id: generateId(),
     name: name.trim(),
     avatarEmoji,
     avatarColor,
+    companionAnimal,
     createdAt: new Date().toISOString(),
   };
   await storageAdapter.saveProfile(profile);
@@ -76,7 +92,7 @@ export async function createProfile(name: string, avatarEmoji: string, avatarCol
 
 export async function updateProfile(
   profileId: string,
-  updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor'>>
+  updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor' | 'companionAnimal'>>
 ): Promise<Profile> {
   const profiles = await storageAdapter.getProfiles();
   const existing = profiles.find(p => p.id === profileId);

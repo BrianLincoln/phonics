@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AVATAR_EMOJIS, AVATAR_COLORS } from '../store/profiles';
+import { AVATAR_EMOJIS, AVATAR_COLORS, COMPANION_ANIMALS, type CompanionAnimalId } from '../store/profiles';
 
 const PASTEL_COLORS  = AVATAR_COLORS.slice(0, 8);
 const VIBRANT_COLORS = AVATAR_COLORS.slice(8);
@@ -17,6 +17,7 @@ export function NewProfileView() {
   const [name, setName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState(() => AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)]);
   const [selectedColor, setSelectedColor] = useState(() => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)].value);
+  const [selectedAnimal, setSelectedAnimal] = useState<CompanionAnimalId>('crow');
 
   function handleNameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +26,7 @@ export function NewProfileView() {
   }
 
   async function handleCreate() {
-    const profile = await addProfile(name, selectedEmoji, selectedColor);
+    const profile = await addProfile(name, selectedEmoji, selectedColor, selectedAnimal);
     selectProfile(profile);
     navigate('/menu');
   }
@@ -112,6 +113,26 @@ export function NewProfileView() {
                   aria-label={color.label}
                   onClick={() => setSelectedColor(color.value)}
                 />
+              ))}
+            </div>
+          </section>
+
+          <section className="new-profile__section">
+            <h2 className="new-profile__section-label">Companion</h2>
+            <div className="new-profile__animal-grid">
+              {COMPANION_ANIMALS.map(animal => (
+                <button
+                  key={animal.id}
+                  type="button"
+                  className={`new-profile__animal-btn${selectedAnimal === animal.id ? ' new-profile__animal-btn--selected' : ''}`}
+                  onClick={() => setSelectedAnimal(animal.id)}
+                >
+                  <div
+                    className="new-profile__animal-sprite"
+                    style={{ backgroundImage: `url('/src/assets/${animal.id}_sprite.png')` }}
+                  />
+                  {animal.label}
+                </button>
               ))}
             </div>
           </section>

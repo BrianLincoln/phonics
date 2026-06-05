@@ -296,6 +296,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
   // ── Per-question setup effect ─────────────────────────────────────────────
   useEffect(() => {
     aliveRef.current = true;
+    let alive = true;
     // Reset letterIntroStartedRef only when queueIdx actually changes
     // (not on the same question due to Strict Mode)
     if (queueIdx !== prevQueueIdxRef.current) {
@@ -324,7 +325,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     // blend-intro is handled by BlendIntroExercise component
 
     async function playQuestionPrompt() {
-      if (!aliveRef.current) return;
+      if (!alive) return;
 
       if (!answersReadyRef.current) {
         answersReadyRef.current = true;
@@ -337,27 +338,27 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           // Two rAFs: first commits React state, second ensures layout is complete
           // so getBoundingClientRect() returns real tile positions.
           await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-          if (!aliveRef.current) return;
+          if (!alive) return;
           // Brief pause so the student sees the word in correct order first.
           await delay(500);
-          if (!aliveRef.current) return;
+          if (!alive) return;
         } else {
           setTransition('entering');
-          setTimeout(() => { if (aliveRef.current) setTransition('idle'); }, 350);
+          setTimeout(() => { if (alive) setTransition('idle'); }, 350);
           // Wait one rAF so React commits the render.
           await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-          if (!aliveRef.current) return;
+          if (!alive) return;
         }
       } else if (question.kind === 'scrambled-blend') {
         // Tiles were already visible (prior question). Wait for any exit/enter
         // transition to settle, then pause so student can see the word.
         await delay(500);
-        if (!aliveRef.current) return;
+        if (!alive) return;
       }
 
       if (question.kind === 'blend') {
         await playAudio(question.promptFile, true).catch(() => {});
-        if (!aliveRef.current) return;
+        if (!alive) return;
         await playAudio(question.wordAudioFile, true).catch(() => {});
       } else if (question.kind === 'scrambled-blend') {
         const shuffled = shuffleIndices(question.letters.length);
@@ -457,25 +458,25 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
           btns.forEach(b => { b.getAnimations().forEach(a => a.cancel()); b.style.transform = ''; });
 
           // Crow hops back to idle
-          if (aliveRef.current) await new Promise<void>(r => scene.returnCrowToIdle(r));
+          if (alive) await new Promise<void>(r => scene.returnCrowToIdle(r));
         } else {
           // Fallback — no animation
           setShuffledIndices(shuffled);
           setDisplayLetters(shuffled.map(i => (question as ScrambledBlendQuestion).letters[i]));
         }
-        if (!aliveRef.current) return;
+        if (!alive) return;
 
         // Wait for the full prompt sequence to finish (started during the scatter)
         await ohNoPromise;
-        if (!aliveRef.current) return;
+        if (!alive) return;
         await playAudio(question.wordAudioFile, true).catch(() => {});
-        if (!aliveRef.current) return;
+        if (!alive) return;
       } else {
         await playAudio((question as any).promptFile, true).catch(() => {});
-        if (!aliveRef.current) return;
+        if (!alive) return;
         await playAudio((question as any).phonemeFile, true).catch(() => {});
       }
-      if (!aliveRef.current) return;
+      if (!alive) return;
       setPromptPlaying(false);
     }
 
@@ -500,49 +501,49 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       console.log('[LessonActivity] Unit found:', unit?.id);
       const withLetterIntro = async () => {
         console.log('[LessonActivity] withLetterIntro started');
-        if (!aliveRef.current) {
+        if (!alive) {
           console.log('[LessonActivity] Component unmounted, aborting');
           return;
         }
         await playAudio(INTRO_PROMPTS.thisIs, true).catch((err) => {
           console.error('[LessonActivity] Failed to play thisIs:', err);
         });
-        if (!aliveRef.current) return;
+        if (!alive) return;
         if (unit?.nameAudio) await playAudio(unit.nameAudio, true).catch((err) => {
           console.error('[LessonActivity] Failed to play nameAudio:', err);
         });
-        if (!aliveRef.current) return;
+        if (!alive) return;
         await playAudio(INTRO_PROMPTS.makesSound, true).catch((err) => {
           console.error('[LessonActivity] Failed to play makesSound:', err);
         });
-        if (!aliveRef.current) return;
+        if (!alive) return;
         if (unit?.soundAudio) await playAudio(unit.soundAudio, true).catch((err) => {
           console.error('[LessonActivity] Failed to play soundAudio:', err);
         });
-        if (!aliveRef.current) return;
+        if (!alive) return;
         if (unit?.likeInWords?.length) await delay(700);
-        if (!aliveRef.current) return;
+        if (!alive) return;
         if (unit?.likeInWords?.length) {
           await playAudio(INTRO_PROMPTS.likeIn, true).catch((err) => {
             console.error('[LessonActivity] Failed to play likeIn:', err);
           });
-          if (!aliveRef.current) return;
+          if (!alive) return;
           for (let i = 0; i < unit.likeInWords.length; i++) {
             await playAudio(unit.likeInWords[i], true).catch((err) => {
               console.error('[LessonActivity] Failed to play likeInWord:', err);
             });
-            if (!aliveRef.current) return;
+            if (!alive) return;
             if (i < unit.likeInWords.length - 1) {
               const andFile = INTRO_PROMPTS.and[Math.min(i, INTRO_PROMPTS.and.length - 1)];
               await playAudio(andFile, true).catch((err) => {
                 console.error('[LessonActivity] Failed to play and:', err);
               });
-              if (!aliveRef.current) return;
+              if (!alive) return;
             }
           }
         }
         console.log('[LessonActivity] Letter intro audio complete, advancing...');
-        if (aliveRef.current) {
+        if (alive) {
           console.log('[LessonActivity] Calling advance(true) for letter-intro');
           advance(true);
         } else {
@@ -570,10 +571,8 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     }
 
     return () => {
+      alive = false;
       aliveRef.current = false;
-      // Note: Don't call stopAll() here in the cleanup. The next effect will call
-      // stopAll() at the beginning to stop audio from the previous question.
-      // Calling it here would interrupt async audio that's currently playing.
     };
   }, [queueIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -597,7 +596,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       <div className="activity-stacked-layout">
         <PhaserGame
           sceneType="multiple-choice"
-          sceneData={{ unitName: activity.unit, questionIndex: queueIdx, showFirstCard: !!(activity.steps.find(s => !isIntroStep(s)) as any)?.showLetter }}
+          sceneData={{ unitName: activity.unit, questionIndex: queueIdx, showFirstCard: activity.steps.some(s => s.kind === 'letter-intro') || !!(activity.steps.find(s => !isIntroStep(s)) as any)?.showLetter }}
           onSceneReady={scene => {
             phaserRef.current = scene;
             if (introCallbackRef.current) {

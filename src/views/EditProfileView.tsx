@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AVATAR_EMOJIS, AVATAR_COLORS } from '../store/profiles';
+import { AVATAR_EMOJIS, AVATAR_COLORS, COMPANION_ANIMALS, type CompanionAnimalId } from '../store/profiles';
 
 const PASTEL_COLORS  = AVATAR_COLORS.slice(0, 8);
 const VIBRANT_COLORS = AVATAR_COLORS.slice(8);
@@ -14,7 +14,7 @@ export function EditProfileView() {
 
   const profile = profiles.find(p => p.id === profileId);
 
-  const [form, setForm] = useState<{ name: string; emoji: string; color: string } | null>(null);
+  const [form, setForm] = useState<{ name: string; emoji: string; color: string; animal: CompanionAnimalId } | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
 
@@ -22,7 +22,7 @@ export function EditProfileView() {
   // default values on hard refresh while context loads from localStorage.
   React.useEffect(() => {
     if (profile) {
-      setForm({ name: profile.name, emoji: profile.avatarEmoji, color: profile.avatarColor });
+      setForm({ name: profile.name, emoji: profile.avatarEmoji, color: profile.avatarColor, animal: profile.companionAnimal ?? 'crow' });
     }
   }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -34,9 +34,10 @@ export function EditProfileView() {
   // Render nothing until the effect has populated form state.
   if (!form) return null;
 
-  const setName  = (name: string)  => setForm(f => f ? { ...f, name }  : f);
-  const setEmoji = (emoji: string) => setForm(f => f ? { ...f, emoji } : f);
-  const setColor = (color: string) => setForm(f => f ? { ...f, color } : f);
+  const setName   = (name: string)             => setForm(f => f ? { ...f, name }   : f);
+  const setEmoji  = (emoji: string)            => setForm(f => f ? { ...f, emoji }  : f);
+  const setColor  = (color: string)            => setForm(f => f ? { ...f, color }  : f);
+  const setAnimal = (animal: CompanionAnimalId) => setForm(f => f ? { ...f, animal } : f);
 
   async function handleSave() {
     if (!profileId || form.name.trim().length < 1) return;
@@ -44,6 +45,7 @@ export function EditProfileView() {
       name: form.name.trim(),
       avatarEmoji: form.emoji,
       avatarColor: form.color,
+      companionAnimal: form.animal,
     });
     navigate('/');
   }
@@ -112,6 +114,26 @@ export function EditProfileView() {
                 aria-label={color.label}
                 onClick={() => setColor(color.value)}
               />
+            ))}
+          </div>
+        </section>
+
+        <section className="new-profile__section">
+          <h2 className="new-profile__section-label">Companion</h2>
+          <div className="new-profile__animal-grid">
+            {COMPANION_ANIMALS.map(animal => (
+              <button
+                key={animal.id}
+                type="button"
+                className={`new-profile__animal-btn${form.animal === animal.id ? ' new-profile__animal-btn--selected' : ''}`}
+                onClick={() => setAnimal(animal.id)}
+              >
+                <div
+                  className="new-profile__animal-sprite"
+                  style={{ backgroundImage: `url('/src/assets/${animal.id}_sprite.png')` }}
+                />
+                {animal.label}
+              </button>
             ))}
           </div>
         </section>

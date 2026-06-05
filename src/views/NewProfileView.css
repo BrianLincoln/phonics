@@ -140,6 +140,49 @@
   transform: scale(1.12);
 }
 
+.new-profile__animal-grid {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.new-profile__animal-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s, background 0.1s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  min-width: 72px;
+}
+
+.new-profile__animal-btn:hover {
+  transform: scale(1.05);
+}
+
+.new-profile__animal-btn--selected {
+  border-color: #4299e1;
+  background: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.new-profile__animal-sprite {
+  width: 64px;
+  height: 64px;
+  background-position: 0% 0%;
+  background-repeat: no-repeat;
+  background-size: 600% 100%;
+  image-rendering: pixelated;
+}
+
 .new-profile__btn {
   width: 100%;
   padding: 1rem;
