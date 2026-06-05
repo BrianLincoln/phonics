@@ -13,7 +13,7 @@ const SuccessDemo: React.FC = () => {
     <div style={{ width: '100vw', height: '100vh', background: '#eee' }}>
       <PhaserGame
         sceneType="success"
-        sceneData={{ onComplete: handleSuccessComplete }}
+        sceneData={{ onComplete: handleSuccessComplete } as any}
         onSceneReady={scene => { phaserRef.current = scene; }}
       />
     </div>
