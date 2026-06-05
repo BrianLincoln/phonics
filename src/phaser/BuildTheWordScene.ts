@@ -15,26 +15,26 @@ export class BuildTheWordScene extends BaseGameScene {
 
   create() {
     this.buildEnvironment();
-    this.buildCrow();
+    this.buildCompanion();
   }
 
-  private buildCrow() {
+  private buildCompanion() {
     const cam = this.cameras.main;
-    this.setupCrow(cam.centerX - 100);
-    this.crowController!.playIntroWalkIn();
+    this.setupCompanion(cam.centerX - 100);
+    this.companionController!.playIntroWalkIn();
   }
 
   onCorrectTap(onDone?: () => void) {
-    this.crowController?.hop(onDone);
+    this.companionController?.hop(onDone);
   }
 
   onWrongTap(onDone?: () => void) {
-    this.crowController?.shake(onDone);
+    this.companionController?.shake(onDone);
   }
 
   // Convenience alias so mixed-mode can drive MCQ feedback with the same API
   onQuestionAnswered(isCorrect: boolean, onDone?: () => void) {
-    if (isCorrect) this.crowController?.hop(onDone);
-    else this.crowController?.shake(onDone);
+    if (isCorrect) this.companionController?.hop(onDone);
+    else this.companionController?.shake(onDone);
   }
 }

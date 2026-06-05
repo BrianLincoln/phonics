@@ -32,7 +32,7 @@ export class MultipleChoiceScene extends BaseGameScene {
   create() {
     this.buildEnvironment();
     this.buildCard();
-    this.buildCrow();
+    this.buildCompanion();
     this.applySceneData();
   }
 
@@ -72,19 +72,19 @@ export class MultipleChoiceScene extends BaseGameScene {
     this.letterCard.setDepth(6);
   }
 
-  private buildCrow() {
+  private buildCompanion() {
     const cam = this.cameras.main;
-    this.setupCrow(-100);
+    this.setupCompanion(-100);
     const showCard = this.sceneData.showFirstCard !== false;
     if (showCard) {
-      this.crowController!.carryCardInFromLeft(
+      this.companionController!.carryCardInFromLeft(
         this.letterCard!,
         cam.centerX,
         cam.centerY + 10,
         () => { this.cardIsOnScreen = true; this.onCarryInComplete?.(); },
       );
     } else {
-      this.crowController!.walkInFromLeft(() => { this.onCarryInComplete?.(); });
+      this.companionController!.walkInFromLeft(() => { this.onCarryInComplete?.(); });
     }
   }
 
@@ -104,7 +104,7 @@ export class MultipleChoiceScene extends BaseGameScene {
       onReady();
     } else if (!this.cardIsOnScreen) {
       // Card is hidden but this question wants it shown — crow brings it back
-      this.crowBringCardIn(onReady);
+      this.companionBringCardIn(onReady);
     } else {
       onReady();
     }
@@ -113,39 +113,39 @@ export class MultipleChoiceScene extends BaseGameScene {
   /** Crow hops or shakes in response to a correct/wrong answer. */
   onQuestionAnswered(isCorrect: boolean, onDone?: () => void) {
     if (isCorrect) {
-      this.crowController?.hop(onDone);
+      this.companionController?.hop(onDone);
     } else {
-      this.crowController?.shake(onDone);
+      this.companionController?.shake(onDone);
     }
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
   crowTakeLetter(onDone?: () => void) {
-    if (!this.crow || !this.letterCard || !this.crowController) {
+    if (!this.companion || !this.letterCard || !this.companionController) {
       onDone?.();
       return;
     }
 
-    this.crowController.walkToLeftOfWordAndLook(this.letterCard.x, this.letterCard.y, () => {
-      this.crowController!.walkWordOffRight(this.letterCard!, () => {
+    this.companionController.walkToLeftOfWordAndLook(this.letterCard.x, this.letterCard.y, () => {
+      this.companionController!.walkWordOffRight(this.letterCard!, () => {
         this.cardIsOnScreen = false;
         onDone?.();
         // Crow re-enters after a short pause (for hop/shake reactions on later questions)
         this.reEnterTimeout = setTimeout(() => {
-          this.crowController?.playReEnterFromRightWithCallback();
+          this.companionController?.playReEnterFromRightWithCallback();
         }, 600);
       });
     });
   }
 
-  private crowBringCardIn(onReady: () => void) {
-    if (!this.letterCard || !this.crowController) {
+  private companionBringCardIn(onReady: () => void) {
+    if (!this.letterCard || !this.companionController) {
       onReady();
       return;
     }
     const cam = this.cameras.main;
-    this.crowController.carryCardInFromLeft(
+    this.companionController.carryCardInFromLeft(
       this.letterCard,
       cam.centerX,
       cam.centerY + 10,
@@ -155,34 +155,34 @@ export class MultipleChoiceScene extends BaseGameScene {
 
   // Place the crow at (x, y) instantly, facing the given direction.
   placeCrow(x: number, y: number, facing: 'left' | 'right' = 'left') {
-    if (!this.crow || !this.crowController) return;
-    this.tweens.killTweensOf(this.crow);
-    this.crowController.stopIdleBob();
-    this.crow.setPosition(x, y);
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing(facing);
+    if (!this.companion || !this.companionController) return;
+    this.tweens.killTweensOf(this.companion);
+    this.companionController.stopIdleBob();
+    this.companion.setPosition(x, y);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing(facing);
   }
 
   // Walk crow to (x, y) over exactly `duration` ms — for syncing with CSS tile animations.
   driveCrow(x: number, y: number, duration: number, onDone?: () => void) {
-    this.crowController?.walkInDuration(x, y, duration, onDone);
+    this.companionController?.walkInDuration(x, y, duration, onDone);
   }
 
   // Walk crow to x quickly between steps (speed-based reposition, no squish).
   reposCrow(x: number, y: number, onDone?: () => void) {
-    this.crowController?.quickWalkTo(x, y, 900, onDone);
+    this.companionController?.quickWalkTo(x, y, 900, onDone);
   }
 
   // Walk crow back to its idle position.
   returnCrowToIdle(onDone?: () => void) {
-    if (!this.crowController) { onDone?.(); return; }
+    if (!this.companionController) { onDone?.(); return; }
     const cam = this.cameras.main;
-    this.crowController.hopTo(cam.width - 100, this.crowController.groundY, onDone);
+    this.companionController.hopTo(cam.width - 100, this.companionController.groundY, onDone);
   }
 
   crowReturnWordAfterQuiz(onDone?: () => void) {
-    if (!this.crow || !this.letterCard || !this.crowController) {
+    if (!this.companion || !this.letterCard || !this.companionController) {
       onDone?.();
       return;
     }
@@ -190,12 +190,12 @@ export class MultipleChoiceScene extends BaseGameScene {
     const cam = this.cameras.main;
     const targetX = cam.centerX;
     const cardY = this.letterCard.y;
-    const crowY = cardY + 80;
+    const crowY = this.companionController.groundY;
 
-    this.crowController.walkOffRightFast(cam.width + 120, crowY, () => {
-      this.crowController!.walkWordOnFromRight(this.letterCard!, targetX, cardY, crowY, () => {
-        this.crowController!.hopTo(cam.width - 100, this.crowController!.groundY, () => {
-          this.crowController!.startHoppingInPlace();
+    this.companionController.walkOffRightFast(cam.width + 120, crowY, () => {
+      this.companionController!.walkWordOnFromRight(this.letterCard!, targetX, cardY, () => {
+        this.companionController!.hopTo(cam.width - 100, this.companionController!.groundY, () => {
+          this.companionController!.startHoppingInPlace();
           onDone?.();
         });
       });

@@ -37,17 +37,8 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
   const aliveRef = useRef(true);
   const sequenceStartedRef = useRef(false);
 
-  // Cleanup on unmount only — empty deps so cleanup doesn't run on every render
-  useEffect(() => {
-    return () => {
-      console.log('[BlendIntroExercise] Cleanup on unmount - stopping everything');
-      aliveRef.current = false;
-      sequenceStartedRef.current = false;  // Allow effect to run again on remount (Strict Mode)
-      stopAll();
-    };
-  }, []);
-
   // Main orchestration effect - reset state AND run sequence (combined to avoid race condition)
+  // Cleanup runs on question change AND unmount, cancelling any in-flight sequence.
   useEffect(() => {
     console.log('[BlendIntroExercise] Question changed, resetting and starting sequence for:', question.id);
 
@@ -165,7 +156,14 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
     runSequence().catch(err => {
       console.error('[BlendIntroExercise] runSequence error:', err);
     });
-  }, [question.id]);
+
+    return () => {
+      console.log('[BlendIntroExercise] Cleanup - stopping sequence for:', question.id);
+      aliveRef.current = false;
+      sequenceStartedRef.current = false;
+      stopAll();
+    };
+  }, [question.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -175,6 +173,7 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
   if (showIndependentPass) {
     return (
       <BuildTheWordExercise
+        embedded
         activity={{
           id: question.id,
           unit: 'blend-intro',
@@ -184,7 +183,6 @@ export const BlendIntroExercise: React.FC<BlendIntroExerciseProps> = ({
           skills: [],
         }}
         onComplete={() => {
-          // All independent passes complete
           onComplete();
         }}
         onBack={onBack}

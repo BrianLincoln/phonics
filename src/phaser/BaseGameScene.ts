@@ -1,25 +1,26 @@
 import Phaser from 'phaser';
-import { Crow } from './Crow';
-import { CrowController } from './CrowController';
+import { Companion } from './Companion';
+import { CompanionController } from './CompanionController';
+import { type CompanionAnimalId } from '../store/profiles';
 import { CLOUD_CONFIGS, spawnClouds } from './sceneUtils';
 
 /**
  * Abstract base for all outdoor game scenes.
- * Owns: sky/hills/ground/sun environment, clouds, crow + controller,
+ * Owns: sky/hills/ground/sun environment, clouds, companion + controller,
  * resize handling, and the shared update loop.
  *
  * Subclasses provide:
  *   - constructor(key)
- *   - create()  — call buildEnvironment(), then their own crow/card setup
+ *   - create()  — call buildEnvironment(), then their own companion/card setup
  *   - Any extra public API (prepareForQuestion, onQuestionAnswered, etc.)
  *
  * Override hillsTextureKey if the scene needs a unique canvas texture key
  * (required when multiple scenes share the same Phaser texture cache).
  */
 export abstract class BaseGameScene extends Phaser.Scene {
-  // Shared crow references — accessible by subclasses
-  protected crow?: Crow;
-  protected crowController?: CrowController;
+  // Shared companion references — accessible by subclasses
+  protected companion?: Companion;
+  protected companionController?: CompanionController;
 
   // Cloud state
   protected clouds: Phaser.GameObjects.Image[] = [];
@@ -48,7 +49,8 @@ export abstract class BaseGameScene extends Phaser.Scene {
   // ── Phaser lifecycle ────────────────────────────────────────────────────────
 
   preload() {
-    this.load.spritesheet('crow', '/src/assets/crow_sprite.png', {
+    const animal = this.getActiveAnimalId();
+    this.load.spritesheet('companion', `/src/assets/${animal}_sprite.png`, {
       frameWidth: 200,
       frameHeight: 200,
     });
@@ -71,9 +73,9 @@ export abstract class BaseGameScene extends Phaser.Scene {
       cloud.x -= this.cloudSpeeds[i] * (delta / 1000);
       if (cloud.x < -130) cloud.x = w + 130;
     });
-    if (this.crow && this.crowController) {
+    if (this.companion && this.companionController) {
       const h = this.cameras.main.height;
-      this.crow.updateShadow(this.crowController.groundY, w * 0.92, h * 0.12);
+      this.companion.updateShadow(this.companionController.groundY, w * 0.92, h * 0.12);
     }
   }
 
@@ -103,21 +105,35 @@ export abstract class BaseGameScene extends Phaser.Scene {
   }
 
   /**
-   * Creates a Crow + CrowController at (x, cam.height * 0.78).
+   * Creates a Companion + CompanionController at (x, cam.height * 0.78).
    * Subclass calls this, then triggers whatever intro animation it needs.
    */
-  protected setupCrow(x: number) {
+  protected setupCompanion(x: number) {
     const cam = this.cameras.main;
-    this.crow = new Crow({
+    this.companion = new Companion({
       scene: this,
       x,
-      y: cam.height * 0.78,
+      y: cam.height * 0.82,
     });
-    this.crow.setScale(0.5);
-    this.crow.setDepth(9);
-    this.crow.setIdle();
+    this.companion.setScale(0.5);
+    this.companion.setDepth(9);
+    this.companion.setIdle();
 
-    this.crowController = new CrowController(this, this.crow);
+    this.companionController = new CompanionController(this, this.companion);
+  }
+
+  private getActiveAnimalId(): CompanionAnimalId {
+    try {
+      const profileId = sessionStorage.getItem('phonics_active_profile_id');
+      if (!profileId) return 'crow';
+      const raw = localStorage.getItem('phonics_profiles');
+      if (!raw) return 'crow';
+      const profiles: Array<{ id: string; companionAnimal?: string }> = JSON.parse(raw);
+      const profile = profiles.find(p => p.id === profileId);
+      return (profile?.companionAnimal as CompanionAnimalId) ?? 'crow';
+    } catch {
+      return 'crow';
+    }
   }
 
   // ── Private environment drawing ─────────────────────────────────────────────

@@ -1,129 +1,79 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PhaserGame } from '../PhaserGame';
-import { BuildTheWordTiles, TileState } from './BuildTheWord/BuildTheWordTiles';
-import { generateBlendWord } from '../../data/blendEndlessMode';
-import { usePlayAudio, useStopAllAudio } from '../../utils/audioUtils';
+import { BuildTheWordTiles } from './BuildTheWord/BuildTheWordTiles';
+import { generateBlendWordForLetters } from '../../data/blendEndlessMode';
+import type { BuildTheWordItem } from '../../data/activities';
 import { useAudioUnlocked } from '../../context/AudioManagerContext';
 import { AudioStartOverlay } from '../AudioStartOverlay';
+import { useProfile } from '../../context/ProfileContext';
+import { storageAdapter } from '../../store/storage';
+import { curriculum } from '../../data/curriculum';
+import { useBlendTapHandler } from '../../hooks/useBlendTapHandler';
 import './MultipleChoice/MultipleChoiceActivity.css';
-
-const PROMPT_FILE = '/audio/prompts/tap-the-letters-to-build-the-word.wav';
-
-const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
-
-function makeInitialTileStates(count: number): TileState[] {
-  return Array.from({ length: count }, (_, i) => (i === 0 ? 'active' : 'untapped'));
-}
 
 export const BlendEndlessActivity: React.FC = () => {
   const navigate = useNavigate();
   const audioUnlocked = useAudioUnlocked();
-  const playAudio = usePlayAudio();
-  const stopAll = useStopAllAudio();
   const phaserRef = useRef<any>(null);
+  const { activeProfile } = useProfile();
 
-  const [item, setItem] = useState(() => generateBlendWord());
-  const [nextTapIndex, setNextTapIndex] = useState(0);
-  const [tileStates, setTileStates] = useState<TileState[]>(() =>
-    makeInitialTileStates(generateBlendWord().letters.length)
-  );
-  const [promptPlaying, setPromptPlaying] = useState(true);
+  const [availableLetters, setAvailableLetters] = useState<Set<string> | null>(null);
+  const [item, setItem] = useState<BuildTheWordItem | null>(null);
   const [wordsBuilt, setWordsBuilt] = useState(0);
 
-  // Play intro sequence whenever item changes
+  // Load map progress and derive the set of letters the user has completed
   useEffect(() => {
-    stopAll();
-    setPromptPlaying(true);
-    let alive = true;
-
-    async function runIntro() {
-      await playAudio(PROMPT_FILE, true).catch(() => {});
-      if (!alive) return;
-      await playAudio(item.wordAudioFile, true).catch(() => {});
-      if (!alive) return;
-      setPromptPlaying(false);
-    }
-
-    runIntro();
-
-    return () => {
-      alive = false;
-      stopAll();
-    };
-  }, [item]);
-
-  const loadNextWord = useCallback(() => {
-    const next = generateBlendWord();
-    setItem(next);
-    setNextTapIndex(0);
-    setTileStates(makeInitialTileStates(next.letters.length));
-  }, []);
-
-  const handleLetterTap = useCallback(async (index: number) => {
-    if (promptPlaying || tileStates[index] === 'tapped') return;
-
-    if (index === nextTapIndex) {
-      // Correct tap
-      const isLastLetter = index === item.letters.length - 1;
-
-      // Await the phoneme on the last tap so the word doesn't play over it
-      if (isLastLetter) {
-        await playAudio(item.phonemeFiles[index], true).catch(() => {});
-      } else {
-        playAudio(item.phonemeFiles[index]).catch(() => {});
+    if (!activeProfile) return;
+    storageAdapter.getMapProgress(activeProfile.id).then(progress => {
+      const completed = new Set<string>();
+      for (const node of curriculum) {
+        if (node.type === 'grapheme' && progress[node.id]?.status === 'complete') {
+          completed.add(node.focus);
+        }
       }
+      setAvailableLetters(completed);
+    });
+  }, [activeProfile]);
 
-      const newStates = [...tileStates];
-      newStates[index] = 'tapped';
-      if (index + 1 < newStates.length) {
-        newStates[index + 1] = 'active';
-      }
-      setTileStates(newStates);
+  // Pick the first word once letters are loaded
+  useEffect(() => {
+    if (availableLetters === null) return;
+    setItem(generateBlendWordForLetters(availableLetters));
+  }, [availableLetters]);
 
-      phaserRef.current?.onCorrectTap?.();
+  const loadNextWord = () => {
+    if (!availableLetters) return;
+    setWordsBuilt(n => n + 1);
+    setItem(generateBlendWordForLetters(availableLetters));
+  };
 
-      if (isLastLetter) {
-        // Word complete
-        setWordsBuilt(n => n + 1);
-        await delay(200);
-        await playAudio(item.wordAudioFile, true).catch(() => {});
-        await delay(800);
-        loadNextWord();
-      } else {
-        setNextTapIndex(index + 1);
-      }
-    } else {
-      // Wrong tap — play the phoneme they tapped
-      playAudio(item.phonemeFiles[index]).catch(() => {});
-
-      const newStates = [...tileStates];
-      newStates[index] = 'wrong';
-      setTileStates(newStates);
-
-      phaserRef.current?.onWrongTap?.();
-
-      setTimeout(() => {
-        setTileStates(prev => {
-          const reset = [...prev];
-          reset[index] = 'untapped';
-          return reset;
-        });
-      }, 400);
-    }
-  }, [promptPlaying, tileStates, nextTapIndex, item, loadNextWord, playAudio]);
+  const { tileStates, promptPlaying, handleLetterTap } = useBlendTapHandler({
+    item,
+    onComplete: loadNextWord,
+    onCorrectTap: () => phaserRef.current?.onCorrectTap?.(),
+    onWrongTap:   () => phaserRef.current?.onWrongTap?.(),
+  });
 
   useEffect(() => {
-    return () => {
-      phaserRef.current?.scene?.stop?.();
-    };
+    return () => { phaserRef.current?.scene?.stop?.(); };
   }, []);
+
+  if (!item) {
+    return (
+      <div className="activity-root">
+        <div className="activity-header">
+          <button className="activity-back-btn" onClick={() => navigate('/menu')}>⬅ Back</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="activity-root">
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
+        <button className="activity-back-btn" onClick={() => navigate('/menu')}>⬅ Back</button>
         <span className="endless-score">{wordsBuilt} built</span>
       </div>
       <div className="activity-stacked-layout">

@@ -501,49 +501,49 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
       console.log('[LessonActivity] Unit found:', unit?.id);
       const withLetterIntro = async () => {
         console.log('[LessonActivity] withLetterIntro started');
-        if (!alive) {
+        if (!aliveRef.current) {
           console.log('[LessonActivity] Component unmounted, aborting');
           return;
         }
         await playAudio(INTRO_PROMPTS.thisIs, true).catch((err) => {
           console.error('[LessonActivity] Failed to play thisIs:', err);
         });
-        if (!alive) return;
+        if (!aliveRef.current) return;
         if (unit?.nameAudio) await playAudio(unit.nameAudio, true).catch((err) => {
           console.error('[LessonActivity] Failed to play nameAudio:', err);
         });
-        if (!alive) return;
+        if (!aliveRef.current) return;
         await playAudio(INTRO_PROMPTS.makesSound, true).catch((err) => {
           console.error('[LessonActivity] Failed to play makesSound:', err);
         });
-        if (!alive) return;
+        if (!aliveRef.current) return;
         if (unit?.soundAudio) await playAudio(unit.soundAudio, true).catch((err) => {
           console.error('[LessonActivity] Failed to play soundAudio:', err);
         });
-        if (!alive) return;
+        if (!aliveRef.current) return;
         if (unit?.likeInWords?.length) await delay(700);
-        if (!alive) return;
+        if (!aliveRef.current) return;
         if (unit?.likeInWords?.length) {
           await playAudio(INTRO_PROMPTS.likeIn, true).catch((err) => {
             console.error('[LessonActivity] Failed to play likeIn:', err);
           });
-          if (!alive) return;
+          if (!aliveRef.current) return;
           for (let i = 0; i < unit.likeInWords.length; i++) {
             await playAudio(unit.likeInWords[i], true).catch((err) => {
               console.error('[LessonActivity] Failed to play likeInWord:', err);
             });
-            if (!alive) return;
+            if (!aliveRef.current) return;
             if (i < unit.likeInWords.length - 1) {
               const andFile = INTRO_PROMPTS.and[Math.min(i, INTRO_PROMPTS.and.length - 1)];
               await playAudio(andFile, true).catch((err) => {
                 console.error('[LessonActivity] Failed to play and:', err);
               });
-              if (!alive) return;
+              if (!aliveRef.current) return;
             }
           }
         }
         console.log('[LessonActivity] Letter intro audio complete, advancing...');
-        if (alive) {
+        if (aliveRef.current) {
           console.log('[LessonActivity] Calling advance(true) for letter-intro');
           advance(true);
         } else {

@@ -7,20 +7,20 @@ export class EndlessScene extends BaseGameScene {
 
   create() {
     this.buildEnvironment();
-    this.buildCrow();
+    this.buildCompanion();
   }
 
-  private buildCrow() {
+  private buildCompanion() {
     const cam = this.cameras.main;
-    this.setupCrow(cam.centerX - 100);
-    this.crowController!.playIntroWalkIn();
+    this.setupCompanion(cam.centerX - 100);
+    this.companionController!.playIntroWalkIn();
   }
 
   onQuestionAnswered(isCorrect: boolean, onDone?: () => void) {
     if (isCorrect) {
-      this.crowController?.hop(onDone);
+      this.companionController?.hop(onDone);
     } else {
-      this.crowController?.shake(onDone);
+      this.companionController?.shake(onDone);
     }
   }
 }

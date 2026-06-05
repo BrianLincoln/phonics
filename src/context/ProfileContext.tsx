@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   type Profile,
+  type CompanionAnimalId,
   getProfiles,
   createProfile,
   updateProfile as updateProfileInStore,
@@ -15,8 +16,8 @@ interface ProfileContextValue {
   activeProfile: Profile | null;
   selectProfile: (profile: Profile) => void;
   switchLearner: () => void;
-  addProfile: (name: string, emoji: string, color: string) => Promise<Profile>;
-  updateProfile: (profileId: string, updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor'>>) => Promise<Profile>;
+  addProfile: (name: string, emoji: string, color: string, companionAnimal?: CompanionAnimalId) => Promise<Profile>;
+  updateProfile: (profileId: string, updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor' | 'companionAnimal'>>) => Promise<Profile>;
   removeProfile: (profileId: string) => Promise<void>;
   isLoaded: boolean;
 }
@@ -50,15 +51,15 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     setActiveProfile(null);
   }
 
-  async function addProfile(name: string, emoji: string, color: string): Promise<Profile> {
-    const profile = await createProfile(name, emoji, color);
+  async function addProfile(name: string, emoji: string, color: string, companionAnimal?: CompanionAnimalId): Promise<Profile> {
+    const profile = await createProfile(name, emoji, color, companionAnimal);
     setProfiles(prev => [...prev, profile]);
     return profile;
   }
 
   async function updateProfile(
     profileId: string,
-    updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor'>>
+    updates: Partial<Pick<Profile, 'name' | 'avatarEmoji' | 'avatarColor' | 'companionAnimal'>>
   ): Promise<Profile> {
     const updated = await updateProfileInStore(profileId, updates);
     setProfiles(prev => prev.map(p => p.id === profileId ? updated : p));

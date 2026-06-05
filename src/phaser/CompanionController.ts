@@ -1,12 +1,13 @@
-
-
 import Phaser from 'phaser';
-import { Crow } from './Crow';
+import { Companion } from './Companion';
 
-export class CrowController {
+export class CompanionController {
   private scene: Phaser.Scene;
-  private crow: Crow;
-  readonly groundY: number;
+  private companion: Companion;
+
+  get groundY(): number {
+    return this.scene.cameras.main.height * 0.82;
+  }
 
   private margin = 30;
   private walkSpeed = 100;
@@ -18,10 +19,9 @@ export class CrowController {
   private hoppingInPlace = false;
   private putzBounds?: Phaser.Geom.Rectangle;
 
-  constructor(scene: Phaser.Scene, crow: Crow) {
+  constructor(scene: Phaser.Scene, companion: Companion) {
     this.scene = scene;
-    this.crow = crow;
-    this.groundY = scene.cameras.main.height * 0.78;
+    this.companion = companion;
   }
 
   // ── Idle bob ────────────────────────────────────────────────────────────────
@@ -35,9 +35,9 @@ export class CrowController {
     const delay = Phaser.Math.Between(3000, 5000);
     this.idleBobTimer = this.scene.time.delayedCall(delay, () => {
       this.idleBobTimer = undefined;
-      const baseY = this.crow.y;
+      const baseY = this.companion.y;
       this.idleBobActiveTween = this.scene.tweens.add({
-        targets: this.crow,
+        targets: this.companion,
         y: baseY - 9,
         duration: 70,
         yoyo: true,
@@ -65,7 +65,7 @@ export class CrowController {
 
   squishOnLand(cb: () => void) {
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       scaleX: 0.57,
       scaleY: 0.44,
       duration: 35,
@@ -81,14 +81,14 @@ export class CrowController {
     this.stopIdleBob();
     this.walkFrame = 1;
     this.walkAnimTimer = 0;
-    this.crow.setFrame(this.walkFrame);
+    this.companion.setAnimalFrame(this.walkFrame);
   }
 
   private advanceWalkAnimation(deltaMs: number) {
     this.walkAnimTimer += deltaMs;
     if (this.walkAnimTimer >= 150) {
       this.walkFrame = this.walkFrame === 3 ? 1 : ((this.walkFrame + 1) as 1 | 2 | 3);
-      this.crow.setFrame(this.walkFrame);
+      this.companion.setAnimalFrame(this.walkFrame);
       this.walkAnimTimer = 0;
     }
   }
@@ -99,35 +99,35 @@ export class CrowController {
     card: Phaser.GameObjects.Container,
     targetX: number,
     cardY: number,
-    crowY: number,
     onDone: () => void
   ) {
     const cam = this.scene.cameras.main;
-    const crowOffset = 90;
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing('left');
-    this.crow.setPosition(cam.width + 100, crowY);
+    const companionOffset = 90;
+    const companionY = Math.max(cardY + 80, cam.height * 0.65);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing('left');
+    this.companion.setPosition(cam.width + 100, companionY);
     card.setVisible(true);
-    card.setPosition(cam.width + 100 - crowOffset, cardY);
+    card.setPosition(cam.width + 100 - companionOffset, cardY);
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
-      x: targetX + crowOffset,
-      y: crowY,
+      targets: this.companion,
+      x: targetX + companionOffset,
+      y: companionY,
       duration: 1200,
       ease: 'Quad.easeOut',
       onUpdate: () => {
         this.advanceWalkAnimation(16);
-        card.x = this.crow.x - crowOffset;
+        card.x = this.companion.x - companionOffset;
         card.y = cardY;
       },
       onComplete: () => {
-        this.crow.setX(targetX + crowOffset);
-        this.crow.setY(crowY);
+        this.companion.setX(targetX + companionOffset);
+        this.companion.setY(companionY);
         card.setX(targetX);
         card.setY(cardY);
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
         if (onDone) onDone();
       },
@@ -141,49 +141,44 @@ export class CrowController {
     onDone?: () => void
   ) {
     const cam = this.scene.cameras.main;
-    // Crow's right edge touches card's left edge:
-    // card half-width (150) + crow half-width at scale 0.5 (50) = 200px offset
-    const crowOffset = 200; // card is 200px to crow's right
-    const dropX = cardCX - crowOffset; // crow x when card reaches center
+    const companionOffset = 200;
+    const dropX = cardCX - companionOffset;
+    // Stay close to the card (pushing it), but never above the visual ground horizon.
+    const companionY = Math.max(cardCY + 80, cam.height * 0.65);
 
-    // Crow y: sit just below the card
-    const crowY = cardCY + 80;
-
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing('right');
-    this.crow.setPosition(-400, crowY);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing('right');
+    this.companion.setPosition(-400, companionY);
     card.setVisible(true);
-    card.setPosition(-400 + crowOffset, cardCY);
+    card.setPosition(-400 + companionOffset, cardCY);
 
     this.startWalking();
 
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: dropX,
       duration: 1400,
       ease: 'Quad.easeOut',
       onUpdate: () => {
         this.advanceWalkAnimation(16);
-        card.x = this.crow.x + crowOffset;
+        card.x = this.companion.x + companionOffset;
       },
       onComplete: () => {
         card.x = cardCX;
 
-        // Card is placed — fire callback immediately so audio can start
         if (onDone) onDone();
 
-        // Crow walks away to idle position (bottom-right), drifting down to groundY
         this.scene.tweens.add({
-          targets: this.crow,
+          targets: this.companion,
           x: cam.width - 100,
           y: this.groundY,
           duration: 1800,
           ease: 'Sine.easeOut',
           onUpdate: () => { this.advanceWalkAnimation(16); },
           onComplete: () => {
-            this.crow.setFacing('left');
-            this.crow.setIdle();
+            this.companion.setFacing('left');
+            this.companion.setIdle();
             this.startIdleBob();
           },
         });
@@ -193,20 +188,20 @@ export class CrowController {
 
   playReEnterFromRightWithCallback(onDone?: () => void) {
     const cam = this.scene.cameras.main;
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing('left');
-    this.crow.setPosition(cam.width + 100, this.groundY);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing('left');
+    this.companion.setPosition(cam.width + 100, this.groundY);
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: cam.width - 100,
       y: this.groundY,
       duration: 3000,
       ease: 'Sine.easeOut',
       onUpdate: () => { this.advanceWalkAnimation(16); },
       onComplete: () => {
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
         if (onDone) onDone();
       },
@@ -215,20 +210,20 @@ export class CrowController {
 
   public playReEnterFromRight() {
     const cam = this.scene.cameras.main;
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing('left');
-    this.crow.setPosition(cam.width + 100, this.groundY);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing('left');
+    this.companion.setPosition(cam.width + 100, this.groundY);
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: cam.width - 100,
       y: this.groundY,
       duration: 3000,
       ease: 'Sine.easeOut',
       onUpdate: () => { this.advanceWalkAnimation(16); },
       onComplete: () => {
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
       },
     });
@@ -240,21 +235,21 @@ export class CrowController {
 
   public walkInFromLeft(onDone?: () => void) {
     const cam = this.scene.cameras.main;
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing('right');
-    this.crow.setPosition(-100, this.groundY);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing('right');
+    this.companion.setPosition(-100, this.groundY);
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: cam.width - 100,
       y: this.groundY,
       duration: 3000,
       ease: 'Sine.easeOut',
       onUpdate: () => { this.advanceWalkAnimation(16); },
       onComplete: () => {
-        this.crow.setFacing('left');
-        this.crow.setIdle();
+        this.companion.setFacing('left');
+        this.companion.setIdle();
         this.startIdleBob();
         onDone?.();
       },
@@ -262,14 +257,14 @@ export class CrowController {
   }
 
   hop(onDone?: () => void) {
-    if (!this.crow.visible) {
+    if (!this.companion.visible) {
       if (onDone) onDone();
       return;
     }
     this.stopIdleBob();
 
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       y: '-=25',
       duration: 100,
       yoyo: true,
@@ -277,7 +272,7 @@ export class CrowController {
       onComplete: () => {
         this.squishOnLand(() => {
           this.scene.tweens.add({
-            targets: this.crow,
+            targets: this.companion,
             y: '-=25',
             duration: 100,
             yoyo: true,
@@ -294,15 +289,15 @@ export class CrowController {
   }
 
   shake(onDone?: () => void) {
-    if (!this.crow.visible) {
+    if (!this.companion.visible) {
       onDone?.();
       return;
     }
     this.stopIdleBob();
     this.scene.time.delayedCall(300, () => {
-      this.crow.setFrame(5);
+      this.companion.setAnimalFrame(5);
       this.scene.time.delayedCall(1000, () => {
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
         onDone?.();
       });
@@ -315,20 +310,20 @@ export class CrowController {
     const idleX = cam.width - 100;
     const idleY = this.groundY;
     if (x === idleX && y === idleY) {
-      this.crow.setFacing('left');
+      this.companion.setFacing('left');
     } else {
-      this.crow.setFacing(x >= this.crow.x ? 'right' : 'left');
+      this.companion.setFacing(x >= this.companion.x ? 'right' : 'left');
     }
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x,
       y,
       duration: 500,
       ease: 'Sine.easeInOut',
       onComplete: () => {
         this.hop(() => {
-          if (x === idleX && y === idleY) this.crow.setFacing('left');
-          this.crow.setIdle();
+          if (x === idleX && y === idleY) this.companion.setFacing('left');
+          this.companion.setIdle();
           this.startIdleBob();
           if (onDone) onDone();
         });
@@ -339,7 +334,7 @@ export class CrowController {
   startHoppingInPlace() {
     if (this.hoppingInPlace) return;
     this.hoppingInPlace = true;
-    this.crow.setFacing('left');
+    this.companion.setFacing('left');
     const hopLoop = () => {
       if (!this.hoppingInPlace) return;
       this.hop(() => {
@@ -356,22 +351,22 @@ export class CrowController {
   }
 
   walkToLeftOfWordAndLook(wordX: number, wordY: number, onDone: () => void) {
-    const targetX = wordX - 200; // crow right edge flush with card left edge
-    const targetY = wordY + 80;  // sit just below card centre, matching carry-in posture
-    const dx = targetX - this.crow.x;
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
-    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    const targetX = wordX - 200;
+    const targetY = wordY + 80;
+    const dx = targetX - this.companion.x;
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
+    this.companion.setFacing(dx >= 0 ? 'right' : 'left');
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: targetX,
       y: targetY,
       duration: 900,
       ease: 'Sine.easeInOut',
       onUpdate: () => { this.advanceWalkAnimation(16); },
       onComplete: () => {
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
         onDone();
       },
@@ -380,24 +375,22 @@ export class CrowController {
 
   walkWordOffRight(card: Phaser.GameObjects.Container, onDone: () => void) {
     const cam = this.scene.cameras.main;
-    // crow offset from card: crow is 200px to the left of card centre (matching carry-in)
-    const crowOffset = 200;
-    // Walk crow until it is fully past the right edge; card drags behind at +crowOffset
-    const targetCrowX = cam.width + crowOffset + 80;
+    const companionOffset = 200;
+    const targetCompanionX = cam.width + companionOffset + 80;
     this.stopIdleBob();
-    this.crow.setFacing('right');
+    this.companion.setFacing('right');
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
-      x: targetCrowX,
+      targets: this.companion,
+      x: targetCompanionX,
       duration: 1200,
       ease: 'Quad.easeIn',
       onUpdate: () => {
         this.advanceWalkAnimation(16);
-        card.x = this.crow.x + crowOffset;
+        card.x = this.companion.x + companionOffset;
       },
       onComplete: () => {
-        this.crow.setVisible(false);
+        this.companion.setVisible(false);
         card.setVisible(false);
         onDone();
       },
@@ -406,89 +399,84 @@ export class CrowController {
 
   walkOffRightFast(targetX: number, y: number, onDone?: () => void) {
     this.stopIdleBob();
-    this.crow.setFacing('right');
+    this.companion.setFacing('right');
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: targetX,
       y: y,
       duration: 350,
       ease: 'Quad.easeIn',
       onUpdate: () => { this.advanceWalkAnimation(16); },
       onComplete: () => {
-        this.crow.setVisible(false);
+        this.companion.setVisible(false);
         if (onDone) onDone();
       },
     });
   }
 
-  // Walk quickly to a position (no tile carried), then call onDone.
   quickWalkTo(x: number, y: number, speed: number, onDone?: () => void) {
     this.stopIdleBob();
-    this.scene.tweens.killTweensOf(this.crow);
-    const dx = x - this.crow.x;
+    this.scene.tweens.killTweensOf(this.companion);
+    const dx = x - this.companion.x;
     const distance = Math.abs(dx);
     if (distance < 5) { onDone?.(); return; }
     const duration = (distance / speed) * 1000;
-    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.companion.setFacing(dx >= 0 ? 'right' : 'left');
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x, y,
       duration,
       ease: 'Sine.easeInOut',
       onUpdate: () => { this.advanceWalkAnimation(16); },
-      onComplete: () => { this.crow.setIdle(); onDone?.(); },
+      onComplete: () => { this.companion.setIdle(); onDone?.(); },
     });
   }
 
-  // Walk to (x, y) over exactly `duration` ms, synced with a CSS animation on a tile.
   walkInDuration(x: number, y: number, duration: number, onDone?: () => void) {
     this.stopIdleBob();
-    this.scene.tweens.killTweensOf(this.crow);
-    const dx = x - this.crow.x;
+    this.scene.tweens.killTweensOf(this.companion);
+    const dx = x - this.companion.x;
     if (Math.abs(dx) < 2) { this.squishOnLand(() => onDone?.()); return; }
-    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.companion.setFacing(dx >= 0 ? 'right' : 'left');
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x, y,
       duration,
       ease: 'Sine.easeInOut',
       onUpdate: () => { this.advanceWalkAnimation(16); },
-      onComplete: () => { this.crow.setIdle(); this.squishOnLand(() => onDone?.()); },
+      onComplete: () => { this.companion.setIdle(); this.squishOnLand(() => onDone?.()); },
     });
   }
 
   playMischiefFlap(onDone?: () => void) {
     this.stopIdleBob();
-    this.scene.tweens.killTweensOf(this.crow);
+    this.scene.tweens.killTweensOf(this.companion);
 
     const cam = this.scene.cameras.main;
     const idleX = cam.width - 100;
-    // Snap to idle position if crow is off-screen or far from idle
-    if (!this.crow.visible || Math.abs(this.crow.x - idleX) > cam.width * 0.25) {
-      this.crow.setPosition(idleX, this.groundY);
+    if (!this.companion.visible || Math.abs(this.companion.x - idleX) > cam.width * 0.25) {
+      this.companion.setPosition(idleX, this.groundY);
     }
-    this.crow.setVisible(true);
-    this.crow.setFacing('left');
-    this.crow.setDepth(9);
+    this.companion.setVisible(true);
+    this.companion.setFacing('left');
+    this.companion.setDepth(9);
 
-    // Rapidly cycle walk frames to simulate frantic wing flapping
     const flapSeq: Array<1 | 2 | 3> = [1, 2, 3, 2, 1, 2, 3, 2, 1, 2];
     let flapIdx = 0;
     const frameTimer = this.scene.time.addEvent({
       delay: 65,
       repeat: flapSeq.length - 1,
       callback: () => {
-        this.crow.setFrame(flapSeq[flapIdx % flapSeq.length]);
+        this.companion.setAnimalFrame(flapSeq[flapIdx % flapSeq.length]);
         flapIdx++;
       },
     });
 
-    // Rapid excited bouncing — 4 quick yoyo hops = ~640ms total
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       y: '-=20',
       duration: 80,
       yoyo: true,
@@ -496,7 +484,7 @@ export class CrowController {
       ease: 'Quad.easeOut',
       onComplete: () => {
         frameTimer.remove();
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
         onDone?.();
       },
@@ -504,14 +492,14 @@ export class CrowController {
   }
 
   stopPutzing() {
-    this.scene.tweens.killTweensOf(this.crow);
-    this.crow.setIdle();
+    this.scene.tweens.killTweensOf(this.companion);
+    this.companion.setIdle();
   }
 
   // Deprecated — kept for potential future use
   startPutzing() {
-    this.crow.setVisible(true);
-    this.crow.setDepth(9);
+    this.companion.setVisible(true);
+    this.companion.setDepth(9);
     this.walkToRandomPoint();
   }
 
@@ -530,21 +518,21 @@ export class CrowController {
     const b = this.putzBounds!;
     const tx = Phaser.Math.Between(b.left, b.right);
     const ty = Phaser.Math.Between(b.top, b.bottom);
-    const dx = tx - this.crow.x;
-    const dy = ty - this.crow.y;
+    const dx = tx - this.companion.x;
+    const dy = ty - this.companion.y;
     const distance = Math.hypot(dx, dy);
     const duration = (distance / this.walkSpeed) * 1000;
-    this.crow.setFacing(dx >= 0 ? 'right' : 'left');
+    this.companion.setFacing(dx >= 0 ? 'right' : 'left');
     this.startWalking();
     this.scene.tweens.add({
-      targets: this.crow,
+      targets: this.companion,
       x: tx,
       y: ty,
       duration,
       ease: 'Sine.easeInOut',
       onUpdate: () => this.advanceWalkAnimation(16),
       onComplete: () => {
-        this.crow.setIdle();
+        this.companion.setIdle();
         this.startIdleBob();
         this.scene.time.delayedCall(3000, () => this.walkToRandomPoint());
       },

@@ -5,12 +5,21 @@ import { usePlayAudio } from '../utils/audioUtils';
 import { CLICK_SOUND } from '../utils/clickSound';
 import { useProfile } from '../context/ProfileContext';
 import { ProfileAvatar } from '../components/ProfileAvatar';
+import { storageAdapter } from '../store/storage';
 import './MenuView.css';
 
 const MenuView: React.FC = () => {
   const navigate = useNavigate();
   const playAudio = usePlayAudio();
   const { activeProfile, switchLearner } = useProfile();
+  const [blendingUnlocked, setBlendingUnlocked] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!activeProfile) return;
+    storageAdapter.getMapProgress(activeProfile.id).then(progress => {
+      setBlendingUnlocked(progress['node-cp1']?.status === 'complete');
+    });
+  }, [activeProfile]);
 
   const click = () => playAudio(CLICK_SOUND).catch(() => {});
 
@@ -39,7 +48,9 @@ const MenuView: React.FC = () => {
           ▶ Play
         </button>
         <button className="menu-btn" onClick={async () => { await click(); navigate('/endless'); }}>🔤 Letter Sounds</button>
-        <button className="menu-btn" onClick={async () => { await click(); navigate('/endless-blend'); }}>🧩 Blending</button>
+        {blendingUnlocked && (
+          <button className="menu-btn" onClick={async () => { await click(); navigate('/endless-blend'); }}>🧩 Blending</button>
+        )}
         <button className="menu-btn" onClick={async () => { await click(); navigate('/endless-mixed'); }}>✨ All Skills</button>
         <button className="menu-btn" onClick={async () => { await click(); navigate('/units'); }}>Units</button>
         <button className="menu-btn" onClick={async () => { await click(); navigate('/progress'); }}>Progress</button>

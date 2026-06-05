@@ -176,7 +176,7 @@ export const activities: Activity[] = [
       { id: 'o4', kind: 'letter-sound', options: ['o', 'i', 'u'], correctAnswer: 'o', phonemeFile: '/audio/phonics-units/o-sound.wav', promptFile: '/audio/prompts/which-letter-makes-the-sound.wav', skills: [SKILL_LETTER_SOUND_MAPPING] },
       { id: 'o5', kind: 'word-start', options: ['octopus', 'ant', 'sun'], correctAnswer: 'octopus', phonemeFile: '/audio/phonics-units/o-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
       { id: 'o6', kind: 'word-start', options: ['otter', 'snake', 'map'], correctAnswer: 'otter', phonemeFile: '/audio/phonics-units/o-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
-      { id: 'o7', kind: 'word-start', options: ['cat', 'ox', 'pin'], correctAnswer: 'ox', phonemeFile: '/audio/phonics-units/o-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
+      { id: 'o7', kind: 'word-start', options: ['cat', 'ostrich', 'pin'], correctAnswer: 'ostrich', phonemeFile: '/audio/phonics-units/o-sound.wav', promptFile: '/audio/prompts/which-word-starts-with-the-sound.wav', skills: [SKILL_PHONEME_IDENTIFICATION] },
     ],
   },
   {
