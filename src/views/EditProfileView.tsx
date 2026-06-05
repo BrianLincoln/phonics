@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AVATAR_EMOJIS, AVATAR_COLORS, COMPANION_ANIMALS, type CompanionAnimalId } from '../store/profiles';
+import { ANIMAL_SPRITE_URLS } from '../assets/spriteUrls';
 
 const PASTEL_COLORS  = AVATAR_COLORS.slice(0, 8);
 const VIBRANT_COLORS = AVATAR_COLORS.slice(8);
@@ -47,7 +48,7 @@ export function EditProfileView() {
       avatarColor: form.color,
       companionAnimal: form.animal,
     });
-    navigate('/');
+    navigate('/map');
   }
 
   return (
@@ -130,7 +131,7 @@ export function EditProfileView() {
               >
                 <div
                   className="new-profile__animal-sprite"
-                  style={{ backgroundImage: `url('/src/assets/${animal.id}_sprite.png')` }}
+                  style={{ backgroundImage: `url('${ANIMAL_SPRITE_URLS[animal.id]}')` }}
                 />
                 {animal.label}
               </button>
@@ -148,9 +149,17 @@ export function EditProfileView() {
         <button
           className="new-profile__back"
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/map')}
         >
           Cancel
+        </button>
+
+        <button
+          className="new-profile__switch-link"
+          type="button"
+          onClick={() => navigate('/')}
+        >
+          Switch learner
         </button>
 
         <div className="edit-profile__delete-zone">

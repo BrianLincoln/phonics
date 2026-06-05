@@ -6,7 +6,7 @@ export class SuccessScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio('success', '/audio/system/success.wav');
+    this.load.audio('success', `${import.meta.env.BASE_URL}audio/system/success.wav`);
   }
 
   create(data: { onComplete?: () => void }) {

@@ -40,6 +40,7 @@ export function createLeafTexture(scene: Phaser.Scene): void {
 import Phaser from 'phaser';
 import { playQuizAudioSequence } from '../helpers/quizAudioOrchestrator';
 import { ActivityType, LeafParadeActivityType } from '../data/activities';
+import { antSprite, leafSprite } from '../assets/spriteUrls';
 
 export interface LeafParadeSceneData {
   activity: LeafParadeActivityType;
@@ -74,14 +75,14 @@ export class AntLeafScene extends Phaser.Scene {
   preload() {
     // Load ant sprite (3 frames, 100x100px) only if not already loaded
     if (!this.textures.exists('ant')) {
-      this.load.spritesheet('ant', '/src/assets/ant_sprite.png', {
+      this.load.spritesheet('ant', antSprite, {
         frameWidth: 100,
         frameHeight: 100,
       });
     }
     // Load leaf image only if not already loaded
     if (!this.textures.exists('leaf')) {
-      this.load.image('leaf', '/src/assets/leaf2.png');
+      this.load.image('leaf', leafSprite);
     }
   }
 

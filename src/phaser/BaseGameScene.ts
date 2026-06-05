@@ -3,6 +3,7 @@ import { Companion } from './Companion';
 import { CompanionController } from './CompanionController';
 import { type CompanionAnimalId } from '../store/profiles';
 import { CLOUD_CONFIGS, spawnClouds } from './sceneUtils';
+import { ANIMAL_SPRITE_URLS } from '../assets/spriteUrls';
 
 /**
  * Abstract base for all outdoor game scenes.
@@ -50,7 +51,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
 
   preload() {
     const animal = this.getActiveAnimalId();
-    this.load.spritesheet('companion', `/src/assets/${animal}_sprite.png`, {
+    this.load.spritesheet('companion', ANIMAL_SPRITE_URLS[animal], {
       frameWidth: 200,
       frameHeight: 200,
     });

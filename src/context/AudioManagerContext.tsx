@@ -39,6 +39,13 @@ export function useAudioUnlocked(): boolean {
 }
 // --------------------------------------------
 
+const BASE_URL = import.meta.env.BASE_URL as string;
+
+function resolveSrc(src: string): string {
+  if (src.startsWith('/')) return BASE_URL + src.slice(1);
+  return src;
+}
+
 class AudioManager {
   private playing = new Set<HTMLAudioElement>();
   private pendingResolvers = new Map<HTMLAudioElement, () => void>();
@@ -54,7 +61,7 @@ class AudioManager {
   }
 
   async play(src: string): Promise<HTMLAudioElement> {
-    const audio = this.track(new Audio(src));
+    const audio = this.track(new Audio(resolveSrc(src)));
     await audio.play().catch(() => this.playing.delete(audio));
     return audio;
   }
@@ -78,7 +85,7 @@ class AudioManager {
     }
 
     return new Promise((resolve, reject) => {
-      const audio = this.track(new Audio(src));
+      const audio = this.track(new Audio(resolveSrc(src)));
       const cleanup = () => {
         this.pendingResolvers.delete(audio);
         resolve(audio);

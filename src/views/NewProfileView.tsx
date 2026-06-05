@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AVATAR_EMOJIS, AVATAR_COLORS, COMPANION_ANIMALS, type CompanionAnimalId } from '../store/profiles';
+import { ANIMAL_SPRITE_URLS } from '../assets/spriteUrls';
 
 const PASTEL_COLORS  = AVATAR_COLORS.slice(0, 8);
 const VIBRANT_COLORS = AVATAR_COLORS.slice(8);
@@ -129,7 +130,7 @@ export function NewProfileView() {
                 >
                   <div
                     className="new-profile__animal-sprite"
-                    style={{ backgroundImage: `url('/src/assets/${animal.id}_sprite.png')` }}
+                    style={{ backgroundImage: `url('${ANIMAL_SPRITE_URLS[animal.id]}')` }}
                   />
                   {animal.label}
                 </button>
