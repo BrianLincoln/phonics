@@ -35,7 +35,7 @@ export const units: Unit[] = [
   { id: 'i', name: 'Ii', nameAudio: '/audio/phonics-units/i-name.wav', soundAudio: '/audio/phonics-units/i-sound.wav', likeInWords: ['/audio/words/insect.wav', '/audio/words/itch.wav'] },
   { id: 'o', name: 'Oo', nameAudio: '/audio/phonics-units/o-name.wav', soundAudio: '/audio/phonics-units/o-sound.wav', likeInWords: ['/audio/words/octopus.wav', '/audio/words/otter.wav', '/audio/words/ostrich.wav'] },
   { id: 'u', name: 'Uu', nameAudio: '/audio/phonics-units/u-name.wav', soundAudio: '/audio/phonics-units/u-sound.wav', likeInWords: ['/audio/words/up.wav', '/audio/words/us.wav'] },
-  { id: 'e', name: 'Ee', nameAudio: '/audio/phonics-units/e-name.wav', soundAudio: '/audio/phonics-units/e-sound.wav', likeInWords: ['/audio/words/bed.wav', '/audio/words/red.wav', '/audio/words/ten.wav'] },
+  { id: 'e', name: 'Ee', nameAudio: '/audio/phonics-units/e-name.wav', soundAudio: '/audio/phonics-units/e-sound.wav', likeInWords: ['/audio/words/egg.wav', '/audio/words/end.wav', '/audio/words/elk.wav'] },
   // Consonant digraphs
   { id: 'sh', name: 'sh' },
   { id: 'ch', name: 'ch' },

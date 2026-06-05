@@ -12,12 +12,90 @@
   margin-bottom: 2.5rem;
   font-family: 'Segoe UI', Arial, sans-serif;
 }
-.menu-buttons {
+/* FAB overlay */
+.menu-fab-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+/* Stacked items above the FAB */
+.menu-fab-items {
+  position: fixed;
+  bottom: 5rem;
+  right: 1.5rem;
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 340px;
+  flex-direction: column-reverse;
+  gap: 0.6rem;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.menu-fab-items--open {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.menu-fab-item {
+  background: white;
+  border: 1.5px solid #d0d0d0;
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.menu-fab-item:hover {
+  background: #e0eaff;
+  border-color: #4a90e2;
+}
+
+.menu-fab-item--muted {
+  color: #aaa;
+  border-color: #e8e8e8;
+  font-size: 0.9rem;
+}
+
+/* FAB button */
+.menu-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: #cbd5e0;
+  color: #4a5568;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: background 0.15s, transform 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-fab:hover {
+  background: #b2bece;
+}
+
+.menu-fab--open {
+  background: #a0aec0;
+  transform: rotate(0deg);
 }
 .menu-btn {
   padding: 1.1rem 0;
@@ -40,6 +118,8 @@
   color: #fff;
   border-color: #2c5aa0;
   font-size: 1.7rem;
+  width: 280px;
+  padding: 1.1rem 0;
 }
 .menu-btn.play:hover {
   background: #3573b7;
