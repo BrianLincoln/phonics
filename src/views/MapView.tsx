@@ -181,7 +181,16 @@ export default function MapView() {
   const [avatarIdx,   setAvatarIdx]   = useState(-1);
   const [justUnlockedId, setJustUnlockedId] = useState<string | null>(null);
   const [checkpointFeedback, setCheckpointFeedback] = useState<CheckpointFeedback | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [blendingUnlocked, setBlendingUnlocked] = useState(false);
   const initiated = useRef(false);
+
+  useEffect(() => {
+    if (!activeProfile) return;
+    storageAdapter.getMapProgress(activeProfile.id).then(progress => {
+      setBlendingUnlocked(progress['node-cp1']?.status === 'complete');
+    });
+  }, [activeProfile]);
 
   useEffect(() => {
     if (!activeProfile || initiated.current) return;
@@ -291,15 +300,15 @@ export default function MapView() {
   return (
     <div className="map-root">
       <header className="map-header">
-        <button className="map-header__back" onClick={() => navigate('/menu')}>
-          ← Menu
-        </button>
         <span className="map-header__title">{activeProfile?.name}'s Path</span>
         {activeProfile && (
-          <ProfileAvatar
-            profile={activeProfile}
-            variant="dark"
-          />
+          <button
+            className="map-header__avatar-btn"
+            onClick={() => navigate(`/edit-profile/${activeProfile.id}`)}
+            aria-label="Edit profile"
+          >
+            <ProfileAvatar profile={activeProfile} variant="dark" />
+          </button>
         )}
       </header>
 
@@ -408,6 +417,29 @@ export default function MapView() {
           })}
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="menu-fab-overlay" onClick={() => setMenuOpen(false)} />
+      )}
+
+      <div className={`menu-fab-items${menuOpen ? ' menu-fab-items--open' : ''}`}>
+        <button className="menu-fab-item" onClick={() => { setMenuOpen(false); navigate('/endless'); }}>🔤 Letter Sounds</button>
+        {blendingUnlocked && (
+          <button className="menu-fab-item" onClick={() => { setMenuOpen(false); navigate('/endless-blend'); }}>🧩 Blending</button>
+        )}
+        <button className="menu-fab-item" onClick={() => { setMenuOpen(false); navigate('/endless-mixed'); }}>✨ All Skills</button>
+        <button className="menu-fab-item" onClick={() => { setMenuOpen(false); navigate('/units'); }}>Units</button>
+        <button className="menu-fab-item" onClick={() => { setMenuOpen(false); navigate('/progress'); }}>Progress</button>
+        <button className="menu-fab-item" onClick={() => { setMenuOpen(false); navigate('/'); }}>Switch Learner</button>
+      </div>
+
+      <button
+        className={`menu-fab${menuOpen ? ' menu-fab--open' : ''}`}
+        onClick={() => setMenuOpen(o => !o)}
+        aria-label="More options"
+      >
+        {menuOpen ? '×' : '+'}
+      </button>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useStopAllAudio } from '../utils/audioUtils';
 import type { PhonicsUnitProgress } from '../helpers/quizProgress';
 import { units } from '../data/units';
 import './ProgressView.css';
+import { BackButton } from '../components/BackButton';
 
 const ProgressView: React.FC = () => {
   const navigate = useNavigate();
@@ -13,8 +14,7 @@ const ProgressView: React.FC = () => {
   const stopAll = useStopAllAudio();
 
   useEffect(() => {
-    const data = getPhonicsProgress();
-    setProgress(data.units);
+    getPhonicsProgress().then(data => setProgress(data.units));
     return () => {
       stopAll();
     };
@@ -22,7 +22,7 @@ const ProgressView: React.FC = () => {
 
   return (
     <div className="progress-root">
-      <button className="progress-back" onClick={() => navigate('/')}>⬅ Back to Menu</button>
+      <BackButton onClick={() => navigate('/')} label="Back to Menu" className="progress-back" />
       <h2 className="progress-title">Phonics Progress</h2>
       <div className="progress-table-wrapper">
         <table className="progress-table">

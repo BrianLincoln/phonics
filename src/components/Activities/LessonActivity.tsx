@@ -20,6 +20,7 @@ import './MultipleChoice/MultipleChoiceActivity.css';
 import { usePlayAudio, useStopAllAudio } from '../../utils/audioUtils';
 import { useAudioUnlocked } from '../../context/AudioManagerContext';
 import { AudioStartOverlay } from '../AudioStartOverlay';
+import { BackButton } from '../BackButton';
 
 const FEEDBACK_AUDIO = {
   correct: '/audio/system/correct.wav',
@@ -589,9 +590,7 @@ export const LessonActivity: React.FC<LessonActivityProps> = ({
     <div className="activity-root">
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => onBack ? onBack() : navigate('/map')}>
-          ⬅ Back
-        </button>
+        <BackButton onClick={() => onBack ? onBack() : navigate('/map')} />
       </div>
       <div className="activity-stacked-layout">
         <PhaserGame

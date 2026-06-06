@@ -9,7 +9,7 @@ import { NavigateFunction } from 'react-router-dom';
 export function handleQuizCompletion(phaserScene: any, navigate: NavigateFunction, onComplete?: (result?: any) => void) {
   if (!phaserScene || !phaserScene.scene) {
     if (typeof onComplete === 'function') onComplete(true);
-    navigate('/menu');
+    navigate('/map');
     return;
   }
   phaserScene.scene.start('SuccessScene', {
@@ -18,7 +18,7 @@ export function handleQuizCompletion(phaserScene: any, navigate: NavigateFunctio
       if (phaserScene.game && phaserScene.game.destroy) {
         phaserScene.game.destroy(true);
       }
-      navigate('/menu');
+      navigate('/map');
     }
   });
 }

@@ -7,6 +7,7 @@ import { useAudioUnlocked } from '../../../context/AudioManagerContext';
 import { AudioStartOverlay } from '../../AudioStartOverlay';
 import { useBlendTapHandler } from '../../../hooks/useBlendTapHandler';
 import '../MultipleChoice/MultipleChoiceActivity.css';
+import { BackButton } from '../../BackButton';
 
 interface BuildTheWordExerciseProps {
   activity: BuildTheWordActivityData;
@@ -63,7 +64,7 @@ export const BuildTheWordExercise: React.FC<BuildTheWordExerciseProps> = ({ acti
     <div className="activity-root">
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => onBack ? onBack() : navigate('/map')}>⬅ Back</button>
+        <BackButton onClick={() => onBack ? onBack() : navigate('/map')} />
       </div>
       <div className="activity-stacked-layout">
         <PhaserGame

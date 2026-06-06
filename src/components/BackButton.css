@@ -1,0 +1,18 @@
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 1.2rem;
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 8px;
+  color: #2c3e50;
+  cursor: pointer;
+  padding: 0.4em 0.8em;
+  backdrop-filter: blur(4px);
+  font-weight: 600;
+}
+
+.back-btn__arrow {
+  flex-shrink: 0;
+}

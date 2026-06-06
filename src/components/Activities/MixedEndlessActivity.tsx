@@ -10,6 +10,7 @@ import { usePlayAudio, useStopAllAudio } from '../../utils/audioUtils';
 import { useAudioUnlocked } from '../../context/AudioManagerContext';
 import { AudioStartOverlay } from '../AudioStartOverlay';
 import './MultipleChoice/MultipleChoiceActivity.css';
+import { BackButton } from '../BackButton';
 
 const PROMPT_FILE = '/audio/prompts/tap-the-letters-to-build-the-word.wav';
 const FEEDBACK_AUDIO = {
@@ -203,7 +204,7 @@ export const MixedEndlessActivity: React.FC = () => {
     <div className="activity-root">
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
+        <BackButton onClick={() => navigate('/')} />
         <span className="endless-score">{score.correct} / {score.total}</span>
       </div>
       <div className="activity-stacked-layout">

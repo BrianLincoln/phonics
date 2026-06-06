@@ -29,7 +29,7 @@ export function NewProfileView() {
   async function handleCreate() {
     const profile = await addProfile(name, selectedEmoji, selectedColor, selectedAnimal);
     selectProfile(profile);
-    navigate('/menu');
+    navigate('/map');
   }
 
   return (

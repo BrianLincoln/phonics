@@ -9,7 +9,7 @@ export function ProfileSelector() {
 
   function handleSelect(profile: (typeof profiles)[0]) {
     selectProfile(profile);
-    navigate('/menu');
+    navigate('/map');
   }
 
   return (

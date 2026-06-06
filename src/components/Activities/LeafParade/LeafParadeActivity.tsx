@@ -4,6 +4,7 @@ import { PhaserGame } from '../../../components/PhaserGame';
 import { LeafParadeActivityType } from '../../../data/activities';
 import { usePlayAudio } from '../../../utils/audioUtils';
 import './LeafParadeActivity.css';
+import { BackButton } from '../../BackButton';
 
 // import { handleQuizCompletion } from '../../../helpers/handleQuizCompletion';
 
@@ -48,7 +49,7 @@ export const LeafParadeActivity: React.FC<LeafParadeActivityProps> = ({ activity
   return (
     <div className="activity-root">
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => navigate('/')}>⬅ Back</button>
+        <BackButton onClick={() => navigate('/')} />
       </div>
       <div className="activity-stacked-layout">
         <PhaserGame

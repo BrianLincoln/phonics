@@ -11,6 +11,7 @@ import { storageAdapter } from '../../store/storage';
 import { curriculum } from '../../data/curriculum';
 import { useBlendTapHandler } from '../../hooks/useBlendTapHandler';
 import './MultipleChoice/MultipleChoiceActivity.css';
+import { BackButton } from '../BackButton';
 
 export const BlendEndlessActivity: React.FC = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export const BlendEndlessActivity: React.FC = () => {
     return (
       <div className="activity-root">
         <div className="activity-header">
-          <button className="activity-back-btn" onClick={() => navigate('/menu')}>⬅ Back</button>
+          <BackButton onClick={() => navigate('/map')} />
         </div>
       </div>
     );
@@ -73,7 +74,7 @@ export const BlendEndlessActivity: React.FC = () => {
     <div className="activity-root">
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => navigate('/menu')}>⬅ Back</button>
+        <BackButton onClick={() => navigate('/map')} />
         <span className="endless-score">{wordsBuilt} built</span>
       </div>
       <div className="activity-stacked-layout">

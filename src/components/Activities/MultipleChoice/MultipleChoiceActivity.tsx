@@ -4,6 +4,7 @@ import { PhaserGame } from '../../../components/PhaserGame';
 import { MultipleChoiceActivity } from '../../../data/activities';
 import MultipleChoice from './MultipleChoice';
 import './MultipleChoiceActivity.css';
+import { BackButton } from '../../BackButton';
 import { usePlayAudio, useStopAllAudio } from '../../../utils/audioUtils';
 import { useAudioUnlocked } from '../../../context/AudioManagerContext';
 import { AudioStartOverlay } from '../../AudioStartOverlay';
@@ -216,7 +217,7 @@ export const MCQActivity: React.FC<MCQActivityProps> = ({ activity, onComplete, 
     <div className='activity-root'>
       {!audioUnlocked && <AudioStartOverlay />}
       <div className="activity-header">
-        <button className="activity-back-btn" onClick={() => onBack ? onBack() : navigate('/')}>⬅ Back</button>
+        <BackButton onClick={() => onBack ? onBack() : navigate('/')} />
       </div>
       <div className="activity-stacked-layout">
         <PhaserGame

@@ -38,17 +38,10 @@ export function getDefaultUnitProgress(): PhonicsUnitProgress {
   };
 }
 
-export function getPhonicsProgress(): PhonicsProgress {
+export async function getPhonicsProgress(): Promise<PhonicsProgress> {
   const profileId = getActiveProfileId();
   if (!profileId) return { units: {} };
-  // Synchronous callers: read directly from localStorage via the key the adapter uses
-  const data = localStorage.getItem(`phonics_progress_${profileId}`);
-  if (!data) return { units: {} };
-  try {
-    return JSON.parse(data);
-  } catch {
-    return { units: {} };
-  }
+  return storageAdapter.getProgress(profileId);
 }
 
 export function setPhonicsProgress(progress: PhonicsProgress) {
@@ -60,8 +53,8 @@ export function setPhonicsProgress(progress: PhonicsProgress) {
 
 // correct: whether the answer was eventually correct
 // firstTryCorrect: whether the answer was correct on the first attempt
-export function updatePhonicsUnitProgress(unitId: string, correct: boolean, firstTryCorrect: boolean) {
-  const progress = getPhonicsProgress();
+export async function updatePhonicsUnitProgress(unitId: string, correct: boolean, firstTryCorrect: boolean) {
+  const progress = await getPhonicsProgress();
   const now = new Date().toISOString();
   let unit = progress.units[unitId] || getDefaultUnitProgress();
 
@@ -84,8 +77,8 @@ export function updatePhonicsUnitProgress(unitId: string, correct: boolean, firs
   setPhonicsProgress(progress);
 }
 
-export function resetPhonicsProgress() {
+export async function resetPhonicsProgress(): Promise<void> {
   const profileId = getActiveProfileId();
   if (!profileId) return;
-  localStorage.removeItem(`phonics_progress_${profileId}`);
+  await storageAdapter.saveProgress(profileId, { units: {} });
 }

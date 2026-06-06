@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { units } from '../data/units';
 import { activities } from '../data/activities';
 import './UnitIndexView.css';
+import { BackButton } from '../components/BackButton';
 
 
 export const UnitIndexView: React.FC = () => {
@@ -22,7 +23,7 @@ export const UnitIndexView: React.FC = () => {
 
   return (
     <div className="unit-index-root">
-      <button className="unit-index-back" onClick={() => navigate('/')}>⬅ Back</button>
+      <BackButton onClick={() => navigate('/')} className="unit-index-back" />
       <h2 className="unit-index-title">Select a Unit Activity</h2>
       <div className="unit-index-list">
         {filteredUnits.map((unit) => (

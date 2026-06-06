@@ -1,7 +1,8 @@
-// Storage adapter interface — swap LocalStorageAdapter for SupabaseAdapter to migrate
 import type { Profile } from './profiles';
 import type { PhonicsProgress } from '../helpers/quizProgress';
 import type { MapProgress } from './mapProgress';
+import { supabase } from './supabaseClient';
+import { SupabaseAdapter } from './supabaseAdapter';
 
 export interface StorageAdapter {
   getProfiles(): Promise<Profile[]>;
@@ -13,66 +14,26 @@ export interface StorageAdapter {
   saveMapProgress(profileId: string, progress: MapProgress): Promise<void>;
 }
 
-const PROFILES_KEY = 'phonics_profiles';
-const progressKey = (id: string) => `phonics_progress_${id}`;
-const mapKey = (id: string) => `phonics_map_${id}`;
+let _adapter: StorageAdapter | null = null;
 
-export class LocalStorageAdapter implements StorageAdapter {
-  async getProfiles(): Promise<Profile[]> {
-    const data = localStorage.getItem(PROFILES_KEY);
-    if (!data) return [];
-    try {
-      return JSON.parse(data) as Profile[];
-    } catch {
-      return [];
-    }
-  }
-
-  async saveProfile(profile: Profile): Promise<void> {
-    const profiles = await this.getProfiles();
-    const idx = profiles.findIndex(p => p.id === profile.id);
-    if (idx >= 0) {
-      profiles[idx] = profile;
-    } else {
-      profiles.push(profile);
-    }
-    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-  }
-
-  async deleteProfile(profileId: string): Promise<void> {
-    const profiles = await this.getProfiles();
-    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles.filter(p => p.id !== profileId)));
-    localStorage.removeItem(progressKey(profileId));
-    localStorage.removeItem(mapKey(profileId));
-  }
-
-  async getProgress(profileId: string): Promise<PhonicsProgress> {
-    const data = localStorage.getItem(progressKey(profileId));
-    if (!data) return { units: {} };
-    try {
-      return JSON.parse(data) as PhonicsProgress;
-    } catch {
-      return { units: {} };
-    }
-  }
-
-  async saveProgress(profileId: string, progress: PhonicsProgress): Promise<void> {
-    localStorage.setItem(progressKey(profileId), JSON.stringify(progress));
-  }
-
-  async getMapProgress(profileId: string): Promise<MapProgress> {
-    const data = localStorage.getItem(mapKey(profileId));
-    if (!data) return {};
-    try {
-      return JSON.parse(data) as MapProgress;
-    } catch {
-      return {};
-    }
-  }
-
-  async saveMapProgress(profileId: string, progress: MapProgress): Promise<void> {
-    localStorage.setItem(mapKey(profileId), JSON.stringify(progress));
-  }
+export function getAdapter(): StorageAdapter {
+  if (!_adapter) throw new Error('Storage adapter not initialized — call initStorageAdapter() first');
+  return _adapter;
 }
 
-export const storageAdapter: StorageAdapter = new LocalStorageAdapter();
+export const storageAdapter: StorageAdapter = {
+  getProfiles: (...args) => getAdapter().getProfiles(...args),
+  saveProfile: (...args) => getAdapter().saveProfile(...args),
+  deleteProfile: (...args) => getAdapter().deleteProfile(...args),
+  getProgress: (...args) => getAdapter().getProgress(...args),
+  saveProgress: (...args) => getAdapter().saveProgress(...args),
+  getMapProgress: (...args) => getAdapter().getMapProgress(...args),
+  saveMapProgress: (...args) => getAdapter().saveMapProgress(...args),
+};
+
+export async function initStorageAdapter(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    _adapter = new SupabaseAdapter(user.id);
+  }
+}
