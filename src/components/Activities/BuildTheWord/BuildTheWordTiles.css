@@ -31,6 +31,7 @@
   justify-content: center;
 
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   box-shadow: 0 clamp(3px, 0.6vw, 6px) 0 #2c3e50;
   transition:
     transform 0.08s ease,
@@ -41,6 +42,12 @@
 
 .letter-tile:hover:not(:disabled) {
   background: #f4f7fb;
+}
+
+.letter-tile:active:not(:disabled):not(.tile-tapped):not(.tile-wrong) {
+  transform: translateY(clamp(3px, 0.6vw, 6px));
+  box-shadow: none;
+  background: #e8eef5;
 }
 
 .letter-tile.tile-active {

@@ -16,6 +16,7 @@ import { ProfileProvider, useProfile } from '../context/ProfileContext';
 import MapView from '../views/MapView';
 import { LessonView } from '../views/LessonView';
 import { AuthView } from '../views/AuthView';
+import { LandingView } from '../views/LandingView';
 import { supabase } from '../store/supabaseClient';
 import { initStorageAdapter } from '../store/storage';
 
@@ -49,6 +50,7 @@ function AppRoutes() {
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
@@ -66,7 +68,10 @@ const App: React.FC = () => {
   }, []);
 
   if (authLoading) return null;
-  if (!session) return <AuthView />;
+  if (!session) {
+    if (showAuth) return <AuthView onBack={() => setShowAuth(false)} />;
+    return <LandingView onSignIn={() => setShowAuth(true)} />;
+  }
 
   return (
     <ProfileProvider>

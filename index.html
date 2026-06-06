@@ -2,8 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Phonics React Menu</title>
+    <script>
+      // Restore path encoded by 404.html redirect for GitHub Pages SPA routing
+      (function() {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) {
+          window.history.replaceState(null, null, '/' + decodeURIComponent(p));
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

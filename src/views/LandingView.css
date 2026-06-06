@@ -1,0 +1,329 @@
+/* ── Layout ────────────────────────────────────────────────── */
+.landing {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #0a2342;
+  color: white;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Nav ───────────────────────────────────────────────────── */
+.landing__nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: rgba(10, 35, 66, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.landing__brand {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fcd34d;
+}
+
+.landing__nav-signin {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: white;
+  padding: 0.4rem 1.1rem;
+  border-radius: 99px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.landing__nav-signin:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+/* ── Hero ──────────────────────────────────────────────────── */
+.landing__hero {
+  min-height: 80svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem 3rem;
+}
+
+.landing__hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  max-width: 600px;
+}
+
+.landing__title {
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.landing__title-accent {
+  color: #fcd34d;
+}
+
+.landing__subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  line-height: 1.65;
+  color: rgba(255,255,255,0.65);
+  margin: 0;
+}
+
+@keyframes ctaBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
+
+.landing__try-btn {
+  margin-top: 0.5rem;
+  background: #fcd34d;
+  border: none;
+  color: #0a2342;
+  padding: 1rem 2.5rem;
+  border-radius: 99px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 24px rgba(252, 211, 77, 0.35);
+  animation: ctaBounce 1.6s ease-in-out infinite;
+  transition: box-shadow 0.15s, filter 0.15s;
+}
+
+.landing__try-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 32px rgba(252, 211, 77, 0.5);
+  animation-play-state: paused;
+}
+
+/* ── Embedded game ─────────────────────────────────────────── */
+.landing__game-wrapper {
+  position: relative;
+  height: 80svh;
+  overflow: hidden;
+  /* Makes this the containing block for position:fixed descendants */
+  transform: translateZ(0);
+}
+
+.landing__game-wrapper .activity-root {
+  height: 100%;
+}
+
+.landing__game-wrapper .activity-stacked-layout {
+  height: 100%;
+}
+
+.landing__game-wrapper .activity-root .phaser-container {
+  height: 100%;
+}
+
+.landing__game-wrapper .activity-header {
+  display: none;
+}
+
+/* ── Signup screen (post-game) ─────────────────────────────── */
+.landing__signup {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(160deg, #0e2d57 0%, #0a2342 100%);
+  animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.landing__signup-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.landing__signup h2 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.landing__signup p {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.65);
+  margin: 0;
+  line-height: 1.55;
+  max-width: 360px;
+}
+
+.landing__signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 0.25rem;
+}
+
+.landing__signup-input {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.landing__signup-input:focus {
+  border-color: rgba(255,255,255,0.4);
+}
+
+.landing__signup-input::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+.landing__signup-submit {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 800;
+  background: #fcd34d;
+  color: #0a2342;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+}
+
+.landing__signup-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.landing__signup-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.landing__signup-error {
+  font-size: 0.85rem;
+  color: #fca5a5;
+  margin: 0;
+  text-align: left;
+}
+
+.landing__signup-existing {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.landing__signup-existing:hover {
+  color: rgba(255,255,255,0.75);
+}
+
+.landing__signup-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.landing__signup-sent h2 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.landing__signup-sent p {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.65);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ── Features strip ────────────────────────────────────────── */
+.landing__features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  padding: 3.5rem 2rem;
+  background: rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.landing__feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  max-width: 220px;
+}
+
+.landing__feature-icon {
+  font-size: 2rem;
+  margin-bottom: 0.2rem;
+}
+
+.landing__feature strong {
+  font-size: 0.95rem;
+  color: white;
+}
+
+.landing__feature span {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.landing__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.25);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.landing__footer-signin {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.landing__footer-signin:hover {
+  color: rgba(255,255,255,0.65);
+}

@@ -21,10 +21,21 @@ function markInteracted() {
   interactionListeners.splice(0).forEach(cb => cb());
 }
 
+// Keyboard-only unlock kept for accessibility — clicking the play button is
+// the intentional path; document-level click/touch listeners removed so that
+// tapping the dark overlay backdrop or the Phaser scene doesn't accidentally
+// unlock audio before the user has consciously pressed play.
 if (typeof document !== 'undefined') {
-  document.addEventListener('click',      markInteracted, { capture: true, once: true });
-  document.addEventListener('keydown',    markInteracted, { capture: true, once: true });
-  document.addEventListener('touchstart', markInteracted, { capture: true, once: true });
+  document.addEventListener('keydown', markInteracted, { capture: true, once: true });
+}
+
+/**
+ * Explicitly unlocks audio. Call this from the play button in AudioStartOverlay
+ * (or any other intentional entry point) instead of relying on a document-wide
+ * click listener.
+ */
+export function triggerAudioUnlock() {
+  markInteracted();
 }
 
 /** Returns true once the user has interacted with the page (audio is unlocked). */
