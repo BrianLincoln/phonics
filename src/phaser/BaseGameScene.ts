@@ -3,11 +3,11 @@ import { Companion } from './Companion';
 import { CompanionController } from './CompanionController';
 import { type CompanionAnimalId, getActiveCompanion } from '../store/profiles';
 
-type LandscapeId = 'mountain' | 'forest' | 'backyard' | 'arctic';
+type LandscapeId = 'mountain' | 'forest' | 'backyard' | 'arctic' | 'pond';
 
 const COMPANION_LANDSCAPE: Record<CompanionAnimalId, LandscapeId> = {
-  crow:    'mountain',
-  frog:    'forest',
+  crow:    'forest',
+  frog:    'pond',
   cat:     'backyard',
   penguin: 'arctic',
 };
@@ -167,6 +167,9 @@ export abstract class BaseGameScene extends Phaser.Scene {
     } else if (landscape === 'arctic') {
       this.drawArcticLandscape(ctx, w, h, groundY);
       this.sky.fillGradientStyle(0x8898c8, 0x8898c8, 0xc8d8f0, 0xc8d8f0, 1);
+    } else if (landscape === 'pond') {
+      this.drawPondLandscape(ctx, w, h, groundY);
+      this.sky.fillGradientStyle(0x90c4d8, 0x90c4d8, 0xc8e4d8, 0xc8e4d8, 1);
     } else {
       this.drawMountainLandscape(ctx, w, h, groundY);
       this.sky.fillGradientStyle(0xede0cc, 0xede0cc, 0xf8f0e2, 0xf8f0e2, 1);
@@ -507,6 +510,169 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.fillRect(0, groundY - h * 0.15, w, h * 0.15);
 
     this.drawGround(ctx, w, h, groundY, '#7cb84a', '#6aaa3a', '#5a9830', 'rgba(20, 50, 10,');
+  }
+
+  private drawPondLandscape(ctx: CanvasRenderingContext2D, w: number, h: number, groundY: number) {
+    // Sky — warm humid haze, like a summer morning near water
+    const skyBg = ctx.createLinearGradient(0, 0, 0, groundY);
+    skyBg.addColorStop(0, '#90c4d8');
+    skyBg.addColorStop(1, '#c8e4d8');
+    ctx.fillStyle = skyBg;
+    ctx.fillRect(0, 0, w, groundY);
+
+    // Distant bank — low gentle hills across the far shore
+    ctx.fillStyle = '#5e9a52';
+    ctx.beginPath();
+    ctx.moveTo(-2, groundY);
+    ctx.quadraticCurveTo(w * 0.20, groundY - h * 0.10, w * 0.38, groundY - h * 0.08);
+    ctx.quadraticCurveTo(w * 0.55, groundY - h * 0.06, w * 0.70, groundY - h * 0.11);
+    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.14, w + 2,   groundY - h * 0.07);
+    ctx.lineTo(w + 2, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Pond water — wide trapezoidal shape, wider at bottom (near bank), narrower at far shore
+    const waterTop  = groundY - h * 0.22;
+    const waterBot  = groundY + h * 0.008; // slightly past groundY so it meets the grass
+    const waterL    = w * 0.04;
+    const waterR    = w * 0.96;
+    const waterTL   = w * 0.12;
+    const waterTR   = w * 0.88;
+
+    const waterGrad = ctx.createLinearGradient(0, waterTop, 0, waterBot);
+    waterGrad.addColorStop(0, '#5aaac8');  // sky reflection at far shore
+    waterGrad.addColorStop(0.5, '#3d8aaa');
+    waterGrad.addColorStop(1, '#2e6e8e');  // deeper, near bank
+    ctx.fillStyle = waterGrad;
+    ctx.beginPath();
+    ctx.moveTo(waterTL, waterTop);
+    ctx.lineTo(waterTR, waterTop);
+    ctx.lineTo(waterR,  waterBot);
+    ctx.lineTo(waterL,  waterBot);
+    ctx.closePath();
+    ctx.fill();
+
+    // Water shimmer lines — subtle horizontal strokes reflecting sky
+    ctx.strokeStyle = 'rgba(180, 220, 240, 0.30)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 7; i++) {
+      const wy = waterTop + (waterBot - waterTop) * (i / 7);
+      const progress = i / 7;
+      const xl = waterTL + (waterL - waterTL) * progress;
+      const xr = waterTR + (waterR - waterTR) * progress;
+      const segW = (xr - xl) * 0.22;
+      const ox   = xl + (xr - xl) * (0.15 + (i % 3) * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(ox, wy);
+      ctx.lineTo(ox + segW, wy);
+      ctx.stroke();
+    }
+
+    // Lily pads — flat ellipses with a notch cut in
+    const drawLilyPad = (lx: number, ly: number, rx: number, ry: number, angle: number) => {
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(angle);
+      ctx.fillStyle = '#2e6e22';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rx, ry, 0, 0.35, Math.PI * 2 - 0.35);
+      ctx.closePath();
+      ctx.fill();
+      // Lighter centre vein
+      ctx.strokeStyle = 'rgba(80,160,60,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -ry * 0.9);
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    drawLilyPad(w * 0.25, groundY - h * 0.07, w * 0.034, h * 0.020, 0.3);
+    drawLilyPad(w * 0.38, groundY - h * 0.12, w * 0.028, h * 0.017, -0.5);
+    drawLilyPad(w * 0.50, groundY - h * 0.10, w * 0.040, h * 0.024, 0.8);
+    drawLilyPad(w * 0.62, groundY - h * 0.07, w * 0.030, h * 0.018, -0.2);
+    drawLilyPad(w * 0.74, groundY - h * 0.13, w * 0.026, h * 0.016, 1.1);
+    drawLilyPad(w * 0.44, groundY - h * 0.17, w * 0.022, h * 0.013, -0.7);
+
+    // Lily pad flowers — tiny bright dot on some pads
+    const drawFlower = (fx: number, fy: number) => {
+      ctx.fillStyle = '#f0d040';
+      ctx.beginPath();
+      ctx.arc(fx, fy, h * 0.007, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    drawFlower(w * 0.25, groundY - h * 0.08);
+    drawFlower(w * 0.50, groundY - h * 0.11);
+
+    // Reeds / cattails along both banks
+    const drawReed = (rx: number, rh: number) => {
+      // Stem
+      ctx.strokeStyle = '#7a6030';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(rx, groundY);
+      ctx.lineTo(rx, groundY - rh);
+      ctx.stroke();
+      // Cattail head
+      ctx.fillStyle = '#6a4820';
+      ctx.beginPath();
+      ctx.ellipse(rx, groundY - rh + rh * 0.12, 3, h * 0.028, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Leaf blade arcing off stem
+      ctx.strokeStyle = '#8a7a40';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(rx, groundY - rh * 0.55);
+      ctx.quadraticCurveTo(rx + rh * 0.45, groundY - rh * 0.72, rx + rh * 0.55, groundY - rh * 0.48);
+      ctx.stroke();
+    };
+
+    const reeds = [
+      { x: w * 0.01, h: h * 0.20 }, { x: w * 0.04, h: h * 0.26 }, { x: w * 0.07, h: h * 0.18 },
+      { x: w * 0.11, h: h * 0.23 }, { x: w * 0.15, h: h * 0.19 },
+      { x: w * 0.84, h: h * 0.22 }, { x: w * 0.88, h: h * 0.18 }, { x: w * 0.92, h: h * 0.25 },
+      { x: w * 0.96, h: h * 0.20 }, { x: w * 0.99, h: h * 0.17 },
+    ];
+    for (const r of reeds) drawReed(r.x, r.h);
+
+    // Willow tree — right side, drooping curtain branches
+    const wlx  = w * 0.87;
+    const wlBot = groundY;
+    const wlTop = groundY - h * 0.40;
+    // Trunk
+    ctx.strokeStyle = '#5a4020';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(wlx, wlBot);
+    ctx.quadraticCurveTo(wlx - w * 0.01, wlTop + h * 0.08, wlx, wlTop);
+    ctx.stroke();
+    // Canopy mass
+    ctx.fillStyle = '#3a7830';
+    ctx.beginPath();
+    ctx.ellipse(wlx, wlTop + h * 0.06, w * 0.10, h * 0.12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Drooping branch strands
+    ctx.strokeStyle = '#4a8a38';
+    ctx.lineWidth = 1.5;
+    const strands = [-0.08, -0.04, 0, 0.04, 0.08, 0.11];
+    for (const dx of strands) {
+      const sx = wlx + w * dx;
+      const sy = wlTop + h * 0.04;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.quadraticCurveTo(sx + w * dx * 0.5, sy + h * 0.18, sx + w * dx * 0.8, sy + h * 0.30);
+      ctx.stroke();
+    }
+
+    // Atmospheric haze — green-tinted moisture at horizon
+    const hazeGrad = ctx.createLinearGradient(0, groundY - h * 0.20, 0, groundY);
+    hazeGrad.addColorStop(0, 'rgba(200, 228, 216, 0)');
+    hazeGrad.addColorStop(1, 'rgba(200, 228, 216, 0.58)');
+    ctx.fillStyle = hazeGrad;
+    ctx.fillRect(0, groundY - h * 0.20, w, h * 0.20);
+
+    this.drawGround(ctx, w, h, groundY, '#6aaa46', '#5a9838', '#4a882e', 'rgba(20, 48, 10,');
   }
 
   private drawArcticLandscape(ctx: CanvasRenderingContext2D, w: number, h: number, groundY: number) {
