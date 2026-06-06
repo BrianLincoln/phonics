@@ -9,7 +9,12 @@ import {
   getActiveProfileId,
   setActiveProfileId,
   clearActiveProfileId,
+  setActiveCompanion,
+  getActiveCompanion as _getActiveCompanion,
 } from '../store/profiles';
+
+// re-export so callers don't need a separate import
+export { _getActiveCompanion as getActiveCompanion };
 
 interface ProfileContextValue {
   profiles: Profile[];
@@ -36,6 +41,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       if (activeId) {
         const found = loaded.find(p => p.id === activeId) ?? null;
         setActiveProfile(found);
+        if (found?.companionAnimal) setActiveCompanion(found.companionAnimal);
       }
       setIsLoaded(true);
     });
@@ -44,6 +50,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   function selectProfile(profile: Profile) {
     setActiveProfileId(profile.id);
     setActiveProfile(profile);
+    if (profile.companionAnimal) setActiveCompanion(profile.companionAnimal);
   }
 
   function switchLearner() {
@@ -63,7 +70,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   ): Promise<Profile> {
     const updated = await updateProfileInStore(profileId, updates);
     setProfiles(prev => prev.map(p => p.id === profileId ? updated : p));
-    if (activeProfile?.id === profileId) setActiveProfile(updated);
+    if (activeProfile?.id === profileId) {
+      setActiveProfile(updated);
+      if (updated.companionAnimal) setActiveCompanion(updated.companionAnimal);
+    }
     return updated;
   }
 

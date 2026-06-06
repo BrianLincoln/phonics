@@ -50,7 +50,8 @@ export const AVATAR_COLORS = [
 ];
 
 // Session management — sessionStorage clears when the tab/browser closes
-const SESSION_KEY = 'phonics_active_profile_id';
+const SESSION_KEY          = 'phonics_active_profile_id';
+const SESSION_COMPANION_KEY = 'phonics_active_companion';
 
 export function getActiveProfileId(): string | null {
   return sessionStorage.getItem(SESSION_KEY);
@@ -62,6 +63,15 @@ export function setActiveProfileId(id: string): void {
 
 export function clearActiveProfileId(): void {
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_COMPANION_KEY);
+}
+
+export function setActiveCompanion(animal: CompanionAnimalId): void {
+  sessionStorage.setItem(SESSION_COMPANION_KEY, animal);
+}
+
+export function getActiveCompanion(): CompanionAnimalId {
+  return (sessionStorage.getItem(SESSION_COMPANION_KEY) as CompanionAnimalId) ?? 'crow';
 }
 
 function generateId(): string {

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Companion } from './Companion';
 import { CompanionController } from './CompanionController';
-import { type CompanionAnimalId } from '../store/profiles';
+import { type CompanionAnimalId, getActiveCompanion } from '../store/profiles';
 
 type LandscapeId = 'mountain' | 'forest' | 'backyard' | 'arctic';
 
@@ -133,17 +133,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
   }
 
   private getActiveAnimalId(): CompanionAnimalId {
-    try {
-      const profileId = sessionStorage.getItem('phonics_active_profile_id');
-      if (!profileId) return 'crow';
-      const raw = localStorage.getItem('phonics_profiles');
-      if (!raw) return 'crow';
-      const profiles: Array<{ id: string; companionAnimal?: string }> = JSON.parse(raw);
-      const profile = profiles.find(p => p.id === profileId);
-      return (profile?.companionAnimal as CompanionAnimalId) ?? 'crow';
-    } catch {
-      return 'crow';
-    }
+    return getActiveCompanion();
   }
 
   private getActiveLandscape(): LandscapeId {
