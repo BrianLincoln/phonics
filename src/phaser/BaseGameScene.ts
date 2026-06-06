@@ -1,7 +1,16 @@
 import Phaser from 'phaser';
 import { Companion } from './Companion';
 import { CompanionController } from './CompanionController';
-import { type CompanionAnimalId, type LandscapeId } from '../store/profiles';
+import { type CompanionAnimalId } from '../store/profiles';
+
+type LandscapeId = 'mountain' | 'forest' | 'backyard' | 'arctic';
+
+const COMPANION_LANDSCAPE: Record<CompanionAnimalId, LandscapeId> = {
+  crow:    'mountain',
+  frog:    'forest',
+  cat:     'backyard',
+  penguin: 'arctic',
+};
 import { CLOUD_CONFIGS, spawnClouds } from './sceneUtils';
 import { ANIMAL_SPRITE_URLS } from '../assets/spriteUrls';
 
@@ -138,17 +147,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
   }
 
   private getActiveLandscape(): LandscapeId {
-    try {
-      const profileId = sessionStorage.getItem('phonics_active_profile_id');
-      if (!profileId) return 'mountain';
-      const raw = localStorage.getItem('phonics_profiles');
-      if (!raw) return 'mountain';
-      const profiles: Array<{ id: string; landscape?: string }> = JSON.parse(raw);
-      const profile = profiles.find(p => p.id === profileId);
-      return (profile?.landscape as LandscapeId) ?? 'mountain';
-    } catch {
-      return 'mountain';
-    }
+    return COMPANION_LANDSCAPE[this.getActiveAnimalId()];
   }
 
   // ── Private environment drawing ─────────────────────────────────────────────
@@ -172,6 +171,12 @@ export abstract class BaseGameScene extends Phaser.Scene {
     if (landscape === 'forest') {
       this.drawForestLandscape(ctx, w, h, groundY);
       this.sky.fillGradientStyle(0x8fbcd4, 0x8fbcd4, 0xc8dfca, 0xc8dfca, 1);
+    } else if (landscape === 'backyard') {
+      this.drawBackyardLandscape(ctx, w, h, groundY);
+      this.sky.fillGradientStyle(0xa0c4e0, 0xa0c4e0, 0xd8eaf0, 0xd8eaf0, 1);
+    } else if (landscape === 'arctic') {
+      this.drawArcticLandscape(ctx, w, h, groundY);
+      this.sky.fillGradientStyle(0x8898c8, 0x8898c8, 0xc8d8f0, 0xc8d8f0, 1);
     } else {
       this.drawMountainLandscape(ctx, w, h, groundY);
       this.sky.fillGradientStyle(0xede0cc, 0xede0cc, 0xf8f0e2, 0xf8f0e2, 1);
@@ -393,6 +398,217 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.fillRect(0, groundY - h * 0.18, w, h * 0.18);
 
     this.drawGround(ctx, w, h, groundY, '#6aaa46', '#5a9838', '#4a882e', 'rgba(20, 48, 10,');
+  }
+
+  private drawBackyardLandscape(ctx: CanvasRenderingContext2D, w: number, h: number, groundY: number) {
+    // Sky
+    const skyBg = ctx.createLinearGradient(0, 0, 0, groundY);
+    skyBg.addColorStop(0, '#a0c4e0');
+    skyBg.addColorStop(1, '#d8eaf0');
+    ctx.fillStyle = skyBg;
+    ctx.fillRect(0, 0, w, groundY);
+
+    // Neighbor house roofline peeking above fence — just the gable, very subtle
+    ctx.fillStyle = '#c4b09a';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.52, groundY - h * 0.16);
+    ctx.lineTo(w * 0.62, groundY - h * 0.24);
+    ctx.lineTo(w * 0.72, groundY - h * 0.16);
+    ctx.closePath();
+    ctx.fill();
+    // Roof shadow face
+    ctx.fillStyle = '#a89070';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.62, groundY - h * 0.24);
+    ctx.lineTo(w * 0.72, groundY - h * 0.16);
+    ctx.lineTo(w * 0.72, groundY - h * 0.12);
+    ctx.lineTo(w * 0.62, groundY - h * 0.12);
+    ctx.closePath();
+    ctx.fill();
+
+    // Garden trees — round apple-tree shapes, warmer greens
+    const drawGardenTree = (tx: number, th: number, canopyColor: string) => {
+      const trunkH = th * 0.32;
+      const crownR = th * 0.34;
+      const crownY = groundY - trunkH - crownR * 0.8;
+      ctx.fillStyle = '#8a6240';
+      ctx.fillRect(tx - th * 0.06, groundY - trunkH, th * 0.12, trunkH);
+      ctx.fillStyle = canopyColor;
+      ctx.beginPath();
+      ctx.arc(tx, crownY, crownR, 0, Math.PI * 2);
+      ctx.arc(tx - crownR * 0.5, crownY + crownR * 0.3, crownR * 0.68, 0, Math.PI * 2);
+      ctx.arc(tx + crownR * 0.5, crownY + crownR * 0.3, crownR * 0.68, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const gardenTrees = [
+      { x: w * 0.06, h: h * 0.20, c: '#5a9a2e' }, { x: w * 0.12, h: h * 0.25, c: '#4a8a22' },
+      { x: w * 0.82, h: h * 0.22, c: '#4a8a22' }, { x: w * 0.88, h: h * 0.18, c: '#5a9a2e' },
+      { x: w * 0.94, h: h * 0.24, c: '#3d7a1a' },
+    ];
+    for (const t of gardenTrees) drawGardenTree(t.x, t.h, t.c);
+
+    // Wooden fence — horizontal rails + pickets along horizon
+    const fenceTop  = groundY - h * 0.115;
+    const fenceBot  = groundY + h * 0.005;
+    const railH     = h * 0.018;
+    const picketW   = w * 0.018;
+    const picketGap = w * 0.026;
+    const picketColor = '#c8a870';
+    const picketShadow = '#a08850';
+    const railColor = '#b89860';
+
+    // Draw pickets
+    let px = w * 0.0;
+    while (px < w + picketW) {
+      // Shadow (right edge)
+      ctx.fillStyle = picketShadow;
+      ctx.fillRect(px + picketW * 0.72, fenceTop, picketW * 0.28, fenceBot - fenceTop);
+      // Face
+      ctx.fillStyle = picketColor;
+      ctx.fillRect(px, fenceTop, picketW * 0.74, fenceBot - fenceTop);
+      // Pointed top — triangle cap
+      ctx.fillStyle = picketColor;
+      ctx.beginPath();
+      ctx.moveTo(px, fenceTop);
+      ctx.lineTo(px + picketW * 0.37, fenceTop - h * 0.028);
+      ctx.lineTo(px + picketW * 0.74, fenceTop);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = picketShadow;
+      ctx.beginPath();
+      ctx.moveTo(px + picketW * 0.37, fenceTop - h * 0.028);
+      ctx.lineTo(px + picketW * 0.74, fenceTop);
+      ctx.lineTo(px + picketW, fenceTop);
+      ctx.lineTo(px + picketW, fenceTop - h * 0.028);
+      ctx.closePath();
+      ctx.fill();
+      px += picketW + picketGap;
+    }
+
+    // Horizontal rails on top of pickets
+    ctx.fillStyle = railColor;
+    ctx.fillRect(0, fenceTop + (fenceBot - fenceTop) * 0.15, w, railH);
+    ctx.fillRect(0, fenceTop + (fenceBot - fenceTop) * 0.65, w, railH);
+
+    // Flower clusters near fence base
+    const drawFlowers = (fx: number, count: number, color: string) => {
+      for (let i = 0; i < count; i++) {
+        const ox = fx + i * w * 0.018;
+        const oy = groundY - h * 0.01 - (i % 2) * h * 0.012;
+        ctx.fillStyle = '#6a9a30';
+        ctx.fillRect(ox - 1, oy, 2, h * 0.025);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(ox, oy, h * 0.012, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+    drawFlowers(w * 0.22, 4, '#e85a6a');
+    drawFlowers(w * 0.38, 3, '#f0c030');
+    drawFlowers(w * 0.74, 5, '#e85a6a');
+    drawFlowers(w * 0.44, 3, '#d060d0');
+
+    // Haze at horizon
+    const hazeGrad = ctx.createLinearGradient(0, groundY - h * 0.15, 0, groundY);
+    hazeGrad.addColorStop(0, 'rgba(216, 234, 240, 0)');
+    hazeGrad.addColorStop(1, 'rgba(216, 234, 240, 0.50)');
+    ctx.fillStyle = hazeGrad;
+    ctx.fillRect(0, groundY - h * 0.15, w, h * 0.15);
+
+    this.drawGround(ctx, w, h, groundY, '#7cb84a', '#6aaa3a', '#5a9830', 'rgba(20, 50, 10,');
+  }
+
+  private drawArcticLandscape(ctx: CanvasRenderingContext2D, w: number, h: number, groundY: number) {
+    // Cold sky
+    const skyBg = ctx.createLinearGradient(0, 0, 0, groundY);
+    skyBg.addColorStop(0, '#8898c8');
+    skyBg.addColorStop(1, '#c8d8f0');
+    ctx.fillStyle = skyBg;
+    ctx.fillRect(0, 0, w, groundY);
+
+    // Distant glacier/ice shelf — far, pale, hazy
+    ctx.fillStyle = '#d8ecf8';
+    ctx.beginPath();
+    ctx.moveTo(-2, groundY);
+    ctx.quadraticCurveTo(w * 0.12, groundY - h * 0.22, w * 0.25, groundY - h * 0.18);
+    ctx.quadraticCurveTo(w * 0.38, groundY - h * 0.14, w * 0.50, groundY - h * 0.26);
+    ctx.quadraticCurveTo(w * 0.63, groundY - h * 0.32, w * 0.72, groundY - h * 0.20);
+    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.12, w + 2,   groundY - h * 0.17);
+    ctx.lineTo(w + 2, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glacier shadow/depth faces — right side of each peak slightly darker
+    ctx.fillStyle = '#b8d4ee';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.50, groundY - h * 0.26);
+    ctx.quadraticCurveTo(w * 0.63, groundY - h * 0.32, w * 0.72, groundY - h * 0.20);
+    ctx.lineTo(w * 0.72, groundY);
+    ctx.lineTo(w * 0.50, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#b8d4ee';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.12, groundY - h * 0.22);
+    ctx.quadraticCurveTo(w * 0.19, groundY - h * 0.16, w * 0.25, groundY - h * 0.18);
+    ctx.lineTo(w * 0.25, groundY);
+    ctx.lineTo(w * 0.12, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Haze over glaciers
+    const glacierHaze = ctx.createLinearGradient(0, groundY - h * 0.34, 0, groundY);
+    glacierHaze.addColorStop(0, 'rgba(200, 216, 240, 0.40)');
+    glacierHaze.addColorStop(1, 'rgba(200, 216, 240, 0.08)');
+    ctx.fillStyle = glacierHaze;
+    ctx.beginPath();
+    ctx.moveTo(-2, groundY);
+    ctx.quadraticCurveTo(w * 0.12, groundY - h * 0.22, w * 0.25, groundY - h * 0.18);
+    ctx.quadraticCurveTo(w * 0.38, groundY - h * 0.14, w * 0.50, groundY - h * 0.26);
+    ctx.quadraticCurveTo(w * 0.63, groundY - h * 0.32, w * 0.72, groundY - h * 0.20);
+    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.12, w + 2,   groundY - h * 0.17);
+    ctx.lineTo(w + 2, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ice chunks along the horizon foreground
+    const drawIceChunk = (ix: number, iw: number, ih: number) => {
+      ctx.fillStyle = '#d0e8f8';
+      ctx.beginPath();
+      ctx.moveTo(ix, groundY);
+      ctx.lineTo(ix + iw * 0.12, groundY - ih);
+      ctx.quadraticCurveTo(ix + iw * 0.5, groundY - ih * 1.15, ix + iw * 0.85, groundY - ih * 0.8);
+      ctx.lineTo(ix + iw, groundY);
+      ctx.closePath();
+      ctx.fill();
+      // Shadow face
+      ctx.fillStyle = '#a8c8e8';
+      ctx.beginPath();
+      ctx.moveTo(ix + iw * 0.5, groundY - ih * 1.15);
+      ctx.lineTo(ix + iw * 0.85, groundY - ih * 0.8);
+      ctx.lineTo(ix + iw, groundY);
+      ctx.lineTo(ix + iw * 0.6, groundY);
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    drawIceChunk(w * 0.03,  w * 0.08, h * 0.055);
+    drawIceChunk(w * 0.30,  w * 0.06, h * 0.042);
+    drawIceChunk(w * 0.55,  w * 0.10, h * 0.065);
+    drawIceChunk(w * 0.78,  w * 0.07, h * 0.048);
+    drawIceChunk(w * 0.91,  w * 0.09, h * 0.058);
+
+    // Horizon haze (cold tint)
+    const hazeGrad = ctx.createLinearGradient(0, groundY - h * 0.18, 0, groundY);
+    hazeGrad.addColorStop(0, 'rgba(200, 216, 240, 0)');
+    hazeGrad.addColorStop(1, 'rgba(200, 216, 240, 0.60)');
+    ctx.fillStyle = hazeGrad;
+    ctx.fillRect(0, groundY - h * 0.18, w, h * 0.18);
+
+    // Snow ground — same wave structure but icy palette
+    this.drawGround(ctx, w, h, groundY, '#deeef8', '#cce2f4', '#b8d4ee', 'rgba(80, 110, 160,');
   }
 
   private drawGround(
