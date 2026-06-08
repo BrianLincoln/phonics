@@ -792,25 +792,6 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.closePath();
     ctx.fill();
 
-    // Glacier shadow/depth faces — right side of each peak slightly darker
-    ctx.fillStyle = '#b8d4ee';
-    ctx.beginPath();
-    ctx.moveTo(w * 0.50, groundY - h * 0.26);
-    ctx.quadraticCurveTo(w * 0.63, groundY - h * 0.32, w * 0.72, groundY - h * 0.20);
-    ctx.lineTo(w * 0.72, groundY);
-    ctx.lineTo(w * 0.50, groundY);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#b8d4ee';
-    ctx.beginPath();
-    ctx.moveTo(w * 0.12, groundY - h * 0.22);
-    ctx.quadraticCurveTo(w * 0.19, groundY - h * 0.16, w * 0.25, groundY - h * 0.18);
-    ctx.lineTo(w * 0.25, groundY);
-    ctx.lineTo(w * 0.12, groundY);
-    ctx.closePath();
-    ctx.fill();
-
     // Haze over glaciers
     const glacierHaze = ctx.createLinearGradient(0, groundY - h * 0.34, 0, groundY);
     glacierHaze.addColorStop(0, 'rgba(200, 216, 240, 0.40)');
