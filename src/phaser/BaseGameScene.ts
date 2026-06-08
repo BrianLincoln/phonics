@@ -6,9 +6,9 @@ import { type CompanionAnimalId, getActiveCompanion } from '../store/profiles';
 type LandscapeId = 'mountain' | 'forest' | 'backyard' | 'arctic' | 'pond';
 
 const COMPANION_LANDSCAPE: Record<CompanionAnimalId, LandscapeId> = {
-  crow:    'forest',
-  frog:    'pond',
-  cat:     'backyard',
+  crow: 'forest',
+  frog: 'pond',
+  cat: 'backyard',
   penguin: 'arctic',
 };
 import { CLOUD_CONFIGS, spawnClouds } from './sceneUtils';
@@ -199,7 +199,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
       rcpx: number, rcpFrac: number, right: number,
       snowFrac: number, color: string
     ) => {
-      const mtnH  = mtnBase - peakY;
+      const mtnH = mtnBase - peakY;
       const snowH = mtnH * snowFrac;
       ctx.save();
       ctx.beginPath();
@@ -223,12 +223,12 @@ export abstract class BaseGameScene extends Phaser.Scene {
 
     // Far mountain
     {
-      const px    = w * 0.36;
+      const px = w * 0.36;
       const peakY = groundY - h * 0.21;
-      const left  = px - w * 0.16;
+      const left = px - w * 0.16;
       const right = px + w * 0.19;
-      const lcpx  = px - w * 0.07;
-      const rcpx  = px + w * 0.08;
+      const lcpx = px - w * 0.07;
+      const rcpx = px + w * 0.08;
 
       ctx.fillStyle = '#d8c4a2';
       ctx.beginPath();
@@ -263,12 +263,12 @@ export abstract class BaseGameScene extends Phaser.Scene {
 
     // Near mountain
     {
-      const px    = w * 0.20;
+      const px = w * 0.20;
       const peakY = groundY - h * 0.35;
-      const left  = px - w * 0.20;
+      const left = px - w * 0.20;
       const right = px + w * 0.16;
-      const lcpx  = px - w * 0.08;
-      const rcpx  = px + w * 0.06;
+      const lcpx = px - w * 0.08;
+      const rcpx = px + w * 0.06;
 
       ctx.fillStyle = '#c4a06a';
       ctx.beginPath();
@@ -294,7 +294,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
       ctx.fillStyle = '#b89a72';
       for (let i = 0; i < 3; i++) {
         const layerBase = groundY - th * 0.04 - th * (i / 3) * 0.72;
-        const layerTop  = groundY - th * 0.04 - th * ((i + 1) / 3) * 0.72 - th * 0.08;
+        const layerTop = groundY - th * 0.04 - th * ((i + 1) / 3) * 0.72 - th * 0.08;
         const hw = th * 0.28 * (1 - i * 0.10);
         ctx.beginPath();
         ctx.moveTo(tx, layerTop);
@@ -355,20 +355,8 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.fill();
 
     // Dense deciduous tree canopy along the horizon — drawn as rounded blobs
-    const drawDeciduous = (tx: number, th: number, color: string) => {
-      const trunkH = th * 0.28;
-      const crownR = th * 0.38;
-      const crownY = groundY - trunkH - crownR * 0.7;
-      ctx.fillStyle = color;
-      // Trunk
-      ctx.fillRect(tx - th * 0.05, groundY - trunkH, th * 0.10, trunkH);
-      // Crown — overlapping circles for a full rounded canopy
-      ctx.beginPath();
-      ctx.arc(tx,            crownY,           crownR,        0, Math.PI * 2);
-      ctx.arc(tx - crownR * 0.55, crownY + crownR * 0.25, crownR * 0.72, 0, Math.PI * 2);
-      ctx.arc(tx + crownR * 0.55, crownY + crownR * 0.25, crownR * 0.72, 0, Math.PI * 2);
-      ctx.fill();
-    };
+    const drawDeciduous = (tx: number, th: number, color: string) =>
+      this.drawDeciduousTree(ctx, groundY, tx, th, color);
 
     const forestTrees = [
       { x: w * 0.01, h: h * 0.20, c: '#2e5e1e' }, { x: w * 0.05, h: h * 0.26, c: '#3a7228' },
@@ -401,23 +389,78 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.fillStyle = skyBg;
     ctx.fillRect(0, 0, w, groundY);
 
-    // Neighbor house roofline peeking above fence — just the gable, very subtle
-    ctx.fillStyle = '#c4b09a';
+    // House on far left — partially cropped off screen
+    const houseRight = w * 0.22;
+    const houseLeft = -w * 0.06; // cut off left edge
+    const wallTop = groundY - h * 0.38;
+    const wallBot = groundY;
+    const roofPeakX = (houseLeft + houseRight) / 2;
+    const roofPeakY = wallTop - h * 0.18;
+    const roofOverhangL = houseLeft - w * 0.01;
+    const roofOverhangR = houseRight + w * 0.015;
+
+    // Wall (siding — warm cream)
+    ctx.fillStyle = '#e8dcc8';
+    ctx.fillRect(houseLeft, wallTop, houseRight - houseLeft, wallBot - wallTop);
+
+    // Wall shadow on right edge
+    ctx.fillStyle = '#c8b89a';
+    ctx.fillRect(houseRight - w * 0.018, wallTop, w * 0.018, wallBot - wallTop);
+
+    // Horizontal siding lines
+    ctx.strokeStyle = '#d4c4a8';
+    ctx.lineWidth = 1;
+    for (let sy = wallTop + h * 0.04; sy < wallBot; sy += h * 0.04) {
+      ctx.beginPath();
+      ctx.moveTo(houseLeft, sy);
+      ctx.lineTo(houseRight, sy);
+      ctx.stroke();
+    }
+
+    // Windows — two on the same level
+    const winY = wallTop + h * 0.10;
+    const winW = w * 0.065;
+    const winH = h * 0.10;
+    const winX = houseRight - w * 0.10;
+    const win2X = 2 * roofPeakX - winX - winW; // mirror of winX across roof peak
+
+    const drawHouseWindow = (wx: number) => {
+      ctx.fillStyle = '#a0b8c8';
+      ctx.fillRect(wx, winY, winW, winH);
+      ctx.fillStyle = '#d8e8f0';
+      ctx.fillRect(wx, winY, winW, winH * 0.45);
+      ctx.fillStyle = '#7898a8';
+      ctx.fillRect(wx, winY + winH * 0.47, winW, winH * 0.06);
+      ctx.fillRect(wx + winW * 0.46, winY, winW * 0.08, winH);
+      ctx.strokeStyle = '#8a7060';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(wx, winY, winW, winH);
+    };
+
+    drawHouseWindow(win2X);
+    drawHouseWindow(winX);
+
+    // Roof — left face (lighter, sun-facing): left overhang → peak → peak base
+    ctx.fillStyle = '#c05030';
     ctx.beginPath();
-    ctx.moveTo(w * 0.52, groundY - h * 0.16);
-    ctx.lineTo(w * 0.62, groundY - h * 0.24);
-    ctx.lineTo(w * 0.72, groundY - h * 0.16);
+    ctx.moveTo(roofOverhangL, wallTop);
+    ctx.lineTo(roofPeakX, roofPeakY);
+    ctx.lineTo(roofPeakX, wallTop);
     ctx.closePath();
     ctx.fill();
-    // Roof shadow face
-    ctx.fillStyle = '#a89070';
+
+    // Roof — right face (darker, shadow side): peak → right overhang → peak base
+    ctx.fillStyle = '#982818';
     ctx.beginPath();
-    ctx.moveTo(w * 0.62, groundY - h * 0.24);
-    ctx.lineTo(w * 0.72, groundY - h * 0.16);
-    ctx.lineTo(w * 0.72, groundY - h * 0.12);
-    ctx.lineTo(w * 0.62, groundY - h * 0.12);
+    ctx.moveTo(roofPeakX, wallTop);
+    ctx.lineTo(roofPeakX, roofPeakY);
+    ctx.lineTo(roofOverhangR, wallTop);
     ctx.closePath();
     ctx.fill();
+
+    // Roof fascia (overhang edge strip)
+    ctx.fillStyle = '#e0c8a0';
+    ctx.fillRect(roofOverhangL, wallTop - h * 0.008, roofOverhangR - roofOverhangL, h * 0.012);
 
     // Garden trees — round apple-tree shapes, warmer greens
     const drawGardenTree = (tx: number, th: number, canopyColor: string) => {
@@ -442,10 +485,10 @@ export abstract class BaseGameScene extends Phaser.Scene {
     for (const t of gardenTrees) drawGardenTree(t.x, t.h, t.c);
 
     // Wooden fence — horizontal rails + pickets along horizon
-    const fenceTop  = groundY - h * 0.115;
-    const fenceBot  = groundY + h * 0.005;
-    const railH     = h * 0.018;
-    const picketW   = w * 0.018;
+    const fenceTop = groundY - h * 0.115;
+    const fenceBot = groundY + h * 0.005;
+    const railH = h * 0.018;
+    const picketW = w * 0.018;
     const picketGap = w * 0.026;
     const picketColor = '#c8a870';
     const picketShadow = '#a08850';
@@ -454,13 +497,13 @@ export abstract class BaseGameScene extends Phaser.Scene {
     // Draw pickets
     let px = w * 0.0;
     while (px < w + picketW) {
-      // Shadow (right edge)
-      ctx.fillStyle = picketShadow;
-      ctx.fillRect(px + picketW * 0.72, fenceTop, picketW * 0.28, fenceBot - fenceTop);
       // Face
       ctx.fillStyle = picketColor;
       ctx.fillRect(px, fenceTop, picketW * 0.74, fenceBot - fenceTop);
-      // Pointed top — triangle cap
+      // Shadow on right portion of face (clamped to face width)
+      ctx.fillStyle = picketShadow;
+      ctx.fillRect(px + picketW * 0.55, fenceTop, picketW * 0.19, fenceBot - fenceTop);
+      // Pointed top — left (light) half
       ctx.fillStyle = picketColor;
       ctx.beginPath();
       ctx.moveTo(px, fenceTop);
@@ -468,12 +511,12 @@ export abstract class BaseGameScene extends Phaser.Scene {
       ctx.lineTo(px + picketW * 0.74, fenceTop);
       ctx.closePath();
       ctx.fill();
+      // Pointed top — right (shadow) half
       ctx.fillStyle = picketShadow;
       ctx.beginPath();
       ctx.moveTo(px + picketW * 0.37, fenceTop - h * 0.028);
+      ctx.lineTo(px + picketW * 0.37, fenceTop);
       ctx.lineTo(px + picketW * 0.74, fenceTop);
-      ctx.lineTo(px + picketW, fenceTop);
-      ctx.lineTo(px + picketW, fenceTop - h * 0.028);
       ctx.closePath();
       ctx.fill();
       px += picketW + picketGap;
@@ -520,150 +563,38 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.fillStyle = skyBg;
     ctx.fillRect(0, 0, w, groundY);
 
-    // Distant bank — low gentle hills across the far shore
+    // Distant bank — left side is a large plateau that levels off and exits off-screen left;
+    // only its right slope is visible, descending to meet the rolling right bank
     ctx.fillStyle = '#5e9a52';
     ctx.beginPath();
-    ctx.moveTo(-2, groundY);
-    ctx.quadraticCurveTo(w * 0.20, groundY - h * 0.10, w * 0.38, groundY - h * 0.08);
-    ctx.quadraticCurveTo(w * 0.55, groundY - h * 0.06, w * 0.70, groundY - h * 0.11);
-    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.14, w + 2,   groundY - h * 0.07);
+    ctx.moveTo(-w * 0.15, groundY);                                                     // bottom-left off screen
+    ctx.lineTo(-w * 0.15, groundY - h * 0.28);                                          // up left wall (off screen)
+    ctx.lineTo(w * 0.08, groundY - h * 0.28);                                           // flat plateau top
+    ctx.quadraticCurveTo(w * 0.20, groundY - h * 0.26, w * 0.32, groundY - h * 0.20); // slope down right
+    ctx.quadraticCurveTo(w * 0.44, groundY - h * 0.20, w * 0.55, groundY - h * 0.18);
+    ctx.quadraticCurveTo(w * 0.70, groundY - h * 0.21, w * 0.86, groundY - h * 0.24);
+    ctx.quadraticCurveTo(w * 0.93, groundY - h * 0.20, w + 2, groundY - h * 0.17);
     ctx.lineTo(w + 2, groundY);
     ctx.closePath();
     ctx.fill();
 
-    // Pond water — wide trapezoidal shape, wider at bottom (near bank), narrower at far shore
-    const waterTop  = groundY - h * 0.22;
-    const waterBot  = groundY + h * 0.008; // slightly past groundY so it meets the grass
-    const waterL    = w * 0.04;
-    const waterR    = w * 0.96;
-    const waterTL   = w * 0.12;
-    const waterTR   = w * 0.88;
-
-    const waterGrad = ctx.createLinearGradient(0, waterTop, 0, waterBot);
-    waterGrad.addColorStop(0, '#5aaac8');  // sky reflection at far shore
-    waterGrad.addColorStop(0.5, '#3d8aaa');
-    waterGrad.addColorStop(1, '#2e6e8e');  // deeper, near bank
-    ctx.fillStyle = waterGrad;
-    ctx.beginPath();
-    ctx.moveTo(waterTL, waterTop);
-    ctx.lineTo(waterTR, waterTop);
-    ctx.lineTo(waterR,  waterBot);
-    ctx.lineTo(waterL,  waterBot);
-    ctx.closePath();
-    ctx.fill();
-
-    // Water shimmer lines — subtle horizontal strokes reflecting sky
-    ctx.strokeStyle = 'rgba(180, 220, 240, 0.30)';
-    ctx.lineWidth = 1.2;
-    for (let i = 0; i < 7; i++) {
-      const wy = waterTop + (waterBot - waterTop) * (i / 7);
-      const progress = i / 7;
-      const xl = waterTL + (waterL - waterTL) * progress;
-      const xr = waterTR + (waterR - waterTR) * progress;
-      const segW = (xr - xl) * 0.22;
-      const ox   = xl + (xr - xl) * (0.15 + (i % 3) * 0.22);
-      ctx.beginPath();
-      ctx.moveTo(ox, wy);
-      ctx.lineTo(ox + segW, wy);
-      ctx.stroke();
-    }
-
-    // Lily pads — flat ellipses with a notch cut in
-    const drawLilyPad = (lx: number, ly: number, rx: number, ry: number, angle: number) => {
-      ctx.save();
-      ctx.translate(lx, ly);
-      ctx.rotate(angle);
-      ctx.fillStyle = '#2e6e22';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rx, ry, 0, 0.35, Math.PI * 2 - 0.35);
-      ctx.closePath();
-      ctx.fill();
-      // Lighter centre vein
-      ctx.strokeStyle = 'rgba(80,160,60,0.5)';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, -ry * 0.9);
-      ctx.stroke();
-      ctx.restore();
-    };
-
-    drawLilyPad(w * 0.25, groundY - h * 0.07, w * 0.034, h * 0.020, 0.3);
-    drawLilyPad(w * 0.38, groundY - h * 0.12, w * 0.028, h * 0.017, -0.5);
-    drawLilyPad(w * 0.50, groundY - h * 0.10, w * 0.040, h * 0.024, 0.8);
-    drawLilyPad(w * 0.62, groundY - h * 0.07, w * 0.030, h * 0.018, -0.2);
-    drawLilyPad(w * 0.74, groundY - h * 0.13, w * 0.026, h * 0.016, 1.1);
-    drawLilyPad(w * 0.44, groundY - h * 0.17, w * 0.022, h * 0.013, -0.7);
-
-    // Lily pad flowers — tiny bright dot on some pads
-    const drawFlower = (fx: number, fy: number) => {
-      ctx.fillStyle = '#f0d040';
-      ctx.beginPath();
-      ctx.arc(fx, fy, h * 0.007, 0, Math.PI * 2);
-      ctx.fill();
-    };
-    drawFlower(w * 0.25, groundY - h * 0.08);
-    drawFlower(w * 0.50, groundY - h * 0.11);
-
-    // Reeds / cattails along both banks
-    const drawReed = (rx: number, rh: number) => {
-      // Stem
-      ctx.strokeStyle = '#7a6030';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(rx, groundY);
-      ctx.lineTo(rx, groundY - rh);
-      ctx.stroke();
-      // Cattail head
-      ctx.fillStyle = '#6a4820';
-      ctx.beginPath();
-      ctx.ellipse(rx, groundY - rh + rh * 0.12, 3, h * 0.028, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // Leaf blade arcing off stem
-      ctx.strokeStyle = '#8a7a40';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(rx, groundY - rh * 0.55);
-      ctx.quadraticCurveTo(rx + rh * 0.45, groundY - rh * 0.72, rx + rh * 0.55, groundY - rh * 0.48);
-      ctx.stroke();
-    };
-
-    const reeds = [
-      { x: w * 0.01, h: h * 0.20 }, { x: w * 0.04, h: h * 0.26 }, { x: w * 0.07, h: h * 0.18 },
-      { x: w * 0.11, h: h * 0.23 }, { x: w * 0.15, h: h * 0.19 },
-      { x: w * 0.84, h: h * 0.22 }, { x: w * 0.88, h: h * 0.18 }, { x: w * 0.92, h: h * 0.25 },
-      { x: w * 0.96, h: h * 0.20 }, { x: w * 0.99, h: h * 0.17 },
+    // Far tree layer — right side only; y = base of trunk matched to distant bank height at that x
+    const farTrees = [
+      { x: w * 0.82, h: h * 0.12, c: '#4a7862', y: groundY - h * 0.21 },
+      { x: w * 0.80, h: h * 0.10, c: '#3e6858', y: groundY - h * 0.20 },
+      { x: w * 0.70, h: h * 0.10, c: '#3e6858', y: groundY - h * 0.19 },
     ];
-    for (const r of reeds) drawReed(r.x, r.h);
+    for (const t of farTrees) this.drawDeciduousTree(ctx, t.y, t.x, t.h, t.c);
 
-    // Willow tree — right side, drooping curtain branches
-    const wlx  = w * 0.87;
-    const wlBot = groundY;
-    const wlTop = groundY - h * 0.40;
-    // Trunk
-    ctx.strokeStyle = '#5a4020';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(wlx, wlBot);
-    ctx.quadraticCurveTo(wlx - w * 0.01, wlTop + h * 0.08, wlx, wlTop);
-    ctx.stroke();
-    // Canopy mass
-    ctx.fillStyle = '#3a7830';
-    ctx.beginPath();
-    ctx.ellipse(wlx, wlTop + h * 0.06, w * 0.10, h * 0.12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Drooping branch strands
-    ctx.strokeStyle = '#4a8a38';
-    ctx.lineWidth = 1.5;
-    const strands = [-0.08, -0.04, 0, 0.04, 0.08, 0.11];
-    for (const dx of strands) {
-      const sx = wlx + w * dx;
-      const sy = wlTop + h * 0.04;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.quadraticCurveTo(sx + w * dx * 0.5, sy + h * 0.18, sx + w * dx * 0.8, sy + h * 0.30);
-      ctx.stroke();
-    }
+    // Distance haze over far trees — softens depth
+    const farHaze = ctx.createLinearGradient(0, groundY - h * 0.48, 0, groundY - h * 0.14);
+    farHaze.addColorStop(0, 'rgba(180, 218, 212, 0)');
+    farHaze.addColorStop(1, 'rgba(180, 218, 212, 0.5)');
+    ctx.fillStyle = farHaze;
+    ctx.fillRect(0, groundY - h * 0.48, w, h * 0.34);
+
+    // Ground layer
+    this.drawGround(ctx, w, h, groundY, '#6aaa46', '#5a9838', '#4a882e', 'rgba(20, 48, 10,');
 
     // Atmospheric haze — green-tinted moisture at horizon
     const hazeGrad = ctx.createLinearGradient(0, groundY - h * 0.20, 0, groundY);
@@ -672,7 +603,173 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.fillStyle = hazeGrad;
     ctx.fillRect(0, groundY - h * 0.20, w, h * 0.20);
 
-    this.drawGround(ctx, w, h, groundY, '#6aaa46', '#5a9838', '#4a882e', 'rgba(20, 48, 10,');
+    // Raised bank mounds — drawn after haze so they aren't washed out by it
+    const bankPeak = groundY - h * 0.14;
+    ctx.fillStyle = '#6aaa46';
+    // Left bank — extends well off the left edge so it reads as a continuous bank, not a bump
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.15, groundY);
+    ctx.lineTo(-w * 0.15, groundY - h * 0.22);
+    ctx.quadraticCurveTo(w * 0.12, groundY - h * 0.20, w * 0.36, groundY);
+    ctx.closePath();
+    ctx.fill();
+    // Right bank
+    ctx.beginPath();
+    ctx.moveTo(w + 2, groundY);
+    ctx.lineTo(w + 2, bankPeak);
+    ctx.quadraticCurveTo(w * 0.90, bankPeak - h * 0.02, w * 0.78, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Pond water — drawn after ground/banks so it sits on top
+    const cx = w * 0.50;
+    const cy = groundY;
+    const pondRx = w * 0.43;
+    const pondRy = h * 0.13;
+
+    const waterGrad = ctx.createLinearGradient(0, cy - pondRy, 0, cy + pondRy);
+    waterGrad.addColorStop(0, '#5aaac8');
+    waterGrad.addColorStop(0.5, '#3d8aaa');
+    waterGrad.addColorStop(1, '#2e6e8e');
+    ctx.fillStyle = waterGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, pondRx, pondRy, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Water shimmer lines — clipped to the oval
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, pondRx, pondRy, 0, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(180, 220, 240, 0.30)';
+    ctx.lineWidth = 1.2;
+    for (let i = 1; i < 7; i++) {
+      const wy = (cy - pondRy) + (pondRy * 2) * (i / 7);
+      const segW = pondRx * 0.25;
+      const ox = cx - pondRx * 0.3 + (pondRx * 0.6) * ((i % 3) * 0.4);
+      ctx.beginPath();
+      ctx.moveTo(ox, wy);
+      ctx.lineTo(ox + segW, wy);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Lily pads — flat ellipses with a notch cut in
+    const drawLilyPad = (lx: number, ly: number, prx: number, pry: number, angle: number) => {
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(angle);
+      ctx.fillStyle = '#2e6e22';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, prx, pry, 0, 0.35, Math.PI * 2 - 0.35);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(80,160,60,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -pry * 0.9);
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    drawLilyPad(w * 0.28, groundY - h * 0.03, w * 0.034, h * 0.020, 0.3);
+    drawLilyPad(w * 0.40, groundY - h * 0.07, w * 0.028, h * 0.017, -0.5);
+    drawLilyPad(w * 0.52, groundY - h * 0.05, w * 0.040, h * 0.024, 0.8);
+    drawLilyPad(w * 0.64, groundY - h * 0.02, w * 0.030, h * 0.018, -0.2);
+    drawLilyPad(w * 0.44, groundY - h * 0.09, w * 0.022, h * 0.013, -0.7);
+
+    // Lily pad flowers
+    const drawFlower = (fx: number, fy: number) => {
+      ctx.fillStyle = '#f0d040';
+      ctx.beginPath();
+      ctx.arc(fx, fy, h * 0.007, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    drawFlower(w * 0.28, groundY - h * 0.04);
+    drawFlower(w * 0.52, groundY - h * 0.06);
+
+    // Near-distance trees — right side only, drawn after pond so they appear in front of water
+    const nearTrees = [
+      // behind pond
+      { x: w * 0.5, h: h * 0.31, c: '#3e6858', y: groundY - h * 0.17 },
+      { x: w * 0.72, h: h * 0.25, c: '#4a7862', y: groundY - h * 0.18 },
+      { x: w * 0.6, h: h * 0.28, c: '#335f45', y: groundY - h * 0.16 },
+
+      // right of pond
+      { x: w * 1.03, h: h * 0.5, c: '#335f45', y: groundY - h * 0.2 },
+      { x: w * 0.90, h: h * 0.31, c: '#4a7862', y: groundY - h * 0.13 },
+      { x: w * 0.98, h: h * 0.41, c: '#3e6858', y: groundY - h * 0.08 },
+    ];
+
+    for (const t of nearTrees) this.drawDeciduousTree(ctx, t.y, t.x, t.h, t.c);
+
+    // Cattails — at the bottom edge of the pond, drawn last so they appear in front of water
+    const drawReed = (rrx: number, rrh: number) => {
+      // Leaves — long blade-like strokes fanning up from the base
+      ctx.strokeStyle = '#5a9030';
+      ctx.lineWidth = 2.5;
+      // Inner left — nearly vertical with slight lean
+      ctx.beginPath();
+      ctx.moveTo(rrx, groundY);
+      ctx.quadraticCurveTo(rrx - rrh * 0.08, groundY - rrh * 0.55, rrx - rrh * 0.12, groundY - rrh * 0.80);
+      ctx.stroke();
+      // Inner right
+      ctx.beginPath();
+      ctx.moveTo(rrx, groundY);
+      ctx.quadraticCurveTo(rrx + rrh * 0.08, groundY - rrh * 0.55, rrx + rrh * 0.12, groundY - rrh * 0.80);
+      ctx.stroke();
+      // Outer left — arcs wider
+      ctx.beginPath();
+      ctx.moveTo(rrx, groundY);
+      ctx.quadraticCurveTo(rrx - rrh * 0.22, groundY - rrh * 0.40, rrx - rrh * 0.38, groundY - rrh * 0.60);
+      ctx.stroke();
+      // Outer right
+      ctx.beginPath();
+      ctx.moveTo(rrx, groundY);
+      ctx.quadraticCurveTo(rrx + rrh * 0.22, groundY - rrh * 0.40, rrx + rrh * 0.38, groundY - rrh * 0.60);
+      ctx.stroke();
+      // Stem — green, drawn over leaf bases
+      ctx.strokeStyle = '#6a9a38';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(rrx, groundY);
+      ctx.lineTo(rrx, groundY - rrh);
+      ctx.stroke();
+      // Cattail head — brown
+      ctx.fillStyle = '#6a4820';
+      ctx.beginPath();
+      ctx.ellipse(rrx, groundY - rrh + rrh * 0.12, 3, h * 0.028, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const reeds = [
+      { x: w * 0.09, h: h * 0.14 }, { x: w * 0.12, h: h * 0.18 },
+      { x: w * 0.15, h: h * 0.13 }, { x: w * 0.18, h: h * 0.16 },
+      { x: w * 0.82, h: h * 0.16 }, { x: w * 0.85, h: h * 0.13 },
+      { x: w * 0.88, h: h * 0.18 }, { x: w * 0.91, h: h * 0.14 },
+    ];
+    for (const r of reeds) drawReed(r.x, r.h);
+  }
+
+  private drawDeciduousTree(
+    ctx: CanvasRenderingContext2D, groundY: number,
+    tx: number, th: number, color: string
+  ) {
+    const trunkH = th * 0.28;
+    const crownR = th * 0.38;
+    const crownY = groundY - trunkH - crownR * 0.7;
+    ctx.fillStyle = '#6b3e1e';
+    ctx.fillRect(tx - th * 0.05, groundY - trunkH, th * 0.10, trunkH);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(tx + crownR, crownY);
+    ctx.arc(tx, crownY, crownR, 0, Math.PI * 2);
+    ctx.moveTo(tx - crownR * 0.55 + crownR * 0.72, crownY + crownR * 0.25);
+    ctx.arc(tx - crownR * 0.55, crownY + crownR * 0.25, crownR * 0.72, 0, Math.PI * 2);
+    ctx.moveTo(tx + crownR * 0.55 + crownR * 0.72, crownY + crownR * 0.25);
+    ctx.arc(tx + crownR * 0.55, crownY + crownR * 0.25, crownR * 0.72, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   private drawArcticLandscape(ctx: CanvasRenderingContext2D, w: number, h: number, groundY: number) {
@@ -690,7 +787,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.quadraticCurveTo(w * 0.12, groundY - h * 0.22, w * 0.25, groundY - h * 0.18);
     ctx.quadraticCurveTo(w * 0.38, groundY - h * 0.14, w * 0.50, groundY - h * 0.26);
     ctx.quadraticCurveTo(w * 0.63, groundY - h * 0.32, w * 0.72, groundY - h * 0.20);
-    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.12, w + 2,   groundY - h * 0.17);
+    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.12, w + 2, groundY - h * 0.17);
     ctx.lineTo(w + 2, groundY);
     ctx.closePath();
     ctx.fill();
@@ -724,7 +821,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ctx.quadraticCurveTo(w * 0.12, groundY - h * 0.22, w * 0.25, groundY - h * 0.18);
     ctx.quadraticCurveTo(w * 0.38, groundY - h * 0.14, w * 0.50, groundY - h * 0.26);
     ctx.quadraticCurveTo(w * 0.63, groundY - h * 0.32, w * 0.72, groundY - h * 0.20);
-    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.12, w + 2,   groundY - h * 0.17);
+    ctx.quadraticCurveTo(w * 0.86, groundY - h * 0.12, w + 2, groundY - h * 0.17);
     ctx.lineTo(w + 2, groundY);
     ctx.closePath();
     ctx.fill();
@@ -750,11 +847,11 @@ export abstract class BaseGameScene extends Phaser.Scene {
       ctx.fill();
     };
 
-    drawIceChunk(w * 0.03,  w * 0.08, h * 0.055);
-    drawIceChunk(w * 0.30,  w * 0.06, h * 0.042);
-    drawIceChunk(w * 0.55,  w * 0.10, h * 0.065);
-    drawIceChunk(w * 0.78,  w * 0.07, h * 0.048);
-    drawIceChunk(w * 0.91,  w * 0.09, h * 0.058);
+    drawIceChunk(w * 0.03, w * 0.08, h * 0.055);
+    drawIceChunk(w * 0.30, w * 0.06, h * 0.042);
+    drawIceChunk(w * 0.55, w * 0.10, h * 0.065);
+    drawIceChunk(w * 0.78, w * 0.07, h * 0.048);
+    drawIceChunk(w * 0.91, w * 0.09, h * 0.058);
 
     // Horizon haze (cold tint)
     const hazeGrad = ctx.createLinearGradient(0, groundY - h * 0.18, 0, groundY);
@@ -835,9 +932,9 @@ export abstract class BaseGameScene extends Phaser.Scene {
     ];
 
     for (const { x, yFrac } of squiggles) {
-      const gy    = groundY + groundH * yFrac;
+      const gy = groundY + groundH * yFrac;
       const width = w * (0.022 + yFrac * 0.030);
-      const amp   = 2.5 + yFrac * 3.0;
+      const amp = 2.5 + yFrac * 3.0;
       const alpha = 0.20 + yFrac * 0.32;
       drawSquiggle(x, gy, width, amp, alpha);
     }

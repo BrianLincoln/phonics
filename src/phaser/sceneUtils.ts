@@ -43,7 +43,7 @@ export function spawnClouds(
     scene.add.image(w * xFrac, h * yFrac, 'cloud')
       .setScale(scale)
       .setAlpha(0.88)
-      .setDepth(1),
+      .setDepth(2),
   );
   const speeds = CLOUD_CONFIGS.map(c => c.speed);
   return { images, speeds };
